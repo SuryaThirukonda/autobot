@@ -26,3 +26,6 @@ analysis/**/carved/
 **/configs/profile.default.json
 # Parallel work by another session; not published from here
 v2/
+v2/configs/profile.default.json
+analysis/jobright/carved/
+analysis/jobright/rea3/

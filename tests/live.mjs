@@ -1,8 +1,8 @@
 // Live smoke test: load Autobot into an owned Chrome for Testing, open a real job posting, fill it, screenshot,
-// and read back the values. It NEVER clicks submit. Usage: node tests/live.mjs <url> [--headed]
+// and read back the values. It NEVER clicks submit. Usage: node tests/live.mjs <url> [--headed] [--ext=v2]
 import { chromium } from "playwright-core";
 import fs from "node:fs"; import path from "node:path"; import os from "node:os"; import { fileURLToPath } from "node:url";
-const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.resolve(here, ".."); const extDir = path.join(root, "autobot");
+const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.resolve(here, ".."); const extArg = process.argv.find((x) => x.startsWith("--ext=")); const extDir = path.resolve(root, extArg ? extArg.slice(6) : process.env.AUTOBOT_EXT || "autobot");
 const url = process.argv[2]; if (!url) { console.error("usage: node tests/live.mjs <url> [--headed]"); process.exit(2); }
 const headed = process.argv.includes("--headed");
 // tests/profile.local.json (git-ignored, your real profile) wins over the sample when present.
@@ -21,8 +21,8 @@ try {
   let sw = ctx.serviceWorkers().find(isOurs);
   while (!sw) { const w = await ctx.waitForEvent("serviceworker", { timeout: 15000 }); if (isOurs(w) && !/_metadata/.test(w.url())) sw = w; }
   const extId = new URL(sw.url()).host;
-  const opt = await ctx.newPage(); await opt.goto(`chrome-extension://${extId}/options.html`);
-  await opt.evaluate(([profile, resume]) => chrome.storage.local.set({ profile, resume, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } }), [PROFILE, RESUME]); await opt.close();
+  const opt = await ctx.newPage(); try { await opt.goto(`chrome-extension://${extId}/options.html`); } catch { await new Promise((r) => setTimeout(r, 500)); await opt.goto(`chrome-extension://${extId}/options.html`); }
+  await opt.evaluate(([profile, resume, extra]) => chrome.storage.local.set({ profile, resume, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true, ...extra } }), [PROFILE, RESUME, JSON.parse(process.env.AUTOBOT_SETTINGS || "{}")]); await opt.close();
   const page = await ctx.newPage();
   page.on("console", (m) => { if (/\[autobot\]/.test(m.text())) console.log("  ", m.text().slice(0, 200)); });
   await page.goto(url, { waitUntil: "load" });

@@ -38,6 +38,8 @@ AB.synonymsFrom = (values) => {
   return syn;
 };
 
+const config_pre_ran = (state) => state.preRan === true;
+
 // Execute one field (or nested array section). Reports via onStatus(key, status, detail).
 AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
   const { container, profile, resume, signal, onStatus } = state;
@@ -100,7 +102,9 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
           if (el) { usedValue = v; break; }
         }
       } else {
-        el = await AB.waitFor(paths, { ctx: container, timeout: step.time ?? (field.time ?? 2500), signal });
+        // Plain fields resolve immediately; waiting is only for steps that expect a prior click to reveal the element.
+        const expectsWait = step.time !== undefined || field.time !== undefined || steps.indexOf(step) > 0 || Boolean(config_pre_ran(state));
+        el = expectsWait ? await AB.waitFor(paths, { ctx: container, timeout: step.time ?? field.time ?? 2500, signal }) : AB.queryAny(paths, container);
       }
       if (!el) {
         if (step.allowFailure || field.allowFailure) continue;
@@ -112,6 +116,7 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
       state.touched?.add(el);
     } else if (lastEl) el = lastEl;
     if (!el) continue;
+    onStatus(fullKey, "filling", "");
     if (step.removed) { await AB.waitGone(el, step.time || 4000); continue; }
     if (!step.method && !field.method && !step.event && steps.length > 1 && step !== steps[steps.length - 1]) continue; // locate-only step
     if (step.event) { AB.fire(el, step.event, step.eventOptions); anyWrite = true; continue; }
@@ -194,8 +199,8 @@ AB.fill = async ({ config, profile, resume, settings, onStatus = () => {}, signa
   state.onStatus = statusWrap;
   // Pre-steps (e.g. click "Apply" to reveal the form).
   for (const pre of config.pre || []) {
-    const el = await AB.waitFor(pre.path, { ctx: document, timeout: pre.time || 1500 });
-    if (el) { AB.fire(el, ["mousedown", "mouseup", "click"]); await AB.sleep(pre.delay || 800); }
+    const el = AB.queryAny(pre.path, document);
+    if (el) { AB.fire(el, ["mousedown", "mouseup", "click"]); state.preRan = true; await AB.sleep(pre.delay || 800); state.container = AB.findContainer(config); }
   }
   let filled = 0;
   for (const field of config.fields || []) {

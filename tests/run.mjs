@@ -1,6 +1,7 @@
 // Autobot end-to-end test: load the unpacked extension into Chrome for Testing, seed a profile,
 // open each fixture, trigger a fill through the test hook, and assert the resulting values.
-// Usage: node tests/run.mjs [--headed]   (AUTOBOT_CHROME=/path/to/chrome to override the binary)
+// Usage: node tests/run.mjs [--headed] [--ext=v2]   (AUTOBOT_CHROME=/path/to/chrome to override the binary;
+// --ext or AUTOBOT_EXT picks the extension folder, default autobot/)
 import { chromium } from "playwright-core";
 import http from "node:http";
 import fs from "node:fs";
@@ -10,7 +11,9 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
-const extDir = path.join(root, "autobot");
+const extArg = process.argv.find((a) => a.startsWith("--ext="));
+const extDir = path.resolve(root, extArg ? extArg.slice(6) : process.env.AUTOBOT_EXT || "autobot");
+const hasSearch = fs.existsSync(path.join(extDir, "engine", "search.js"));
 const headed = process.argv.includes("--headed");
 
 const PROFILE = {
@@ -80,7 +83,8 @@ const fillAndWait = async (page) => {
 
     // Seed profile + resume + test hooks via the options page.
     const opt = await ctx.newPage();
-    await opt.goto(`chrome-extension://${extId}/options.html`);
+    // onInstalled opens options.html too; that navigation can interrupt ours, so retry once.
+    try { await opt.goto(`chrome-extension://${extId}/options.html`); } catch { await new Promise((r) => setTimeout(r, 500)); await opt.goto(`chrome-extension://${extId}/options.html`); }
     await opt.evaluate(([profile, resume]) => chrome.storage.local.set({ profile, resume, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } }), [PROFILE, RESUME]);
     await opt.close();
 
@@ -137,6 +141,57 @@ const fillAndWait = async (page) => {
       check("generic city", v.q4, "Austin"); check("generic state", v.q5, "Texas"); check("generic linkedin", v.q6, PROFILE.linkedin); check("generic company", v.q7, PROFILE.current_company); check("generic title", v.q8, PROFILE.current_title);
       check("generic auth radio", v.auth, "y"); check("generic sponsorship select", v.q9, "No"); check("generic how heard", v.q10, "LinkedIn"); check("generic saved answer", v.q11, PROFILE.answers["Why do you want to work here?"]);
       check("generic gender synonym", v.q12, "Prefer not to say"); check("generic resume", v.q13, "ada-resume.pdf"); check("generic degree synonym", v.q14, "Bachelors"); check("generic certify checkbox untouched", v.q15, false);
+      await page.close();
+    }
+    // ---- Search widgets (v2 multi-round option search) ----
+    if (hasSearch) {
+      const page = await ctx.newPage();
+      page.on("console", (m) => { if (/\[autobot\] search (result|search)/.test(m.text())) console.log("  ", m.text()); });
+      await page.goto(`${base}/search.html`);
+      const summary = await fillAndWait(page);
+      console.log("search summary:", summary.statuses?.filter((s) => /school|major|location|company|\?/.test(s[0])));
+      const v = await page.evaluate(() => { const g = (id) => document.getElementById(id); return {
+        loc: g("loc").value, locId: g("loc-id").value, locQueries: window.__queries.loc.slice(), school: g("school").selectedOptions[0]?.text, schoolVal: g("school").value,
+        schoolQueries: window.__queries.school.slice(), rendered: document.querySelector(".select2-selection__rendered").textContent, other: g("other").value, otherQueries: window.__queries.other.slice(),
+        major: g("major").selectedOptions[0]?.text, employer: g("employer").value, city: g("city").value, name: g("fullname").value,
+        eduSchool: g("edu-school").selectedOptions[0]?.text, eduOther: g("edu-school-other").value }; });
+      check("search: location committed", v.loc, "Austin, Texas, United States");
+      check("search: location id (option value)", v.locId, "L1");
+      check("search: location needed a 2nd round", JSON.stringify(v.locQueries), (q) => { const a = JSON.parse(q); return a[0] === "Austin, Texas" && a.includes("Austin, TX"); });
+      check("search: select2 ajax school", v.school, "Texas A&M University");
+      check("search: select2 native value", v.schoolVal, "1002");
+      check("search: select2 rendered label", v.rendered, "Texas A&M University");
+      check("search: near-miss school left empty", v.other, "");
+      check("search: near-miss school was searched", v.otherQueries.length, (n) => Number(n) >= 1);
+      check("search: native select major (trap-free)", v.major, "Computer Science");
+      check("search: datalist canonical employer", v.employer, "Babbage and Co.");
+      check("search: school 'Other' fallback select", v.eduSchool, "Other");
+      check("search: school 'Other' companion text", v.eduOther, "Texas A&M University");
+      check("search: plain city not searched", v.city, "Austin");
+      check("search: plain name still filled", v.name, "Ada Lovelace");
+      check("search: status shows rounds", JSON.stringify(summary.statuses), (t) => /searched \\"Austin, Texas\\"/.test(t) || /searched "Austin, Texas"/.test(t) || /Austin, Texas, United States/.test(t));
+      if (headed) await page.screenshot({ path: path.join(root, "tests", "out-search.png") });
+      await page.close();
+    }
+    // ---- Workday-like (button prompts, multiselect search, split dates) ----
+    {
+      const page = await ctx.newPage();
+      await page.goto(`${base}/workday.html`);
+      const t0 = Date.now();
+      const summary = await fillAndWait(page);
+      const elapsed = Date.now() - t0;
+      console.log("workday summary:", { ...summary, statuses: summary.statuses?.filter((s) => s[1] !== "absent") }, `${elapsed} ms`);
+      const v = await page.evaluate(() => { const q = (s) => document.querySelector(s); return {
+        detected: document.documentElement.dataset.autobotDetected, prev: document.querySelector('input[name=prev]:checked')?.value, fn: q("#fn").value, ln: q("#ln").value, a1: q("#a1").value, city: q("#city").value, zip: q("#zip").value,
+        state: q("[data-automation-id='addressSection_countryRegion']").dataset.value, device: q("[data-automation-id='phone-device-type']").dataset.value, cc: q("[data-automation-id='formField-countryPhoneCode'] .chips").dataset.value,
+        phone: q("#ph").value, src: q("[data-automation-id='sourceSection'] .chips").dataset.value, title: q("[data-automation-id='jobTitle']").value, company: q("[data-automation-id='company']").value,
+        current: q("[data-automation-id='currentlyWorkHere']").checked, mm: q("[data-automation-id='dateSectionMonth-input']").value, yyyy: q("[data-automation-id='dateSectionYear-input']").value, desc: q("[data-automation-id='description']").value }; });
+      check("wd detected", v.detected, "workday"); check("wd previously worked = No", v.prev, "false"); check("wd first", v.fn, "Ada"); check("wd last", v.ln, "Lovelace");
+      check("wd address", v.a1, PROFILE.address); check("wd city", v.city, "Austin"); check("wd zip", v.zip, "78701"); check("wd state prompt", v.state, "Texas");
+      check("wd phone device prompt", v.device, "Mobile"); check("wd country code multiselect", v.cc, "United States of America (+1)"); check("wd phone digits", v.phone, "5125550100");
+      check("wd source multiselect", v.src, "LinkedIn"); check("wd job title", v.title, PROFILE.experience[0].title); check("wd company", v.company, PROFILE.experience[0].company); check("wd currently work here", v.current, true);
+      check("wd start month", v.mm, "06"); check("wd start year", v.yyyy, "2025"); check("wd description", v.desc, PROFILE.experience[0].description);
+      check("wd finished in under 25 s", elapsed, (ms) => ms < 25000);
       await page.close();
     }
   } finally {

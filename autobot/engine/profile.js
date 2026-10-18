@@ -82,6 +82,12 @@ AB.getProfileValue = (profile, keyPath) => {
       case "most_recent_major": cur = profile.education?.[0]?.major; break;
       case "most_recent_gpa": cur = profile.education?.[0]?.gpa; break;
       case "skills_text": cur = (profile.skills || []).join(", "); break;
+      case "today": { // signature / "today's date" fields
+        const d = new Date(); const two = (n) => String(n).padStart(2, "0");
+        if (fmt === "DD" || fmt === "D") return fmt === "DD" ? two(d.getDate()) : String(d.getDate());
+        if (fmt) return AB.format(undefined, fmt, { month: d.getMonth() + 1, year: d.getFullYear() }) || `${two(d.getMonth() + 1)}/${two(d.getDate())}/${d.getFullYear()}`;
+        return `${two(d.getMonth() + 1)}/${two(d.getDate())}/${d.getFullYear()}`;
+      }
     }
   }
   if (cur === undefined || cur === null || cur === "") return undefined;

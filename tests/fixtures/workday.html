@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Workday-like My Information step</title>
+<style>
+  body{font:15px Roboto,system-ui;margin:0;background:#f5f5f5} .page{max-width:1100px;margin:24px auto;background:#fff;padding:32px 48px;border:1px solid #e1e1e1}
+  h2{color:#0875e1;font-size:22px;margin:28px 0 6px} label{display:block;font-weight:700;margin:16px 0 6px} input,textarea{width:420px;padding:10px;border:1px solid #767676;border-radius:3px;font:inherit}
+  button.dd{width:420px;text-align:left;padding:10px;border:1px solid #767676;border-radius:3px;background:#fff;font:inherit;position:relative} button.dd::after{content:"▾";position:absolute;right:10px}
+  .popup{position:absolute;background:#fff;border:1px solid #ccc;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:10;width:420px;max-height:220px;overflow:auto} .popup div{padding:8px 12px;cursor:pointer} .popup div:hover{background:#e8f0fe} .hidden{display:none}
+  .ms{width:420px;border:1px solid #767676;border-radius:3px;padding:4px;display:flex;flex-wrap:wrap;gap:4px} .ms .chip{background:#e8f0fe;border-radius:12px;padding:2px 10px;font-size:13px} .ms input{border:0;width:200px;padding:6px}
+  .date{display:flex;gap:6px} .date input{width:60px} .date input.y{width:90px} .footer{display:flex;justify-content:flex-end;margin-top:40px}
+  .footer button{background:#0875e1;color:#fff;border:0;border-radius:24px;padding:12px 24px;font:inherit;font-weight:700}
+</style></head>
+<body>
+<div class="page" data-automation-id="applyFlowPage">
+  <h1>My Information</h1>
+  <div data-automation-id="formField-candidateIsPreviousWorker"><label>Have you previously worked for Methodist? *</label>
+    <label style="font-weight:400"><input type="radio" name="prev" id="prev-yes" value="true" style="width:auto" /> Yes</label><label style="font-weight:400"><input type="radio" name="prev" id="prev-no" value="false" style="width:auto" /> No</label></div>
+  <h2>Legal Name</h2>
+  <div data-automation-id="legalName">
+    <div data-automation-id="formField-legalName--firstName"><label for="fn">First Name *</label><input id="fn" data-automation-id="legalNameSection_firstName" /></div>
+    <div data-automation-id="formField-legalName--lastName"><label for="ln">Last Name *</label><input id="ln" data-automation-id="legalNameSection_lastName" /></div>
+  </div>
+  <h2>Address</h2>
+  <div data-automation-id="formField-addressLine1"><label for="a1">Address Line 1 *</label><input id="a1" data-automation-id="addressSection_addressLine1" /></div>
+  <div data-automation-id="formField-addressSection_city"><label for="city">City *</label><input id="city" data-automation-id="addressSection_city" /></div>
+  <div data-automation-id="formField-countryRegion"><label>State *</label><button class="dd" data-automation-id="addressSection_countryRegion" aria-haspopup="listbox" data-options="Alabama|Alaska|Arizona|Texas|Utah|Vermont">Select One</button></div>
+  <div data-automation-id="formField-postalCode"><label for="zip">Postal Code *</label><input id="zip" data-automation-id="addressSection_postalCode" /></div>
+  <h2>Email Address</h2><div data-automation-id="formField-email"><label>Email</label><div id="emailro">thirukondas@gmail.com</div></div>
+  <h2>Phone</h2>
+  <div data-automation-id="formField-phone-device-type"><label>Phone Device Type *</label><button class="dd" data-automation-id="phone-device-type" aria-haspopup="listbox" data-options="Fax|Landline|Mobile|Pager">Select One</button></div>
+  <div data-automation-id="formField-countryPhoneCode"><label>Country Phone Code *</label>
+    <div class="ms" data-automation-id="multiselectInputContainer"><span class="chips"></span><input id="cc" placeholder="Search" data-options="Afghanistan (+93)|Albania (+355)|United Arab Emirates (+971)|United Kingdom (+44)|United States of America (+1)|Uruguay (+598)" /></div></div>
+  <div data-automation-id="formField-phone-number"><label for="ph">Phone Number *</label><input id="ph" data-automation-id="phone-number" /></div>
+  <div data-automation-id="formField-phoneExtension"><label for="ext">Phone Extension</label><input id="ext" data-automation-id="phone-extension" /></div>
+  <h2>How Did You Hear About Us?</h2>
+  <div data-automation-id="sourceSection"><div class="ms"><span class="chips"></span><input id="src" placeholder="Search" data-options="Indeed|Glassdoor|LinkedIn|Referral|Company Website" /></div></div>
+  <h2>Work Experience</h2>
+  <div data-automation-id="workExperienceSection">
+    <div data-automation-id="workExperience-1">
+      <div data-automation-id="formField-jobTitle"><label>Job Title *</label><input data-automation-id="jobTitle" /></div>
+      <div data-automation-id="formField-company"><label>Company *</label><input data-automation-id="company" /></div>
+      <div data-automation-id="formField-currentlyWorkHere"><label style="font-weight:400"><input type="checkbox" data-automation-id="currentlyWorkHere" style="width:auto" /> I currently work here</label></div>
+      <div data-automation-id="formField-startDate"><label>From *</label><div class="date"><input data-automation-id="dateSectionMonth-input" placeholder="MM" /><input class="y" data-automation-id="dateSectionYear-input" placeholder="YYYY" /></div></div>
+      <div data-automation-id="formField-description"><label>Role Description</label><textarea data-automation-id="description"></textarea></div>
+    </div>
+  </div>
+  <div class="footer"><button data-automation-id="bottom-navigation-next-button">Save and Continue</button></div>
+</div>
+<script>
+  // Workday-style prompts: a button or search input opens a popup of promptOption rows; clicking commits.
+  let popup = null;
+  const closePopup = () => { popup?.remove(); popup = null; };
+  const openPopup = (anchor, options, onPick) => {
+    closePopup(); popup = document.createElement("div"); popup.className = "popup"; popup.setAttribute("data-automation-id", "activeListContainer");
+    for (const o of options) { const d = document.createElement("div"); d.setAttribute("data-automation-id", "promptOption"); d.setAttribute("role", "option"); d.textContent = o; d.addEventListener("click", () => { onPick(o); closePopup(); }); popup.appendChild(d); }
+    const r = anchor.getBoundingClientRect(); popup.style.left = (r.left + scrollX) + "px"; popup.style.top = (r.bottom + scrollY) + "px"; document.body.appendChild(popup);
+  };
+  document.querySelectorAll("button.dd").forEach((b) => { const opts = b.dataset.options.split("|"); b.addEventListener("click", () => openPopup(b, opts, (v) => { b.textContent = v; b.dataset.value = v; })); b.addEventListener("keydown", (e) => { if (e.key === "ArrowDown" && !popup) openPopup(b, opts, (v) => { b.textContent = v; b.dataset.value = v; }); if (e.key === "Enter" && popup) popup.firstChild?.click(); }); });
+  document.querySelectorAll(".ms input").forEach((inp) => { const all = inp.dataset.options.split("|"); const render = () => { const q = inp.value.toLowerCase(); const opts = all.filter((o) => o.toLowerCase().includes(q)); openPopup(inp, opts, (v) => { const chips = inp.parentElement.querySelector(".chips"); chips.innerHTML = `<span class="chip" data-automation-id="selectedItem">${v}</span>`; chips.dataset.value = v; inp.value = ""; }); };
+    inp.addEventListener("focus", render); inp.addEventListener("input", render); inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && popup) popup.firstChild?.click(); if (e.key === "Escape") closePopup(); }); });
+  document.addEventListener("mousedown", (e) => { if (popup && !popup.contains(e.target) && !e.target.closest("button.dd, .ms")) closePopup(); });
+</script>
+</body></html>
