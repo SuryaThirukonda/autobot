@@ -49,7 +49,8 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
   if (field.array) {
     const items = AB.arr(data?.[key]);
     const limit = Math.min(field.limit || items.length, items.length);
-    if (!limit) { onStatus(fullKey, "skipped", "no entries"); return true; }
+    if (!limit) { onStatus(fullKey, "skipped", "no entries"); return false; }
+    let wroteAny = false;
     for (let i = 0; i < limit; i++) {
       if (i > 0 && field.add) {
         const btn = AB.queryAny(field.add, container);
@@ -62,10 +63,10 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
         sectionCtx = secs[i] || secs[secs.length - 1] || container;
       }
       for (const sub of field.fields || []) {
-        await AB.runField(sub, { ...state, container: sectionCtx }, `${fullKey}[${i}]`, items[i]);
+        if (await AB.runField(sub, { ...state, container: sectionCtx }, `${fullKey}[${i}]`, items[i])) wroteAny = true;
       }
     }
-    return true;
+    return wroteAny;
   }
 
   // Resolve the value.
@@ -147,12 +148,13 @@ AB.runHeuristics = async (state, touched) => {
     }
     const current = AB.readBack(el);
     if (current && !(el instanceof HTMLSelectElement && el.selectedIndex <= 0 && /select|choose|--/.test(AB.norm(current)))) continue; // already has a value
-    const { key, label } = AB.classify(el);
+    const { key, label, labels } = AB.classify(el);
+    const answerFor = () => { for (const l of labels || [label]) { const a = AB.lookupAnswer(profile, l); if (a !== undefined) return a; } return undefined; };
     const isCheckbox = el instanceof HTMLInputElement && el.type === "checkbox";
     if (isCheckbox) {
       // Never tick consent/marketing/certification boxes, and only tick boxes whose question is a yes/no profile fact.
       if (/agree|consent|acknowledg|certif|marketing|newsletter|subscribe|terms|privacy|policy|confirm|accurate|signature/.test(label)) continue;
-      if (!["work_auth_us", "sponsorship", "over18"].includes(key)) { const a = AB.lookupAnswer(profile, label); if (a === undefined) continue; const yes = /^(yes|true|y)$/i.test(String(a)); const ok = AB.setChecked(el, yes); touched.add(el); onStatus(`? ${label.slice(0, 40)}`, ok ? "filled" : "error", String(a)); if (ok) n++; continue; }
+      if (!["work_auth_us", "sponsorship", "over18"].includes(key)) { const a = answerFor(); if (a === undefined) continue; const yes = /^(yes|true|y)$/i.test(String(a)); const ok = AB.setChecked(el, yes); touched.add(el); onStatus(`? ${label.slice(0, 40)}`, ok ? "filled" : "error", String(a)); if (ok) n++; continue; }
     }
     let value, values;
     if (key) {
@@ -160,9 +162,10 @@ AB.runHeuristics = async (state, touched) => {
       values = { work_auth_us: "workAuth", sponsorship: "sponsorship", over18: "yesNo", gender: "gender", ethnicity: "ethnicity", hispanic: "hispanic", veteran: "veteran", disability: "disability", most_recent_degree: "degree" }[key];
       if (typeof value === "boolean") value = AB.boolToYesNo(value);
     } else {
-      value = AB.lookupAnswer(profile, label);
+      value = answerFor();
     }
-    if (value === undefined || value === "") { if (label) onStatus(`? ${label.slice(0, 40)}`, "unknown", key || "no rule"); continue; }
+    if (value === undefined || value === "") { if (label) onStatus(`? ${label.slice(0, 40)}`, "unknown", key ? `${key} (empty in profile)` : "no rule"); continue; }
+    if (isCheckbox && !(/^(yes|true|y)$/i.test(String(AB.boolToYesNo(value))))) { onStatus(`? ${label.slice(0, 40)}`, "skipped", `left unchecked (${AB.boolToYesNo(value)})`); touched.add(el); continue; }
     const candidates = AB.mapValue(value, values);
     const synonyms = AB.synonymsFrom(values);
     let ok = false;

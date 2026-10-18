@@ -7,7 +7,7 @@ AB.RULES = [
   ["first_name", ["first name", "given name", "forename", "firstname"], ["last", "preferred"]],
   ["last_name", ["last name", "surname", "family name", "lastname"], ["first", "preferred"]],
   ["preferred_name", ["preferred name", "preferred first", "nickname", "name you go by"], []],
-  ["full_name", ["full name", "legal name", "your name", "candidate name", "name"], ["company", "school", "user", "first", "last", "preferred", "file", "contact", "referr", "emergency", "manager"]],
+  ["full_name", ["full name", "legal name", "your name", "candidate name", "name"], ["company", "school", "user", "first", "last", "preferred", "file", "contact", "referr", "emergency", "manager", "pronounce", "pronunciation", "call you", "nickname", "middle", "maiden"]],
   ["pronouns", ["pronoun"], []],
   ["email", ["email", "e mail"], ["confirm", "verify", "re enter", "manager", "referr", "recruiter"]],
   ["email", ["confirm email", "verify email", "re enter email", "email confirmation"], []],
@@ -27,7 +27,7 @@ AB.RULES = [
   ["city", ["city", "town", "locality"], ["state", "country"]],
   ["state", ["state", "province", "region"], ["country", "united"]],
   ["country", ["country", "nation"], ["code", "phone"]],
-  ["location", ["location", "where are you located", "where do you live", "current location", "based"], ["work location", "preferred", "office", "job"]],
+  ["location", ["location", "where are you located", "where are you currently located", "currently located", "where do you live", "where do you currently live", "current location", "where are you based", "based"], ["work location", "preferred", "office", "job", "relocat"]],
   ["current_company", ["current company", "current employer", "employer", "company you work", "organization", "org"], ["previous", "school"]],
   ["current_title", ["current title", "job title", "current role", "current position", "title"], ["degree", "mr", "ms", "salutation"]],
   ["years_experience", ["years of experience", "years experience", "how many years"], []],
@@ -39,7 +39,7 @@ AB.RULES = [
   ["salary", ["salary", "compensation", "pay expectation", "desired pay", "expected pay"], []],
   ["start_date", ["start date", "available to start", "availability", "when can you start", "earliest"], ["employment", "education", "experience"]],
   ["notice_period", ["notice period", "notice"], []],
-  ["how_heard", ["how did you hear", "how did you find", "source", "where did you hear", "referral source"], ["referred by", "name"]],
+  ["how_heard", ["how did you hear", "how you heard", "heard about this", "heard about us", "how did you find", "how did you learn", "source", "where did you hear", "referral source"], ["referred by", "name"]],
   ["referred_by", ["referred by", "referrer", "referral name", "who referred"], []],
   ["most_recent_school", ["school", "university", "college", "institution", "alma mater"], ["high school", "degree", "major"]],
   ["most_recent_degree", ["degree", "education level", "highest level of education", "qualification"], ["major", "discipline"]],
@@ -95,6 +95,8 @@ AB.labelFor = (el, { group = true } = {}) => {
     const lg = box.querySelector("legend, label, h2, h3, h4, [class*='label'], [class*='question-text'], [class*='title']");
     if (lg && !lg.contains(el)) push(lg.textContent);
   }
+  // Question text held by a sibling of the control's wrapper (e.g. Lever: <div class="application-label">…</div><div class="application-field"><textarea>)
+  if (!isChoice) AB.groupLabelFor(el).forEach(push);
   // preceding sibling text (for bare inputs)
   let p = el.previousElementSibling;
   for (let i = 0; p && i < 2; i++, p = p.previousElementSibling) if (/^(LABEL|SPAN|P|DIV|STRONG|B)$/.test(p.tagName) && p.textContent.trim().length < 160) push(p.textContent);
@@ -133,12 +135,25 @@ AB.classify = (el) => {
   if (type === "email") return { key: "email", via: "type", label: "email" };
   if (type === "tel") return { key: "phone", via: "type", label: "phone" };
   const labels = AB.labelFor(el);
+  // Open-ended questions are never profile fields; only a saved answer may fill them.
+  const primary = AB.displayLabel(labels);
+  if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))
+    return { key: null, via: "free-text", label: primary, labels };
   for (const label of labels) {
     for (const [key, incl, excl] of AB.RULES) {
-      if (incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k))) return { key, via: "label", label };
+      if (incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k))) return { key, via: "label", label, labels };
     }
   }
-  return { key: null, via: null, label: labels[0] || "" };
+  return { key: null, via: null, label: AB.displayLabel(labels), labels };
+};
+
+AB.FREE_TEXT = /(^|\s)(how do you|how would you|why do you|why are you|why would you|what has been|what is your favorite|what are you|describe|tell us|explain|in what ways|anything else|additional information|comments?)(\s|$)/;
+
+// Pick the most question-like label for display and saved-answer lookup: skip placeholders/markers, prefer the longest.
+AB.GENERIC_LABELS = /^(type your response|start typing|pick date|select|search|choose|choose one|yes|no|✱|\*|required|optional|enter .*|your answer)$/;
+AB.displayLabel = (labels) => {
+  const good = labels.filter((l) => l && !AB.GENERIC_LABELS.test(l) && !/^[0-9a-f]{8}( [0-9a-f]{4}){3} [0-9a-f]{12}/.test(l) && !/^cards? [0-9a-f]{8}/.test(l));
+  return (good.sort((a, b) => b.length - a.length)[0]) || labels[0] || "";
 };
 
 // Enumerate fillable controls under a container, deduplicating radio groups and hidden widgets.

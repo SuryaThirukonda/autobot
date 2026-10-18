@@ -58,6 +58,15 @@ node tests/live.mjs <job posting url>      # fills a real page in a throwaway br
 
 `AUTOBOT_CHROME=/path/to/chrome` overrides the browser (branded Google Chrome ≥137 ignores `--load-extension`; use Chrome for Testing or Chromium).
 
+## Live results (2026-10-18, throwaway browser, nothing submitted)
+
+| ATS | Posting | Written | Left alone (correctly) |
+|---|---|---|---|
+| Greenhouse (job-boards) | Anthropic | first/last/email/phone, resume, phone-country react-select, custom react-select question via saved answer | reCAPTCHA, country search box |
+| Lever | Palantir | resume, full name, email, phone, location typeahead, company, LinkedIn/GitHub/Portfolio, work-auth radio = Yes, sponsorship radio = No, university select, "how did you hear" select = LinkedIn | consent radios, Singapore residency radios, 33 language checkboxes, free-text essays, preferred name / pronunciation (no profile value) |
+| Ashby | OpenAI | name, email, phone, resume, location combobox, work-auth checkbox = on, gender/ethnicity/veteran radios = decline | sponsorship checkbox stays unchecked (profile says no), office-days, arbitration + acknowledgement checkboxes, start date, free text |
+| Workday | NVIDIA | detection only: the application form is behind sign-in; the job page has no fillable fields | everything |
+
 ## Limits
 
 - Deterministic by design: questions without a rule or saved answer are left blank and listed as `unknown`.

@@ -58,7 +58,10 @@
       ],
       "allowFailure": true,
       "optionsPath": [
-        "css:.location-suggestion, css:[class*='suggestion'], css:[role=option]"
+        "css:.location-suggestion",
+        "css:[class*='suggestion']",
+        "css:[role=option]",
+        "css:.pac-item"
       ]
     },
     {

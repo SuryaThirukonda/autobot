@@ -148,16 +148,20 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
   if (!want.length) return false;
   el = AB.refresh(el);
   let input = el.matches("input, textarea") ? el : el.querySelector("input") || el;
+  const optSel = optionsPath || [
+    "css:[role=listbox] [role=option]:not([aria-disabled=true])",
+    "css:[role=option]:not([aria-disabled=true])",
+    "css:[class*='menu'] [class*='option']:not([class*='disabled'])",
+    "css:[class*='select__option']:not([class*='disabled'])",
+    "css:[class*='dropdown'] li, css:[class*='suggestion'], css:[class*='autocomplete'] li",
+  ];
+  // Anything already visible before we interact is not a menu option (e.g. radio labels with "option" in their class).
+  const before = new Set(AB.collectOptions(optSel));
   input.focus();
   AB.fire(el, ["mousedown", "mouseup", "click"]);
   if (typeToSearch && input.matches("input, textarea")) await AB.writeText(input, want[0], { blur: false });
   input = AB.refresh(input);
-  const optSel = optionsPath || [
-    "css:[role=option]:not([aria-disabled=true])",
-    "css:[class*='option']:not([class*='disabled'])",
-    "css:li[role=option], css:li",
-  ];
-  const waitOptions = async (ms) => { const deadline = Date.now() + ms; let options = []; while (Date.now() < deadline) { options = AB.collectOptions(optSel); if (options.length) break; await AB.sleep(100); } return options; };
+  const waitOptions = async (ms) => { const deadline = Date.now() + ms; let options = []; while (Date.now() < deadline) { options = AB.collectOptions(optSel).filter((o) => !before.has(o)); if (options.length) break; await AB.sleep(100); } return options; };
   let options = await waitOptions(2000);
   if (!options.length) {
     // Menu may not have opened: ArrowDown opens react-select/ARIA listboxes.
@@ -167,12 +171,18 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
   if (!options.length) {
     AB.log("combobox: no options rendered for", want[0], "on", input.id || input.className);
     AB.fire(input, "keydown", { key: "Enter", code: "Enter", keyCode: 13 }); // some widgets commit typed text on Enter
-    await AB.sleep(100);
-    return Boolean(input.value) && AB.norm(input.value) === AB.norm(want[0]);
+    await AB.sleep(150);
+    input = AB.refresh(input);
+    const got = AB.norm(input.value), head = AB.norm(String(want[0]).split(",")[0]);
+    return Boolean(got) && (got === AB.norm(want[0]) || (head.length >= 3 && got.includes(head)));
   }
   const labels = options.map((o) => o.innerText || o.textContent);
   let i = AB.bestOption(want, labels, synonyms);
-  if (i < 0 && typeToSearch) i = 0; // typed search already narrowed; take first
+  if (i < 0 && typeToSearch) {
+    // The typed search narrowed the list: accept the first option only if it shares a meaningful token with the value.
+    const toks = AB.norm(want[0]).split(" ").filter((t) => t.length >= 3);
+    if (toks.some((t) => AB.norm(labels[0]).includes(t))) i = 0;
+  }
   AB.log("combobox options", labels.slice(0, 8), "chose", i);
   if (i < 0) { AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 }); return false; }
   const opt = options[i];
@@ -180,7 +190,7 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
   AB.fire(opt, ["mousemove", "mouseover", "mousedown", "mouseup", "click"]);
   await AB.sleep(150);
   // Verify the menu closed (commit). If it is still open, commit the focused option with Enter.
-  if (AB.collectOptions(optSel).includes(opt) || AB.collectOptions(optSel).length) {
+  if (AB.collectOptions(optSel).filter((o) => !before.has(o)).length) {
     AB.fire(input, "keydown", { key: "Enter", code: "Enter", keyCode: 13 });
     await AB.sleep(120);
   }
@@ -195,7 +205,11 @@ AB.write = async (el, method, value, ctx = {}) => {
   const synonyms = ctx.synonyms;
   if (el instanceof HTMLSelectElement && !["click", "jquery", "react"].includes(method)) return AB.writeSelect(el, value, synonyms);
   if (el instanceof HTMLInputElement && el.type === "radio" && method !== "click") return AB.writeRadio(el, AB.boolToYesNo(value), synonyms);
-  if (el instanceof HTMLInputElement && el.type === "checkbox" && method !== "click") return AB.setChecked(el, value === undefined ? true : value !== false && value !== "false" && value !== "No" && value !== "no");
+  if (el instanceof HTMLInputElement && el.type === "checkbox" && method !== "click") {
+    const v = Array.isArray(value) ? value[0] : value;
+    const want = v === undefined || v === null ? true : !(v === false || /^(no|false|n|0|off|unchecked)$/i.test(String(v).trim()));
+    return AB.setChecked(el, want);
+  }
   if (el instanceof HTMLInputElement && el.type === "file") return AB.writeFile(el, ctx.file);
   const isCombo = el.getAttribute("role") === "combobox" || el.getAttribute("aria-haspopup") === "listbox" || el.matches("[class*='select__input'], [class*='select__control'], [class*='select__container']");
   switch (method) {

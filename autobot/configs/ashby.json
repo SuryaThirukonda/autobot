@@ -1,24 +1,97 @@
 {
   "id": "ashby",
   "name": "Ashby",
-  "urls": ["*://jobs.ashbyhq.com/*/application*", "*://jobs.ashbyhq.com/*", "*://*/*ashby_jid=*"],
-  "probes": [["//input[@id='_systemfield_name' or @name='_systemfield_name']"], ["//*[contains(@class, 'ashby-application-form')]"]],
-  "container": ["//form[.//input[@id='_systemfield_name' or @id='_systemfield_email']]", "//*[contains(@class, 'ashby-application-form')]", "//form"],
+  "urls": [
+    "*://jobs.ashbyhq.com/*/application*",
+    "*://jobs.ashbyhq.com/*",
+    "*://*/*ashby_jid=*"
+  ],
+  "probes": [
+    [
+      "//input[@id='_systemfield_name' or @name='_systemfield_name']"
+    ],
+    [
+      "//*[contains(@class, 'ashby-application-form')]"
+    ]
+  ],
+  "container": [
+    "//form[.//input[@id='_systemfield_name' or @id='_systemfield_email']]",
+    "//*[contains(@class, 'ashby-application-form')]",
+    "//form"
+  ],
   "defaultMethod": "react",
   "fields": [
-    { "key": "full_name", "path": [".//input[@id='_systemfield_name']", ".//input[@name='_systemfield_name']"] },
-    { "key": "email", "path": [".//input[@id='_systemfield_email']", ".//input[@name='_systemfield_email']"] },
-    { "key": "phone", "path": [".//input[@id='_systemfield_phone']", ".//input[@type='tel']"], "allowFailure": true },
-    { "key": "resume", "method": "upload", "path": [".//input[@id='_systemfield_resume']", ".//input[@type='file' and (contains(@id,'resume') or contains(@name,'resume'))]", ".//input[@type='file'][1]"], "allowFailure": true },
-    { "key": "location", "method": "combobox", "path": [".//input[@id='_systemfield_location']", ".//label[contains(translate(., 'LOCATION', 'location'), 'location')]/following::input[1]"], "allowFailure": true, "optionsPath": ["css:[role=option]", "css:[class*='option']"] },
-    { "key": "linkedin", "path": [".//label[contains(translate(., 'LINKEDIN', 'linkedin'), 'linkedin')]/following::input[1]"], "allowFailure": true },
-    { "key": "github", "path": [".//label[contains(translate(., 'GITHUB', 'github'), 'github')]/following::input[1]"], "allowFailure": true },
-    { "key": "portfolio", "path": [".//label[contains(translate(., 'PORTFOLIO', 'portfolio'), 'portfolio') or contains(translate(., 'WEBSITE', 'website'), 'website')]/following::input[1]"], "allowFailure": true },
-    { "key": "work_auth_us", "values": "workAuth", "allowFailure": true, "method": "radio",
-      "path": [".//*[contains(translate(., 'AUTHORIZED TO WORK', 'authorized to work'), 'authorized to work')]/following::input[@type='radio'][1]", ".//*[contains(translate(., 'AUTHORIZED TO WORK', 'authorized to work'), 'authorized to work')]/following::button[@role='radio'][1]"] },
-    { "key": "sponsorship", "values": "sponsorship", "allowFailure": true, "method": "radio",
-      "path": [".//*[contains(translate(., 'SPONSORSHIP', 'sponsorship'), 'sponsorship')]/following::input[@type='radio'][1]"] }
+    {
+      "key": "full_name",
+      "path": [
+        ".//input[@id='_systemfield_name']",
+        ".//input[@name='_systemfield_name']"
+      ]
+    },
+    {
+      "key": "email",
+      "path": [
+        ".//input[@id='_systemfield_email']",
+        ".//input[@name='_systemfield_email']"
+      ]
+    },
+    {
+      "key": "phone",
+      "path": [
+        ".//input[@id='_systemfield_phone']",
+        ".//input[@type='tel']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "resume",
+      "method": "upload",
+      "path": [
+        ".//input[@id='_systemfield_resume']",
+        ".//input[@type='file' and (contains(@id,'resume') or contains(@name,'resume'))]",
+        ".//input[@type='file'][1]"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "location",
+      "method": "combobox",
+      "path": [
+        ".//input[@id='_systemfield_location']",
+        ".//label[contains(translate(., 'LOCATION', 'location'), 'location')]/following::input[1]"
+      ],
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[role=option]",
+        "css:[class*='option']"
+      ]
+    },
+    {
+      "key": "linkedin",
+      "path": [
+        ".//label[contains(translate(., 'LINKEDIN', 'linkedin'), 'linkedin')]/following::input[1]"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "github",
+      "path": [
+        ".//label[contains(translate(., 'GITHUB', 'github'), 'github')]/following::input[1]"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "portfolio",
+      "path": [
+        ".//label[contains(translate(., 'PORTFOLIO', 'portfolio'), 'portfolio') or contains(translate(., 'WEBSITE', 'website'), 'website')]/following::input[1]"
+      ],
+      "allowFailure": true
+    }
   ],
-  "submit": [".//button[@type='submit' and contains(., 'Submit')]"],
-  "success": [".//*[contains(., 'Application submitted') or contains(., 'Thank you for applying')]"]
+  "submit": [
+    ".//button[@type='submit' and contains(., 'Submit')]"
+  ],
+  "success": [
+    ".//*[contains(., 'Application submitted') or contains(., 'Thank you for applying')]"
+  ]
 }

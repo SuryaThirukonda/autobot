@@ -27,6 +27,21 @@ try {
   for (const [k, s, d] of summary.statuses) console.log(`  ${s.padEnd(10)} ${k.padEnd(36)} ${d}`);
   // Read back visible controls (no submit!).
   const values = await page.evaluate(() => Array.from(document.querySelectorAll("input:not([type=hidden]):not([type=submit]), textarea, select")).filter((e) => e.offsetParent !== null || e.type === "file").map((e) => ({ id: e.id || e.name || e.getAttribute("aria-label") || e.getAttribute("data-automation-id") || e.tagName, type: e.type, value: e.type === "file" ? (e.files[0]?.name || "") : e.type === "checkbox" || e.type === "radio" ? String(e.checked) : (e.value || "").slice(0, 60) })).filter((v) => v.value));
-  console.log("non-empty controls after fill:"); for (const v of values) console.log(`  ${v.type.padEnd(9)} ${String(v.id).slice(0, 40).padEnd(40)} = ${v.value}`);
+  console.log("non-empty controls after fill:"); for (const v of values) if (v.type !== "radio" && v.type !== "checkbox") console.log(`  ${v.type.padEnd(9)} ${String(v.id).slice(0, 40).padEnd(40)} = ${v.value}`);
+  // Radio/checkbox groups: question text + what is checked (so a wrong tick is visible).
+  const groups = await page.evaluate(() => {
+    const txt = (e) => (e?.innerText || e?.textContent || "").replace(/\s+/g, " ").trim();
+    const byName = new Map();
+    for (const r of document.querySelectorAll("input[type=radio], input[type=checkbox]")) { const k = r.name || r.id; if (!byName.has(k)) byName.set(k, []); byName.get(k).push(r); }
+    const out = [];
+    for (const [name, inputs] of byName) {
+      const first = inputs[0]; let q = ""; let box = first.closest("label")?.parentElement || first.parentElement;
+      for (let i = 0; box && i < 6 && !q; i++, box = box.parentElement) { const c = Array.from(box.querySelectorAll("legend, [class*='label'], [class*='question'], h3, h4, p, span, div")).find((c) => !c.contains(first) && !c.querySelector("input") && txt(c).length > 3 && txt(c).length < 200); if (c) q = txt(c); }
+      const checked = inputs.filter((i) => i.checked).map((i) => txt(i.closest("label")) || txt(document.querySelector(`label[for="${CSS.escape(i.id)}"]`)) || i.value);
+      out.push({ type: first.type, q: q.slice(0, 70), options: inputs.length, checked });
+    }
+    return out;
+  });
+  console.log("choice groups (question → checked):"); for (const g of groups) console.log(`  ${g.type.padEnd(8)} [${String(g.options).padStart(2)}] ${g.q.padEnd(72)} → ${g.checked.join(" | ") || "(none)"}`);
   const shot = path.join(root, "tests", "out-live.png"); await page.screenshot({ path: shot, fullPage: false }); console.log("screenshot:", shot);
 } finally { await ctx.close().catch(() => {}); fs.rmSync(userDataDir, { recursive: true, force: true }); }
