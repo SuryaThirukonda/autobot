@@ -150,7 +150,8 @@ AB.runHeuristics = async (state, touched) => {
     const current = AB.readBack(el);
     const hasValue = el instanceof HTMLSelectElement ? el.selectedIndex > 0 && el.value !== "" && !/^(select|choose|please|--|none|pick)/.test(AB.norm(current)) : Boolean(current);
     if (hasValue) continue; // already has a value
-    const { key, label, labels } = AB.classify(el);
+    const { key, label, labels, via } = AB.classify(el);
+    if (via === "search-box") continue; // widget-internal search boxes are not questions
     const answerFor = () => { for (const l of labels || [label]) { const a = AB.lookupAnswer(profile, l); if (a !== undefined) return a; } return undefined; };
     const isCheckbox = el instanceof HTMLInputElement && el.type === "checkbox";
     if (isCheckbox) {

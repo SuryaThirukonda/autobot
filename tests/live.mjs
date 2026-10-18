@@ -12,9 +12,14 @@ console.log("profile:", profileFile);
 const RESUME = { name: "autobot-test-resume.pdf", type: "application/pdf", dataBase64: Buffer.from("%PDF-1.4\n% autobot test resume (not a real document)\n").toString("base64") };
 const findChrome = () => { if (process.env.AUTOBOT_CHROME) return process.env.AUTOBOT_CHROME; const pw = path.join(os.homedir(), ".cache", "ms-playwright"); for (const d of fs.readdirSync(pw).filter((d) => d.startsWith("chromium-")).sort().reverse()) { const p = path.join(pw, d, "chrome-linux64/chrome"); if (fs.existsSync(p)) return p; } };
 const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "autobot-live-"));
-const ctx = await chromium.launchPersistentContext(userDataDir, { headless: false, executablePath: findChrome(), args: [`--disable-extensions-except=${extDir}`, `--load-extension=${extDir}`, ...(headed ? [] : ["--headless=new"]), "--no-first-run", "--window-size=1280,1000"], viewport: { width: 1280, height: 1000 } });
+// AUTOBOT_EXTRA_EXT=/path/to/another/unpacked/extension loads a second extension (e.g. Simplify) to test coexistence.
+const extList = [extDir, ...(process.env.AUTOBOT_EXTRA_EXT ? [process.env.AUTOBOT_EXTRA_EXT] : [])].join(",");
+const ctx = await chromium.launchPersistentContext(userDataDir, { headless: false, executablePath: findChrome(), args: [`--disable-extensions-except=${extList}`, `--load-extension=${extList}`, ...(headed ? [] : ["--headless=new"]), "--no-first-run", "--window-size=1280,1000"], viewport: { width: 1280, height: 1000 } });
 try {
-  let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent("serviceworker", { timeout: 15000 });
+  // Pick Autobot's worker (another extension may also have one).
+  const isOurs = (w) => w.url().endsWith("/background.js") && !/pbanhock|odcnpip/.test(w.url());
+  let sw = ctx.serviceWorkers().find(isOurs);
+  while (!sw) { const w = await ctx.waitForEvent("serviceworker", { timeout: 15000 }); if (isOurs(w) && !/_metadata/.test(w.url())) sw = w; }
   const extId = new URL(sw.url()).host;
   const opt = await ctx.newPage(); await opt.goto(`chrome-extension://${extId}/options.html`);
   await opt.evaluate(([profile, resume]) => chrome.storage.local.set({ profile, resume, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } }), [PROFILE, RESUME]); await opt.close();

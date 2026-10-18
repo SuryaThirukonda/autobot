@@ -57,10 +57,24 @@ AB.panel = (() => {
     .f { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; border: 1px solid #eceff5; background: #fff; cursor: pointer; color: #5b6770; }
     .f.on { background: #263137; color: #fff; border-color: #263137; }
   `;
+  // Another autofill sidebar (Simplify, Jobright) may already own the right edge: it reserves html margin-right and
+  // pins a fixed column there. Sit to its left instead of fighting for the same pixels.
+  let offset = 0;
+  const foreignOffset = () => {
+    reserveStyle?.remove();
+    const m = parseFloat(getComputedStyle(document.documentElement).marginRight) || 0;
+    const foreign = Array.from(document.querySelectorAll("body > div, html > div")).filter((d) => d !== host && !d.hasAttribute("data-autobot-panel") && getComputedStyle(d).position === "fixed" && (d.id || "").match(/simplify|jobright|jr-|helper/i));
+    const widest = foreign.reduce((w, d) => Math.max(w, d.getBoundingClientRect().width), 0);
+    return Math.min(640, Math.max(m >= 240 ? m : 0, widest >= 240 ? widest : 0));
+  };
   const reserve = (on) => {
     if (on) {
-      if (!reserveStyle) { reserveStyle = document.createElement("style"); reserveStyle.setAttribute("data-autobot-reserve", "1"); reserveStyle.textContent = `html { margin-right: ${W}px !important; width: auto !important; min-width: 0 !important; max-width: calc(100% - ${W}px) !important; }`; }
+      offset = foreignOffset();
+      if (!reserveStyle) { reserveStyle = document.createElement("style"); reserveStyle.setAttribute("data-autobot-reserve", "1"); }
+      const total = W + offset;
+      reserveStyle.textContent = `html { margin-right: ${total}px !important; width: auto !important; min-width: 0 !important; max-width: calc(100% - ${total}px) !important; }`;
       if (!reserveStyle.isConnected) document.documentElement.appendChild(reserveStyle);
+      if (els.col) { els.col.style.right = `${offset}px`; els.pill.style.right = `${offset}px`; }
     } else reserveStyle?.remove();
   };
   const jobInfo = () => {

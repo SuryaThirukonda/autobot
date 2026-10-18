@@ -76,6 +76,14 @@ node tests/live.mjs <job posting url>      # fills a real page in a throwaway br
 | Ashby | OpenAI | name, email, phone, resume, location combobox, work-auth checkbox = on, gender/ethnicity/veteran radios = decline | sponsorship checkbox stays unchecked (profile says no), office-days, arbitration + acknowledgement checkboxes, start date, free text |
 | Workday | NVIDIA | detection only: the application form is behind sign-in; the job page has no fillable fields | everything |
 
+## Troubleshooting ("it does nothing")
+
+- **Hotkey does nothing.** Browsers only auto-bind an extension's suggested shortcut if nothing else holds it; Brave did not bind Alt+Shift+A on a profile where Simplify already owns Alt+Shift+F/S. Open `brave://extensions/shortcuts` (or `chrome://extensions/shortcuts`), find Autobot → *Autofill the current job application page*, and set a key. The toolbar popup's **Fill this page** button and the sidebar's **Autofill** button do not depend on the shortcut.
+- **No sidebar, or only Simplify's/Jobright's sidebar.** All three pin a column to the right edge. Autobot now shifts left when another sidebar already reserves that space, but running three autofillers on one form is still a bad idea: disable Simplify and Jobright at `brave://extensions` while testing Autobot.
+- **Popup says "Page not ready (reload the tab)".** The tab was opened before the extension was (re)loaded, so its content script is missing. Autobot tries to inject it on demand; if that fails (e.g. on an extension or browser-internal page), reload the tab.
+- **Sidebar appears only on known ATSs.** On Greenhouse, Lever, Ashby and Workday the panel opens by itself; on any other form it appears after you press the hotkey or the popup's Fill button, then runs heuristics.
+- **After editing code**, click the reload arrow on the extension card at `brave://extensions`, then reload the job page.
+
 ## Limits
 
 - Deterministic by design: questions without a rule or saved answer are left blank and listed as `unknown`.
