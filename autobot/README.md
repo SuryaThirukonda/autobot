@@ -56,6 +56,18 @@ Two optional files hold a real profile and are ignored by git:
 
 Create both from a Simplify export with `node tools/import-simplify-profile.mjs simplify-me.json` (the script header explains how to grab the JSON from simplify.jobs). It maps Simplify's numeric EEO and degree codes with Simplify's own value tables. Edit the result in the options page afterwards; saved answers are not part of the Simplify export.
 
+## Using the engine from Playwright (no extension)
+
+The fill engine is plain DOM JavaScript; the extension is one host for it. `tools/playwright-fill.mjs` is another:
+
+```js
+import { autobotFill } from "./tools/playwright-fill.mjs";
+const result = await autobotFill(page, { profile, resume });   // page already on the application form
+// result: { ats, matchedBy, filled, statuses: [[key, status, detail], ...] }
+```
+
+It injects `engine/*.js` and `page.js` with `page.evaluate` (not blocked by site CSP), passes the profile and configs in directly, and runs `AB.fill` in the page's main world. A browser-use agent can call it as a tool step and read back `statuses` to decide what still needs a human. Demo: `node tools/playwright-fill.mjs <job url> [--headed]`.
+
 ## Tests
 
 ```bash

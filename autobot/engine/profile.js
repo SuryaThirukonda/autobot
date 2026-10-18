@@ -121,8 +121,12 @@ AB.seedDefaultProfile = async () => {
   } catch { return null; }
 };
 
+// Standalone mode (no extension): a host such as a Playwright script sets AB._standalone = { profile, resume, settings }
+// and AB._configs = [...] before calling AB.fill; nothing below touches chrome.* then.
 AB.loadProfile = () =>
-  new Promise((resolve) =>
+  AB._standalone
+    ? Promise.resolve({ profile: { ...AB.PROFILE_DEFAULT, ...(AB._standalone.profile || {}) }, resume: AB._standalone.resume || null, settings: AB._standalone.settings || {} })
+    : new Promise((resolve) =>
     chrome.storage.local.get(["profile", "resume", "settings"], async (r) => {
       let profile = r.profile;
       if (!profile || (!profile.first_name && !profile.email)) profile = (await AB.seedDefaultProfile()) || profile || {};

@@ -38,8 +38,6 @@ AB.synonymsFrom = (values) => {
   return syn;
 };
 
-const config_pre_ran = (state) => state.preRan === true;
-
 // Execute one field (or nested array section). Reports via onStatus(key, status, detail).
 AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
   const { container, profile, resume, signal, onStatus } = state;
@@ -103,7 +101,7 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
         }
       } else {
         // Plain fields resolve immediately; waiting is only for steps that expect a prior click to reveal the element.
-        const expectsWait = step.time !== undefined || field.time !== undefined || steps.indexOf(step) > 0 || Boolean(config_pre_ran(state));
+        const expectsWait = step.time !== undefined || field.time !== undefined || steps.indexOf(step) > 0;
         el = expectsWait ? await AB.waitFor(paths, { ctx: container, timeout: step.time ?? field.time ?? 2500, signal }) : AB.queryAny(paths, container);
       }
       if (!el) {
@@ -200,7 +198,13 @@ AB.fill = async ({ config, profile, resume, settings, onStatus = () => {}, signa
   // Pre-steps (e.g. click "Apply" to reveal the form).
   for (const pre of config.pre || []) {
     const el = AB.queryAny(pre.path, document);
-    if (el) { AB.fire(el, ["mousedown", "mouseup", "click"]); state.preRan = true; await AB.sleep(pre.delay || 800); state.container = AB.findContainer(config); }
+    if (!el) continue;
+    AB.fire(el, ["mousedown", "mouseup", "click"]);
+    // Wait once for the revealed form (first few field paths), then every field resolves instantly.
+    const firstPaths = (config.fields || []).slice(0, 4).flatMap((f) => AB.arr(f.path)).filter((p) => typeof p === "string" && !AB.hasValueTemplate(p));
+    await AB.waitFor(firstPaths, { ctx: document, timeout: pre.time || 4000 });
+    await AB.sleep(pre.delay || 300);
+    state.container = AB.findContainer(config);
   }
   let filled = 0;
   for (const field of config.fields || []) {
