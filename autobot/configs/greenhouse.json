@@ -83,7 +83,8 @@
       "path": [
         ".//input[@type='file' and (ancestor::*[@id='resume_fieldset' or @id='s3_upload_for_resume' or @aria-labelledby='upload-label-resume'])]",
         ".//input[@id='resume']",
-        ".//input[@type='file' and contains(@name, 'resume')]"
+        ".//input[@type='file' and contains(@name, 'resume')]",
+        "//*[@id='resume_fieldset' or @id='s3_upload_for_resume' or @aria-labelledby='upload-label-resume']//button[@aria-describedby='resume-allowable-file-types' or contains(., 'Attach')]"
       ],
       "allowFailure": true
     },

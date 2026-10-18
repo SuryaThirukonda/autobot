@@ -135,6 +135,8 @@ AB.classify = (el) => {
   if (type === "email") return { key: "email", via: "type", label: "email" };
   if (type === "tel") return { key: "phone", via: "type", label: "phone" };
   const labels = AB.labelFor(el);
+  // Search boxes inside widgets (intl-tel-input country list, typeahead filters) are never identity fields.
+  if (type === "search" || el.matches(".iti__search-input, .iti input, [class*='search-input'], [class*='searchInput']")) return { key: null, via: "search-box", label: AB.displayLabel(labels), labels: [] };
   // Open-ended questions are never profile fields; only a saved answer may fill them.
   const primary = AB.displayLabel(labels);
   if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))

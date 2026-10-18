@@ -117,9 +117,22 @@ AB.writeRadio = (anyRadio, value, synonyms) => {
   return AB.setChecked(group[i], true);
 };
 
+// Upload when the page only exposes a button (hidden/absent <input type=file>): intercept the picker in the page world.
+AB.uploadViaPicker = async (el, file) => {
+  if (!file?.dataBase64) return false;
+  const r = await AB.pageCall("fill", { path: AB.pathTo(el), method: "interceptFilePicker", value: file }, 9000);
+  if (!r.ok) AB.log("picker interception failed", r.error);
+  return Boolean(r.ok);
+};
+
 // File upload from a stored { name, type, dataBase64 }.
 AB.writeFile = (input, file) => {
   if (!file?.dataBase64) return false;
+  if (!(input instanceof HTMLInputElement && input.type === "file")) {
+    // Prefer a nearby hidden file input; otherwise go through the button.
+    const near = input.querySelector?.("input[type=file]") || input.closest?.("label, [class*='upload'], [class*='file'], fieldset, div")?.querySelector("input[type=file]");
+    if (near) input = near; else return AB.uploadViaPicker(input, file);
+  }
   const bin = atob(file.dataBase64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -159,7 +172,12 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
   const before = new Set(AB.collectOptions(optSel));
   input.focus();
   AB.fire(el, ["mousedown", "mouseup", "click"]);
-  if (typeToSearch && input.matches("input, textarea")) await AB.writeText(input, want[0], { blur: false });
+  if (typeToSearch && input.matches("input, textarea")) {
+    // React-controlled search inputs (react-select, Ashby, Greenhouse) only filter when React's own onChange runs.
+    const isReact = Object.keys(input).some((k) => /^__react(Props|Fiber|EventHandlers|InternalInstance)\$/.test(k));
+    if (isReact) { const r = await AB.pageCall("fill", { path: AB.pathTo(input), method: "react", value: want[0], eventOptions: { skipBlur: true } }); if (!r.ok) await AB.writeText(input, want[0], { blur: false }); }
+    else await AB.writeText(input, want[0], { blur: false });
+  }
   input = AB.refresh(input);
   const waitOptions = async (ms) => { const deadline = Date.now() + ms; let options = []; while (Date.now() < deadline) { options = AB.collectOptions(optSel).filter((o) => !before.has(o)); if (options.length) break; await AB.sleep(100); } return options; };
   let options = await waitOptions(2000);
@@ -186,13 +204,21 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
   AB.log("combobox options", labels.slice(0, 8), "chose", i);
   if (i < 0) { AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 }); return false; }
   const opt = options[i];
+  const menuOpen = () => AB.collectOptions(optSel).filter((o) => !before.has(o)).length > 0;
+  if (i === 0 && typeToSearch) {
+    // The typed search left our match as the focused first option: Enter commits exactly that one.
+    AB.fire(input, "keydown", { key: "Enter", code: "Enter", keyCode: 13 });
+    await AB.sleep(150);
+    if (!menuOpen()) return true;
+  }
   opt.scrollIntoView({ block: "nearest" });
   AB.fire(opt, ["mousemove", "mouseover", "mousedown", "mouseup", "click"]);
   await AB.sleep(150);
-  // Verify the menu closed (commit). If it is still open, commit the focused option with Enter.
-  if (AB.collectOptions(optSel).filter((o) => !before.has(o)).length) {
-    AB.fire(input, "keydown", { key: "Enter", code: "Enter", keyCode: 13 });
-    await AB.sleep(120);
+  if (menuOpen()) {
+    // Never blind-commit: a stray Enter here would pick whatever is focused (observed: "+93" instead of "+1").
+    AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 });
+    AB.log("combobox: option click did not commit", labels[i]);
+    return false;
   }
   return true;
 };
@@ -243,6 +269,7 @@ AB.readBack = (el) => {
   if (!el) return "";
   if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) return el.checked ? "checked" : "";
   if (el instanceof HTMLInputElement && el.type === "file") return el.files?.[0]?.name || "";
+  if (el instanceof HTMLSelectElement) return el.selectedOptions[0]?.text?.trim() || el.value || "";
   if ("value" in el) return el.value ?? "";
   return el.textContent?.trim() || "";
 };

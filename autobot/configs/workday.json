@@ -106,6 +106,7 @@
       "method": "upload",
       "path": [
         ".//input[@data-automation-id='file-upload-input-ref']",
+        ".//button[@data-automation-id='select-files']",
         ".//input[@type='file']"
       ],
       "allowFailure": true

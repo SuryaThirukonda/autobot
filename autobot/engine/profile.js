@@ -103,9 +103,23 @@ AB.lookupAnswer = (profile, label) => {
   return undefined;
 };
 
+// Optional bundled default profile (configs/profile.default.json, git-ignored, personal). Seeds storage once when empty.
+AB.seedDefaultProfile = async () => {
+  try {
+    const r = await fetch(chrome.runtime.getURL("configs/profile.default.json"));
+    if (!r.ok) return null;
+    const p = await r.json();
+    if (!p || typeof p !== "object" || !(p.first_name || p.email)) return null;
+    await new Promise((res) => chrome.storage.local.set({ profile: p, profileSeededFrom: "configs/profile.default.json" }, res));
+    return p;
+  } catch { return null; }
+};
+
 AB.loadProfile = () =>
   new Promise((resolve) =>
-    chrome.storage.local.get(["profile", "resume", "settings"], (r) =>
-      resolve({ profile: { ...AB.PROFILE_DEFAULT, ...(r.profile || {}) }, resume: r.resume || null, settings: r.settings || {} })
-    )
+    chrome.storage.local.get(["profile", "resume", "settings"], async (r) => {
+      let profile = r.profile;
+      if (!profile || (!profile.first_name && !profile.email)) profile = (await AB.seedDefaultProfile()) || profile || {};
+      resolve({ profile: { ...AB.PROFILE_DEFAULT, ...profile }, resume: r.resume || null, settings: r.settings || {} });
+    })
   );

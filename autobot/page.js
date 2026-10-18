@@ -91,6 +91,25 @@
       return [];
     },
     hasReact: ({ el }) => Boolean(reactKey(el)),
+    // Upload through a custom "Attach / Select files" button: temporarily capture the <input type=file>.click() the
+    // page performs (or window.showOpenFilePicker), hand it our File, and fire input/change. Same approach as Simplify.
+    interceptFilePicker: ({ el, value }) => new Promise((resolve, reject) => {
+      if (!value?.dataBase64) return reject(new Error("no file"));
+      const bin = atob(value.dataBase64); const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const file = new File([bytes], value.name || "resume.pdf", { type: value.type || "application/pdf" });
+      const proto = HTMLInputElement.prototype, origClick = proto.click, hadOwn = Object.prototype.hasOwnProperty.call(proto, "click");
+      const origPicker = window.showOpenFilePicker, hadPicker = typeof origPicker === "function";
+      let done = false;
+      const restore = () => { if (hadOwn) proto.click = origClick; else delete proto.click; if (hadPicker) window.showOpenFilePicker = origPicker; else delete window.showOpenFilePicker; };
+      const attach = (input) => { const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; input.dispatchEvent(new Event("input", { bubbles: true, composed: true })); input.dispatchEvent(new Event("change", { bubbles: true })); };
+      const finish = (ok, err) => { if (done) return; done = true; clearTimeout(t); restore(); ok ? resolve(true) : reject(err || new Error("file picker not intercepted")); };
+      proto.click = function () { if (this.type !== "file") return origClick.call(this); try { attach(this); finish(true); } catch (e) { finish(false, e); } };
+      if (hadPicker) window.showOpenFilePicker = async () => { finish(true); return [{ kind: "file", name: file.name, getFile: async () => file }]; };
+      const t = setTimeout(() => finish(false), 6000);
+      try { el.scrollIntoView({ block: "center" }); el.click(); } catch (e) { finish(false, e); }
+      // Some widgets trigger the picker on a nested element.
+      setTimeout(() => { if (!done) { const inner = el.querySelector("input[type=file]") || el.closest("label")?.querySelector("input[type=file]"); if (inner) { try { attach(inner); finish(true); } catch (e) { finish(false, e); } } } }, 800);
+    }),
   };
 
   window.addEventListener("message", (ev) => {

@@ -5,7 +5,10 @@ import fs from "node:fs"; import path from "node:path"; import os from "node:os"
 const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.resolve(here, ".."); const extDir = path.join(root, "autobot");
 const url = process.argv[2]; if (!url) { console.error("usage: node tests/live.mjs <url> [--headed]"); process.exit(2); }
 const headed = process.argv.includes("--headed");
-const PROFILE = JSON.parse(fs.readFileSync(path.join(here, "profile.sample.json"), "utf8"));
+// tests/profile.local.json (git-ignored, your real profile) wins over the sample when present.
+const profileFile = fs.existsSync(path.join(here, "profile.local.json")) ? "profile.local.json" : "profile.sample.json";
+const PROFILE = JSON.parse(fs.readFileSync(path.join(here, profileFile), "utf8"));
+console.log("profile:", profileFile);
 const RESUME = { name: "autobot-test-resume.pdf", type: "application/pdf", dataBase64: Buffer.from("%PDF-1.4\n% autobot test resume (not a real document)\n").toString("base64") };
 const findChrome = () => { if (process.env.AUTOBOT_CHROME) return process.env.AUTOBOT_CHROME; const pw = path.join(os.homedir(), ".cache", "ms-playwright"); for (const d of fs.readdirSync(pw).filter((d) => d.startsWith("chromium-")).sort().reverse()) { const p = path.join(pw, d, "chrome-linux64/chrome"); if (fs.existsSync(p)) return p; } };
 const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "autobot-live-"));

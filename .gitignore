@@ -12,3 +12,9 @@ targets/
 analysis/pretty/
 analysis/jobright/pretty/
 dist/
+
+# Personal profile data (never commit)
+autobot/configs/profile.default.json
+tests/profile.local.json
+analysis/rea2/*.json
+analysis/rea2/*.err

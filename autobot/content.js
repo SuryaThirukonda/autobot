@@ -15,23 +15,26 @@
 
   const runFill = async ({ continuous = false } = {}) => {
     const d = detected || (await detect());
-    if (!d) { AB.panel.show({ subtitle: "No application form detected on this page." }); return { ok: false, reason: "no-form" }; }
     const { profile, resume, settings } = await AB.loadProfile();
     AB.debug = Boolean(settings.debug);
+    const common = { fill: () => runFill(), stop, settings: openSettings, profile, resume, ats: d?.config.name || d?.config.id, matchedBy: d?.matchedBy, next: () => d && AB.advance(d.config) };
+    if (!d) { AB.panel.show({ ...common, subtitle: "No application form detected on this page." }); return { ok: false, reason: "no-form" }; }
     if (!profile.first_name && !profile.email) {
-      AB.panel.show({ subtitle: "Profile is empty. Open Autobot options to fill it in.", fill: () => runFill(), stop });
+      AB.panel.show({ ...common, subtitle: "Your profile is empty. Open settings (⚙) to fill it in first." });
       return { ok: false, reason: "no-profile" };
     }
     aborter?.abort();
     aborter = new AbortController();
-    AB.panel.show({ subtitle: `${d.config.name || d.config.id} (${d.matchedBy}) — filling…`, fill: () => runFill(), stop, next: () => AB.advance(d.config) });
+    AB.panel.show({ ...common, subtitle: `Filling ${d.config.name || d.config.id} form…` });
     AB.panel.clear();
+    AB.panel.busy(true);
     const statuses = [];
     const onStatus = (k, s, det) => { statuses.push([k, s, String(det ?? "").slice(0, 80)]); AB.panel.status(k, s, det); };
     const res = await AB.fill({ config: d.config, profile, resume, settings, signal: aborter.signal, onStatus });
     res.statuses = statuses;
     res.ats = d.config.id;
-    AB.panel.subtitle(`${d.config.name || d.config.id}: ${res.filled} field group(s) written. Review, then submit yourself.`);
+    AB.panel.busy(false);
+    AB.panel.subtitle(`${res.filled} field group(s) written. Review every field, then submit yourself.`);
     if (continuous && d.config.continue && !aborter.signal.aborted) {
       // Fill subsequent pages: click continue, wait for new form content, fill again (bounded).
       for (let i = 0; i < 6 && !aborter.signal.aborted; i++) {
@@ -44,7 +47,8 @@
     }
     return { ok: true, ...res };
   };
-  const stop = () => { aborter?.abort(); AB.panel.subtitle("Stopped."); };
+  const stop = () => { aborter?.abort(); AB.panel.busy(false); AB.panel.subtitle("Stopped."); };
+  const openSettings = () => chrome.runtime.sendMessage({ type: "bg:openOptions" }).catch(() => {});
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg?.type === "autobot:fill") { runFill({ continuous: Boolean(msg.continuous) }).then(sendResponse); return true; }
@@ -76,8 +80,8 @@
     document.documentElement.dataset.autobotDetected = d ? d.config.id : "";
     await installTestHooks();
     if (d && d.matchedBy !== "heuristic" && window === window.top) {
-      const { settings } = await AB.loadProfile();
-      if (settings.showPanel !== false) AB.panel.show({ subtitle: `${d.config.name} detected. Press Fill or Alt+Shift+A.`, fill: () => runFill(), stop, next: () => AB.advance(d.config) });
+      const { profile, resume, settings } = await AB.loadProfile();
+      if (settings.showPanel !== false) AB.panel.show({ subtitle: `${d.config.name} application detected. Press Autofill or Alt+Shift+A.`, fill: () => runFill(), stop, settings: openSettings, next: () => AB.advance(d.config), ats: d.config.name, matchedBy: d.matchedBy, profile, resume });
       if (settings.autoFill) runFill();
     }
   };

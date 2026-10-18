@@ -47,6 +47,15 @@ Profile keys: see `engine/profile.js` (`PROFILE_DEFAULT`). Derived keys: `full_n
 
 Overrides: the options page has a *Config overrides* JSON box, `{ "greenhouse": { "fields": [...] } }` replaces that key of the bundled config.
 
+## Your profile as the default (git-ignored)
+
+Two optional files hold a real profile and are ignored by git:
+
+- `autobot/configs/profile.default.json` — bundled into the extension; when extension storage has no profile yet, Autobot seeds itself from this file on first use, so a fresh unpacked install is ready to fill immediately.
+- `tests/profile.local.json` — used by `node tests/live.mjs` instead of the Ada Lovelace sample.
+
+Create both from a Simplify export with `node tools/import-simplify-profile.mjs simplify-me.json` (the script header explains how to grab the JSON from simplify.jobs). It maps Simplify's numeric EEO and degree codes with Simplify's own value tables. Edit the result in the options page afterwards; saved answers are not part of the Simplify export.
+
 ## Tests
 
 ```bash

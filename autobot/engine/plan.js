@@ -118,7 +118,7 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
 
     let ok = false;
     try {
-      if (method === "upload") ok = AB.writeFile(el, resume);
+      if (method === "upload") ok = await AB.writeFile(el, resume);
       else if (method === "select" || method === "radio" || method === "checkbox" || el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox")))
         ok = await AB.write(el, method, el instanceof HTMLInputElement && el.type === "checkbox" ? value : candidates, { synonyms });
       else ok = await AB.write(el, method, usedValue, { synonyms, optionsPath: field.optionsPath, eventOptions: step.eventOptions });
@@ -138,16 +138,18 @@ AB.runHeuristics = async (state, touched) => {
   const { container, profile, resume, onStatus, signal } = state;
   const controls = AB.enumerateControls(container);
   let n = 0;
+  const touchedKeys = new Set(Array.from(touched).map((t) => t.id || t.name).filter(Boolean));
   for (let el of controls) {
     if (signal?.aborted) return n;
-    if (touched.has(el)) continue;
+    if (touched.has(el) || touchedKeys.has(el.id || el.name)) continue; // same control after a framework re-render
     if (el instanceof HTMLInputElement && el.type === "file") {
       const lbl = AB.labelFor(el).join(" ");
-      if (/resume|cv|curriculum/.test(lbl) && resume?.dataBase64 && !el.files?.length) { if (AB.writeFile(el, resume)) { onStatus("resume", "filled", resume.name); n++; } }
+      if (/resume|cv|curriculum/.test(lbl) && resume?.dataBase64 && !el.files?.length) { if (await AB.writeFile(el, resume)) { onStatus("resume", "filled", resume.name); n++; } }
       continue;
     }
     const current = AB.readBack(el);
-    if (current && !(el instanceof HTMLSelectElement && el.selectedIndex <= 0 && /select|choose|--/.test(AB.norm(current)))) continue; // already has a value
+    const hasValue = el instanceof HTMLSelectElement ? el.selectedIndex > 0 && el.value !== "" && !/^(select|choose|please|--|none|pick)/.test(AB.norm(current)) : Boolean(current);
+    if (hasValue) continue; // already has a value
     const { key, label, labels } = AB.classify(el);
     const answerFor = () => { for (const l of labels || [label]) { const a = AB.lookupAnswer(profile, l); if (a !== undefined) return a; } return undefined; };
     const isCheckbox = el instanceof HTMLInputElement && el.type === "checkbox";
