@@ -21,3 +21,8 @@ analysis/rea2/*.err
 .brave-test-profile/
 analysis/jobright/carved/
 analysis/**/carved/
+
+# Any bundled personal profile, anywhere
+**/configs/profile.default.json
+# Parallel work by another session; not published from here
+v2/

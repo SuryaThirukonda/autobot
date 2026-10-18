@@ -130,6 +130,11 @@ AB.panel = (() => {
     document.documentElement.appendChild(host);
     const ji = jobInfo(); els.title.textContent = ji.title || "—"; els.company.textContent = ji.company || location.hostname; els.mark.textContent = (ji.company || "A").slice(0, 1).toUpperCase();
     reserve(!collapsed);
+    // Other sidebars (Simplify, Jobright) usually mount after us: keep re-measuring and slide left when one appears.
+    if (!AB.panel._offsetTimer) {
+      let ticks = 0;
+      AB.panel._offsetTimer = setInterval(() => { ticks++; if (!host?.isConnected) return; const before = offset; reserve(!collapsed); if (offset !== before) AB.log("panel offset ->", offset); if (ticks > 60) { clearInterval(AB.panel._offsetTimer); AB.panel._offsetTimer = setInterval(() => host?.isConnected && reserve(!collapsed), 5000); } }, 1000);
+    }
     // Re-apply state lost with the previous host.
     if (last.ats) { els.badge.textContent = `${last.ats} · ${last.matchedBy === "url" ? "detected by URL" : last.matchedBy === "dom-probe" ? "detected in page" : "heuristic form"}`; els.badge.classList.remove("gray"); }
     if (last.profile) api.setProfile(last.profile, last.resume);

@@ -51,5 +51,7 @@ try {
     return out;
   });
   console.log("choice groups (question → checked):"); for (const g of groups) console.log(`  ${g.type.padEnd(8)} [${String(g.options).padStart(2)}] ${g.q.padEnd(72)} → ${g.checked.join(" | ") || "(none)"}`);
+  const layout = await page.evaluate(() => { const cs = getComputedStyle(document.documentElement); const fixed = Array.from(document.querySelectorAll("html > div, body > div")).filter((d) => getComputedStyle(d).position === "fixed" || d.shadowRoot).map((d) => { const inner = d.shadowRoot?.querySelector(".col, .column, [class*='panel']"); const r = (inner || d).getBoundingClientRect(); return { id: d.id || d.getAttribute("data-autobot-panel") && "autobot" || d.className?.toString().slice(0, 30) || d.tagName, left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) }; }); return { htmlMarginRight: cs.marginRight, htmlMaxWidth: cs.maxWidth, bodyWidth: document.body.getBoundingClientRect().width, scrollY: window.scrollY, fixed: fixed.filter((f) => f.width > 100) }; });
+  console.log("layout:", JSON.stringify(layout));
   const shot = path.join(root, "tests", "out-live.png"); await page.screenshot({ path: shot, fullPage: false }); console.log("screenshot:", shot);
 } finally { await ctx.close().catch(() => {}); fs.rmSync(userDataDir, { recursive: true, force: true }); }
