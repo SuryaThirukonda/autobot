@@ -6,6 +6,8 @@ var AB = globalThis.AB || (globalThis.AB = {});
 AB.panel = (() => {
   const W = 384;
   let host, root, els = {}, handlers = {}, collapsed = false, counts = { filled: 0, skipped: 0, unknown: 0, error: 0, absent: 0 };
+  let last = {}; // last show() args and status rows, re-applied when the page re-renders and drops our host
+  const rows = new Map();
   let reserveStyle = null;
   const css = `
     :host { all: initial; }
@@ -114,27 +116,37 @@ AB.panel = (() => {
     document.documentElement.appendChild(host);
     const ji = jobInfo(); els.title.textContent = ji.title || "—"; els.company.textContent = ji.company || location.hostname; els.mark.textContent = (ji.company || "A").slice(0, 1).toUpperCase();
     reserve(!collapsed);
+    // Re-apply state lost with the previous host.
+    if (last.ats) { els.badge.textContent = `${last.ats} · ${last.matchedBy === "url" ? "detected by URL" : last.matchedBy === "dom-probe" ? "detected in page" : "heuristic form"}`; els.badge.classList.remove("gray"); }
+    if (last.profile) api.setProfile(last.profile, last.resume);
+    if (last.subtitle) els.sub.textContent = last.subtitle;
+    if (last.busy) { els.fill.disabled = true; els.fill.textContent = "Autofilling…"; }
+    for (const [key, [status, detail]] of rows) { for (const list of [els.short, els.full]) { if (list === els.short && status === "absent") continue; list.appendChild(li(key, status, detail)); } }
+    if (rows.size) els.empty.style.display = "none";
   };
   const li = (key, status, detail) => { const n = document.createElement("li"); n.dataset.k = key; n.className = status; n.innerHTML = `<span class="dot"></span><span class="k"></span><span class="d"></span>`; n.querySelector(".k").textContent = key.replace(/^\? /, ""); n.querySelector(".d").textContent = detail || status; return n; };
   const api = {
     show({ subtitle, fill, stop, next, settings, ats, matchedBy, profile, resume } = {}) {
       ensure();
       Object.assign(handlers, { fill, stop, next, settings });
+      Object.assign(last, { ats: ats ?? last.ats, matchedBy: matchedBy ?? last.matchedBy, profile: profile ?? last.profile, resume: resume ?? last.resume, subtitle: subtitle ?? last.subtitle });
       if (subtitle) els.sub.textContent = subtitle;
       if (ats) { els.badge.textContent = `${ats} · ${matchedBy === "url" ? "detected by URL" : matchedBy === "dom-probe" ? "detected in page" : "heuristic form"}`; els.badge.classList.remove("gray"); }
       if (profile) api.setProfile(profile, resume);
     },
     setProfile(profile, resume) {
       ensure();
+      last.profile = profile; last.resume = resume;
       els.rtext.innerHTML = resume?.name ? `<b>${resume.name.replace(/[<>&]/g, "")}</b> ready to attach` : "No resume uploaded — add one in settings";
       const rows = [["Name", [profile.first_name, profile.last_name].filter(Boolean).join(" ")], ["Email", profile.email], ["Phone", profile.phone], ["Location", [profile.city, profile.state].filter(Boolean).join(", ")], ["Work auth (US)", profile.work_auth_us ? "Yes" : "No"], ["Sponsorship", profile.sponsorship ? "Yes" : "No"], ["Education", `${(profile.education || []).length} entr${(profile.education || []).length === 1 ? "y" : "ies"}`], ["Experience", `${(profile.experience || []).length} entr${(profile.experience || []).length === 1 ? "y" : "ies"}`], ["Saved answers", String(Object.keys(profile.answers || {}).length)]];
       els.kv.innerHTML = rows.map(([k, v]) => `<div>${k}</div><div>${String(v || "—").replace(/[<>&]/g, "")}</div>`).join("");
     },
-    subtitle(t) { ensure(); els.sub.textContent = t; },
-    busy(on) { ensure(); els.fill.disabled = on; els.fill.textContent = on ? "Autofilling…" : "Autofill this page"; },
-    clear() { ensure(); els.short.innerHTML = ""; els.full.innerHTML = ""; counts = { filled: 0, skipped: 0, unknown: 0, error: 0, absent: 0 }; els.summary.textContent = ""; els.empty.style.display = "none"; },
+    subtitle(t) { ensure(); last.subtitle = t; els.sub.textContent = t; },
+    busy(on) { ensure(); last.busy = on; els.fill.disabled = on; els.fill.textContent = on ? "Autofilling…" : "Autofill this page"; },
+    clear() { ensure(); rows.clear(); els.short.innerHTML = ""; els.full.innerHTML = ""; counts = { filled: 0, skipped: 0, unknown: 0, error: 0, absent: 0 }; els.summary.textContent = ""; els.empty.style.display = "none"; },
     status(key, status, detail) {
       ensure();
+      rows.set(key, [status, detail]);
       for (const list of [els.short, els.full]) {
         let n = list.querySelector(`li[data-k="${CSS.escape(key)}"]`);
         if (!n) { n = li(key, status, detail); list.appendChild(n); } else { n.className = status; n.querySelector(".d").textContent = detail || status; }
