@@ -11,3 +11,4 @@ tests/out-*.png
 targets/
 analysis/pretty/
 analysis/jobright/pretty/
+dist/
