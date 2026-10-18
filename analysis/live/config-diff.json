@@ -1,0 +1,211 @@
+{
+ "top_added": [],
+ "top_removed": [],
+ "top_changed": [
+  "ATS",
+  "conditionalTrackedInputExclusions",
+  "savedAnswersEnabled"
+ ],
+ "ats_added": [],
+ "ats_removed": [],
+ "ats_changed": [
+  {
+   "ats": "AshbyHQ",
+   "bundled_bytes": 672079,
+   "live_bytes": 709804,
+   "fields": [
+    "~inputSelectors(35->35)",
+    "~trackedInputSelectors(4->4)"
+   ]
+  },
+  {
+   "ats": "Avature",
+   "bundled_bytes": 2663887,
+   "live_bytes": 2878988,
+   "fields": [
+    "~inputSelectors(37->37)",
+    "~trackedInputSelectors(5->5)"
+   ]
+  },
+  {
+   "ats": "BambooHR",
+   "bundled_bytes": 31755,
+   "live_bytes": 31790,
+   "fields": [
+    "~inputSelectors(24->24)"
+   ]
+  },
+  {
+   "ats": "BreezyHR",
+   "bundled_bytes": 26169,
+   "live_bytes": 26204,
+   "fields": [
+    "~inputSelectors(31->31)"
+   ]
+  },
+  {
+   "ats": "Dover",
+   "bundled_bytes": 16494,
+   "live_bytes": 16541,
+   "fields": [
+    "~inputSelectors(17->17)"
+   ]
+  },
+  {
+   "ats": "FreshTeam",
+   "bundled_bytes": 9523,
+   "live_bytes": 9703,
+   "fields": [
+    "~inputSelectors(15->15)"
+   ]
+  },
+  {
+   "ats": "Google",
+   "bundled_bytes": 16499,
+   "live_bytes": 17277,
+   "fields": [
+    "~submitButtonPaths(4->6)"
+   ]
+  },
+  {
+   "ats": "Greenhouse",
+   "bundled_bytes": 5943568,
+   "live_bytes": 12887348,
+   "fields": [
+    "~containerPath(14->15)",
+    "~inputSelectors(60->60)",
+    "~pathsExcluded(1->3)",
+    "+staleInvalidFlags",
+    "~submittedSuccessPaths(6->7)",
+    "~trackedInputSelectors(9->11)",
+    "~trackedObjExtractors(13->14)"
+   ]
+  },
+  {
+   "ats": "ICIMS",
+   "bundled_bytes": 6063734,
+   "live_bytes": 6845298,
+   "fields": [
+    "~inputSelectors(35->39)",
+    "~trackedInputSelectors(13->14)",
+    "~urls(14->16)"
+   ]
+  },
+  {
+   "ats": "JazzHR",
+   "bundled_bytes": 361911,
+   "live_bytes": 399298,
+   "fields": [
+    "~inputSelectors(22->22)"
+   ]
+  },
+  {
+   "ats": "Jobvite",
+   "bundled_bytes": 201645,
+   "live_bytes": 201915,
+   "fields": [
+    "~inputSelectors(24->24)"
+   ]
+  },
+  {
+   "ats": "Lever",
+   "bundled_bytes": 1584188,
+   "live_bytes": 1733362,
+   "fields": [
+    "~inputSelectors(36->36)",
+    "~trackedInputSelectors(3->3)"
+   ]
+  },
+  {
+   "ats": "OracleCloud",
+   "bundled_bytes": 2108594,
+   "live_bytes": 2226297,
+   "fields": [
+    "~continueButtonPaths(1->2)",
+    "~inputSelectors(34->34)",
+    "~submitButtonPaths(2->3)"
+   ]
+  },
+  {
+   "ats": "PhenomPeople",
+   "bundled_bytes": 661758,
+   "live_bytes": 718704,
+   "fields": [
+    "~inputSelectors(36->36)"
+   ]
+  },
+  {
+   "ats": "PinpointHQ",
+   "bundled_bytes": 18239,
+   "live_bytes": 18274,
+   "fields": [
+    "~inputSelectors(20->20)"
+   ]
+  },
+  {
+   "ats": "Recruitee",
+   "bundled_bytes": 8264,
+   "live_bytes": 8309,
+   "fields": [
+    "~inputSelectors(10->10)"
+   ]
+  },
+  {
+   "ats": "Rippling",
+   "bundled_bytes": 865768,
+   "live_bytes": 959118,
+   "fields": [
+    "~inputSelectors(24->24)"
+   ]
+  },
+  {
+   "ats": "SmartRecruiters",
+   "bundled_bytes": 1317876,
+   "live_bytes": 1471486,
+   "fields": [
+    "~inputSelectors(24->24)"
+   ]
+  },
+  {
+   "ats": "SuccessFactors",
+   "bundled_bytes": 901819,
+   "live_bytes": 935719,
+   "fields": [
+    "~inputSelectors(56->56)"
+   ]
+  },
+  {
+   "ats": "Waymo",
+   "bundled_bytes": 58319,
+   "live_bytes": 58462,
+   "fields": [
+    "~submittedSuccessPaths(2->3)"
+   ]
+  },
+  {
+   "ats": "Workable",
+   "bundled_bytes": 347976,
+   "live_bytes": 385532,
+   "fields": [
+    "~inputSelectors(16->16)",
+    "~trackedInputSelectors(5->5)"
+   ]
+  },
+  {
+   "ats": "Workday",
+   "bundled_bytes": 3591444,
+   "live_bytes": 3733553,
+   "fields": [
+    "~continueButtonPaths(1->1)",
+    "~inputSelectors(49->49)",
+    "~submitButtonPaths(1->1)"
+   ]
+  }
+ ],
+ "methods_added": [],
+ "methods_removed": [],
+ "keypaths_added": [
+  "most_recent_graduation_mmyyyy"
+ ],
+ "keypaths_removed": []
+}

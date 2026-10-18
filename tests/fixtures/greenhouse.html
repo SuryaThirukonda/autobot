@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Greenhouse-like application</title>
+<style>
+  body{font:14px system-ui;margin:24px;max-width:720px} label{display:block;margin-top:14px;font-weight:600} input,select,textarea{width:100%;padding:6px;margin-top:4px}
+  .select__container{position:relative} .select__control{border:1px solid #ccc;padding:4px} .select__menu{position:absolute;left:0;right:0;background:#fff;border:1px solid #ccc;z-index:5}
+  .select__option{padding:6px;cursor:pointer} .select__option:hover{background:#eef} .select__single-value{color:#111} .hidden{display:none}
+</style></head>
+<body>
+<h1>Software Engineer</h1>
+<form id="application-form" action="https://job-boards.greenhouse.io/x/jobs/1" onsubmit="return false">
+  <div class="field"><label for="first_name">First Name *</label><input id="first_name" name="job_application[first_name]" type="text" /></div>
+  <div class="field"><label for="last_name">Last Name *</label><input id="last_name" name="job_application[last_name]" type="text" /></div>
+  <div class="field"><label for="email">Email *</label><input id="email" name="job_application[email]" type="email" /></div>
+  <div class="field"><label for="phone">Phone</label><input id="phone" name="job_application[phone]" type="tel" /></div>
+
+  <div class="field" id="resume_fieldset" aria-labelledby="upload-label-resume"><label id="upload-label-resume">Resume/CV *</label><input type="file" id="resume" name="job_application[resume]" /></div>
+
+  <div class="field select__container"><label for="school-input">School *</label>
+    <div class="select__control"><div class="select__value-container"><div class="select__single-value hidden"></div><input id="school-input" class="select__input" role="combobox" aria-expanded="false" autocomplete="off" /></div></div>
+    <div class="select__menu hidden"></div><input type="hidden" name="job_application[educations][][school_name_id]" id="school-hidden" />
+  </div>
+
+  <div class="field"><label for="degree">Degree</label>
+    <select id="degree" name="job_application[educations][][degree_id]"><option value="">Select…</option><option value="1">Associate's Degree</option><option value="2">Bachelor's Degree</option><option value="3">Master's Degree</option><option value="4">Doctor of Philosophy (Ph.D.)</option></select></div>
+
+  <div class="field"><label for="auth">Are you legally authorized to work in the United States? *</label>
+    <select id="auth" name="job_application[answers_attributes][0][boolean_value]"><option value="">--</option><option value="1">Yes</option><option value="0">No</option></select></div>
+  <div class="field"><label for="sponsor">Will you now or in the future require sponsorship for employment visa status? *</label>
+    <select id="sponsor" name="job_application[answers_attributes][1][boolean_value]"><option value="">--</option><option value="1">Yes</option><option value="0">No</option></select></div>
+
+  <div class="field"><label for="linkedin">LinkedIn Profile</label><input id="linkedin" name="job_application[answers_attributes][2][text_value]" type="text" /></div>
+  <div class="field"><label for="website">Website</label><input id="website" name="job_application[answers_attributes][3][text_value]" type="text" /></div>
+  <div class="field"><label for="why">Why do you want to work here?</label><textarea id="why" name="job_application[answers_attributes][4][text_value]"></textarea></div>
+
+  <h2>Voluntary Self-Identification</h2>
+  <div class="field demographic_question"><label for="gender">Gender</label>
+    <select id="gender" name="job_application[gender]"><option value="">Select…</option><option>Male</option><option>Female</option><option>Decline To Self Identify</option></select></div>
+  <div class="field demographic_question"><label for="veteran">Veteran Status</label>
+    <select id="veteran" name="job_application[veteran_status]"><option value="">Select…</option><option>I am not a protected veteran</option><option>I identify as one or more of the classifications of a protected veteran</option><option>I don't wish to answer</option></select></div>
+
+  <input type="submit" id="submit_app" value="Submit Application" data-trackingid="job-application-submit" />
+</form>
+<pre id="events"></pre>
+<script>
+  // Record that proper events were dispatched (frameworks rely on these).
+  const ev = {};
+  document.querySelectorAll('input, textarea, select').forEach(el => ['input','change'].forEach(t => el.addEventListener(t, () => { ev[el.id || el.name] = (ev[el.id || el.name] || []).concat(t); document.getElementById('events').textContent = JSON.stringify(ev); })));
+  // Minimal react-select-like combobox: filter options while typing, render menu, commit on option click.
+  const SCHOOLS = ['Texas A&M University', 'Texas Tech University', 'University of Texas at Austin', 'Stanford University', 'Other'];
+  const input = document.getElementById('school-input'), menu = document.querySelector('.select__menu'), single = document.querySelector('.select__single-value'), hidden = document.getElementById('school-hidden');
+  const render = (q) => { const items = SCHOOLS.filter(s => s.toLowerCase().includes((q || '').toLowerCase())); menu.innerHTML = items.map(s => `<div class="select__option" role="option">${s}</div>`).join(''); menu.classList.toggle('hidden', !items.length); input.setAttribute('aria-expanded', String(!!items.length)); };
+  input.addEventListener('focus', () => render(input.value)); input.addEventListener('input', () => render(input.value));
+  menu.addEventListener('click', (e) => { const o = e.target.closest('.select__option'); if (!o) return; single.textContent = o.textContent; single.classList.remove('hidden'); hidden.value = o.textContent; input.value = ''; menu.classList.add('hidden'); input.setAttribute('aria-expanded', 'false'); });
+</script>
+</body></html>

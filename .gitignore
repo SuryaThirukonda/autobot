@@ -1,0 +1,13 @@
+node_modules/
+analysis/rea-javascript-application.json
+analysis/live/netlog.json
+analysis/live/sabre-live.json
+analysis/jobright/rea-javascript-application.json
+*.log
+.DS_Store
+tests/out-*.png
+
+# Third-party extension copies and their prettified bundles stay local only
+targets/
+analysis/pretty/
+analysis/jobright/pretty/

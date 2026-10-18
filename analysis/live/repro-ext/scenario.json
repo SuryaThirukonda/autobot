@@ -1,0 +1,26 @@
+{
+  "browser": {
+    "mode": "connect",
+    "cdp_endpoint": "http://127.0.0.1:9334",
+    "target_id": "E5548A9ACA079C037C4ABCC056249F57"
+  },
+  "start_url": {
+    "url": "https://example.com/",
+    "query": []
+  },
+  "actions": [
+    {
+      "step_id": "settle",
+      "action": "wait_for_timeout",
+      "duration_ms": 3000
+    }
+  ],
+  "capture": {
+    "at_end": [
+      "url"
+    ],
+    "events": [
+      "network"
+    ]
+  }
+}

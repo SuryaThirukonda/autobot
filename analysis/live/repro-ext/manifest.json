@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "status0-repro",
+  "version": "1.0",
+  "description": "Minimal extension that loads a web-accessible script into every page (reproduces REA capture_browser_scenario status-0 crash).",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected.js"
+      ],
+      "matches": [
+        "*://*/*"
+      ],
+      "use_dynamic_url": true
+    }
+  ]
+}

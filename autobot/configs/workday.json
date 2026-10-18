@@ -1,0 +1,53 @@
+{
+  "id": "workday",
+  "name": "Workday",
+  "urls": ["*://*.myworkdayjobs.com/*", "*://*.myworkdaysite.com/*", "*://*.wd1.myworkdayjobs.com/*", "*://*.wd5.myworkdayjobs.com/*"],
+  "probes": [["//*[@data-automation-id='legalNameSection_firstName']"], ["//*[@data-automation-id='applyFlowPage' or @data-automation-id='jobPostingPage']"]],
+  "container": ["//*[@data-automation-id='applyFlowPage']", "//form", "//body"],
+  "defaultMethod": "react",
+  "fillInterval": 120,
+  "fields": [
+    { "key": "first_name", "path": [".//input[@data-automation-id='legalNameSection_firstName']"] },
+    { "key": "last_name", "path": [".//input[@data-automation-id='legalNameSection_lastName']"] },
+    { "key": "email", "path": [".//input[@data-automation-id='email']"], "allowFailure": true },
+    { "key": "address", "path": [".//input[@data-automation-id='addressSection_addressLine1']"], "allowFailure": true },
+    { "key": "city", "path": [".//input[@data-automation-id='addressSection_city']"], "allowFailure": true },
+    { "key": "postal_code", "path": [".//input[@data-automation-id='addressSection_postalCode']"], "allowFailure": true },
+    { "key": "state", "method": "combobox", "path": [".//button[@data-automation-id='addressSection_countryRegion']", ".//input[@data-automation-id='addressSection_countryRegion']"], "allowFailure": true, "optionsPath": ["css:[role=option]", "css:li[role=option]", "css:[data-automation-id='promptOption']"] },
+    { "key": "phone_device", "value": "Mobile", "method": "combobox", "path": [".//button[@data-automation-id='phone-device-type']", ".//select[@data-automation-id='phone-device-type']"], "allowFailure": true, "optionsPath": ["css:[role=option]", "css:[data-automation-id='promptOption']"] },
+    { "key": "phone", "valueKey": "phone_digits", "path": [".//input[@data-automation-id='phone-number']"], "allowFailure": true },
+    { "key": "resume", "method": "upload", "path": [".//input[@data-automation-id='file-upload-input-ref']", ".//input[@type='file']"], "allowFailure": true },
+    { "key": "how_heard", "method": "combobox", "path": [".//input[@data-automation-id='sourceSection_source' or contains(@data-automation-id,'source')][@role='combobox' or @type='text']"], "allowFailure": true, "optionsPath": ["css:[data-automation-id='promptOption']", "css:[role=option]"] },
+    { "key": "previously_worked", "value": "No", "method": "radio", "path": [".//*[@data-automation-id='previousWorker']//input[@type='radio']"], "allowFailure": true },
+    { "key": "experience", "array": true, "limit": 3,
+      "add": [".//button[@data-automation-id='add-button' and ancestor::*[contains(@data-automation-id,'workExperience')]]", ".//*[@data-automation-id='workExperienceSection']//button[contains(@aria-label,'Add')]"],
+      "item": [".//*[starts-with(@data-automation-id,'workExperience-')]", ".//*[@data-automation-id='workExperienceSection']//*[contains(@data-automation-id,'workExperience')]"],
+      "fields": [
+        { "key": "title", "path": [".//input[@data-automation-id='jobTitle']"], "allowFailure": true },
+        { "key": "company", "path": [".//input[@data-automation-id='company']"], "allowFailure": true },
+        { "key": "location", "path": [".//input[@data-automation-id='location']"], "allowFailure": true },
+        { "key": "current", "method": "checkbox", "path": [".//input[@data-automation-id='currentlyWorkHere']"], "allowFailure": true },
+        { "key": "start_date|MM/YYYY", "valueKey": "start_date|MM/YYYY", "path": [".//*[@data-automation-id='formField-startDate']//input[@data-automation-id='dateSectionMonth-input' or @data-automation-id='dateInput-input' or @data-automation-id='dateSectionMM-input']"], "allowFailure": true },
+        { "key": "end_date|MM/YYYY", "valueKey": "end_date|MM/YYYY", "path": [".//*[@data-automation-id='formField-endDate']//input[@data-automation-id='dateSectionMonth-input' or @data-automation-id='dateInput-input' or @data-automation-id='dateSectionMM-input']"], "allowFailure": true },
+        { "key": "description", "path": [".//textarea[@data-automation-id='description']"], "allowFailure": true }
+      ] },
+    { "key": "education", "array": true, "limit": 2,
+      "add": [".//*[@data-automation-id='educationSection']//button[@data-automation-id='add-button']"],
+      "item": [".//*[starts-with(@data-automation-id,'education-')]"],
+      "fields": [
+        { "key": "school", "path": [".//input[@data-automation-id='school']", ".//input[@data-automation-id='schoolItem']"], "allowFailure": true },
+        { "key": "degree", "method": "combobox", "values": "degree", "path": [".//button[@data-automation-id='degree']"], "allowFailure": true, "optionsPath": ["css:[role=option]", "css:[data-automation-id='promptOption']"] },
+        { "key": "major", "method": "combobox", "path": [".//input[@data-automation-id='formField-fieldOfStudy']//input", ".//*[@data-automation-id='formField-fieldOfStudy']//input"], "allowFailure": true, "optionsPath": ["css:[data-automation-id='promptOption']", "css:[role=option]"] },
+        { "key": "gpa", "path": [".//input[@data-automation-id='gpa']"], "allowFailure": true }
+      ] },
+    { "key": "linkedin", "path": [".//input[@data-automation-id='linkedinQuestion']", ".//*[contains(translate(., 'LINKEDIN', 'linkedin'), 'linkedin')]/following::input[1]"], "allowFailure": true },
+    { "key": "website", "valueKey": "portfolio", "path": [".//input[@data-automation-id='website']"], "allowFailure": true },
+    { "key": "gender", "values": "gender", "method": "combobox", "path": [".//button[@data-automation-id='gender']"], "allowFailure": true, "optionsPath": ["css:[role=option]"] },
+    { "key": "ethnicity", "values": "ethnicity", "method": "combobox", "path": [".//button[@data-automation-id='ethnicityDropdown']", ".//button[@data-automation-id='ethnicity']"], "allowFailure": true, "optionsPath": ["css:[role=option]"] },
+    { "key": "veteran", "values": "veteran", "method": "combobox", "path": [".//button[@data-automation-id='veteranStatus']"], "allowFailure": true, "optionsPath": ["css:[role=option]"] },
+    { "key": "disability", "values": "disability", "method": "checkbox", "path": [".//*[contains(translate(., 'I DO NOT WANT TO ANSWER', 'i do not want to answer'), 'i do not want to answer')]/preceding::input[@type='checkbox'][1]"], "allowFailure": true }
+  ],
+  "continue": [".//button[@data-automation-id='bottom-navigation-next-button']", ".//button[@data-automation-id='pageFooterNextButton']"],
+  "submit": [".//button[@data-automation-id='bottom-navigation-next-button' and normalize-space(.)='Submit']", ".//button[normalize-space(.)='Submit']"],
+  "success": [".//*[contains(., 'Congratulations') or contains(., 'successfully submitted')]"]
+}

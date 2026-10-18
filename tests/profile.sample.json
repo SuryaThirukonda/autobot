@@ -1,0 +1,61 @@
+{
+  "first_name": "Ada",
+  "last_name": "Lovelace",
+  "email": "ada.lovelace@example.test",
+  "phone": "(512) 555-0100",
+  "phone_country": "US",
+  "address": "1 Analytical Engine Way",
+  "city": "Austin",
+  "state": "Texas",
+  "postal_code": "78701",
+  "country": "United States",
+  "linkedin": "https://www.linkedin.com/in/ada-lovelace-example",
+  "github": "https://github.com/ada-example",
+  "portfolio": "https://ada.example.test",
+  "website": "https://ada.example.test",
+  "current_company": "Babbage & Co",
+  "current_title": "Software Engineer",
+  "years_experience": "3",
+  "work_auth_us": true,
+  "sponsorship": false,
+  "over18": true,
+  "gender": "Decline to self-identify",
+  "ethnicity": "Decline to self-identify",
+  "hispanic": "Decline to self-identify",
+  "veteran": "I am not a protected veteran",
+  "disability": "I do not want to answer",
+  "salary": "150000",
+  "how_heard": "LinkedIn",
+  "education": [
+    {
+      "school": "Texas A&M University",
+      "degree": "Bachelor's",
+      "major": "Computer Science",
+      "gpa": "3.9",
+      "start_month": "8",
+      "start_year": "2024",
+      "end_month": "5",
+      "end_year": "2028",
+      "graduated": false
+    }
+  ],
+  "experience": [
+    {
+      "company": "Babbage & Co",
+      "title": "Software Engineer",
+      "location": "Austin, TX",
+      "start_month": "6",
+      "start_year": "2025",
+      "current": true,
+      "description": "Built reliable systems."
+    }
+  ],
+  "skills": [
+    "TypeScript",
+    "Python"
+  ],
+  "answers": {
+    "Why do you want to work here?": "Because the mission matches my experience building reliable systems.",
+    "Please note that you will not be considered unless you complete the Constellation application form": "I understand"
+  }
+}

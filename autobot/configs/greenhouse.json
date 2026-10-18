@@ -1,0 +1,310 @@
+{
+  "id": "greenhouse",
+  "name": "Greenhouse",
+  "urls": [
+    "*://boards.greenhouse.io/*",
+    "*://boards.eu.greenhouse.io/*",
+    "*://job-boards.greenhouse.io/*",
+    "*://job-boards.eu.greenhouse.io/*",
+    "*://*/*gh_jid=*"
+  ],
+  "urlsExcluded": [
+    "*://boards.greenhouse.io/*/confirmation"
+  ],
+  "probes": [
+    [
+      "//form[@id='application-form'][.//input[@id='first_name' or contains(@name,'first_name')]]"
+    ],
+    [
+      "//form[starts-with(@action, 'https://boards.greenhouse.io/')]"
+    ],
+    [
+      "//form[starts-with(@action, 'https://job-boards.greenhouse.io/')]"
+    ],
+    [
+      "//iframe[@id='grnhse_iframe']"
+    ],
+    [
+      "//input[@id='first_name'][following::input[@id='last_name']][following::input[@id='email']]"
+    ]
+  ],
+  "container": [
+    "//form[@id='application-form']",
+    "//form[starts-with(@action, 'https://boards.greenhouse.io/')]",
+    "//form[starts-with(@action, 'https://job-boards.greenhouse.io/')]",
+    "//form[descendant::input[contains(@name, 'first_name')] and descendant::input[contains(@name, 'email')]]"
+  ],
+  "defaultMethod": "react",
+  "pre": [
+    {
+      "path": [
+        "//a[@id='apply_button']",
+        "//button[normalize-space(.)='Apply' and not(@type='submit')]"
+      ],
+      "time": 800,
+      "delay": 900
+    }
+  ],
+  "fields": [
+    {
+      "key": "first_name",
+      "path": [
+        ".//input[@id='first_name']",
+        ".//input[contains(@name, 'first_name')]",
+        ".//label[contains(translate(., 'FIRST NAME', 'first name'), 'first name')]/following::input[1]"
+      ]
+    },
+    {
+      "key": "last_name",
+      "path": [
+        ".//input[@id='last_name']",
+        ".//input[contains(@name, 'last_name')]",
+        ".//label[contains(translate(., 'LAST NAME', 'last name'), 'last name')]/following::input[1]"
+      ]
+    },
+    {
+      "key": "email",
+      "path": [
+        ".//input[@id='email']",
+        ".//input[contains(@name, 'email') and not(contains(@name, 'confirm'))]"
+      ]
+    },
+    {
+      "key": "phone",
+      "path": [
+        ".//input[@id='phone']",
+        ".//input[contains(@name, 'phone') and @type!='hidden']",
+        ".//input[@type='tel']"
+      ]
+    },
+    {
+      "key": "resume",
+      "method": "upload",
+      "path": [
+        ".//input[@type='file' and (ancestor::*[@id='resume_fieldset' or @id='s3_upload_for_resume' or @aria-labelledby='upload-label-resume'])]",
+        ".//input[@id='resume']",
+        ".//input[@type='file' and contains(@name, 'resume')]"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "linkedin",
+      "path": [
+        ".//label[contains(translate(., 'LINKEDIN', 'linkedin'), 'linkedin')]/following::input[1]",
+        ".//input[contains(translate(@id, 'LINKEDIN', 'linkedin'), 'linkedin')]"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "website",
+      "path": [
+        ".//label[contains(translate(., 'WEBSITE', 'website'), 'website')]/following::input[1]",
+        ".//label[contains(translate(., 'PORTFOLIO', 'portfolio'), 'portfolio')]/following::input[1]"
+      ],
+      "allowFailure": true,
+      "valueKey": "portfolio"
+    },
+    {
+      "key": "location",
+      "method": "combobox",
+      "path": [
+        ".//input[@id='candidate-location']",
+        ".//input[@id='job_application_location']"
+      ],
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[role=option]",
+        "css:.select__option",
+        "css:.pac-item",
+        "css:[id^='candidate-location'] [role=option]"
+      ]
+    },
+    {
+      "key": "work_auth_us",
+      "values": "workAuth",
+      "allowFailure": true,
+      "path": [
+        ".//label[contains(translate(., 'AUTHORIZED', 'authorized'), 'authorized to work')]/following::select[1]",
+        ".//label[contains(translate(., 'AUTHORIZED', 'authorized'), 'authorized to work')]/following::*[@role='combobox' or contains(@class,'select__input')][1]"
+      ],
+      "method": "combobox"
+    },
+    {
+      "key": "sponsorship",
+      "values": "sponsorship",
+      "allowFailure": true,
+      "path": [
+        ".//label[contains(translate(., 'SPONSORSHIP', 'sponsorship'), 'sponsorship')]/following::select[1]",
+        ".//label[contains(translate(., 'SPONSORSHIP', 'sponsorship'), 'sponsorship')]/following::*[@role='combobox' or contains(@class,'select__input')][1]"
+      ],
+      "method": "combobox"
+    },
+    {
+      "key": "education",
+      "array": true,
+      "limit": 2,
+      "add": [
+        ".//a[@id='add_education']",
+        ".//button[contains(translate(., 'ADD ANOTHER EDUCATION', 'add another education'), 'add another education')]",
+        ".//button[contains(@class,'add-another-button')]"
+      ],
+      "item": [
+        ".//div[@id='education_section']//div[contains(@class,'education') and not(contains(@class,'container')) and not(contains(@class,'section'))]",
+        ".//div[contains(@class,'education--form')]",
+        ".//div[contains(@class,'education--container')]"
+      ],
+      "fields": [
+        {
+          "key": "school",
+          "method": "combobox",
+          "path": [
+            ".//label[contains(translate(., 'SCHOOL', 'school'), 'school')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
+            ".//select[contains(@id,'school')]",
+            ".//input[contains(@id,'school')]"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
+        },
+        {
+          "key": "degree",
+          "method": "combobox",
+          "values": "degree",
+          "path": [
+            ".//label[contains(translate(., 'DEGREE', 'degree'), 'degree')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
+            ".//select[contains(@id,'degree')]"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
+        },
+        {
+          "key": "major",
+          "method": "combobox",
+          "path": [
+            ".//label[contains(translate(., 'DISCIPLINE', 'discipline'), 'discipline')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
+            ".//select[contains(@id,'discipline')]",
+            ".//select[contains(@id,'major')]"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
+        },
+        {
+          "key": "start_month|MM",
+          "valueKey": "start_month|MM",
+          "path": [
+            ".//input[contains(@class,'start-date-month')]",
+            ".//input[contains(@id,'start-month')]"
+          ],
+          "allowFailure": true
+        },
+        {
+          "key": "start_year",
+          "path": [
+            ".//input[contains(@class,'start-date-year')]",
+            ".//input[contains(@id,'start-year')]"
+          ],
+          "allowFailure": true
+        },
+        {
+          "key": "end_month|MM",
+          "valueKey": "end_month|MM",
+          "path": [
+            ".//input[contains(@class,'end-date-month')]",
+            ".//input[contains(@id,'end-month')]"
+          ],
+          "allowFailure": true
+        },
+        {
+          "key": "end_year",
+          "path": [
+            ".//input[contains(@class,'end-date-year')]",
+            ".//input[contains(@id,'end-year')]"
+          ],
+          "allowFailure": true
+        }
+      ]
+    },
+    {
+      "key": "gender",
+      "values": "gender",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:.select__option",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//label[contains(translate(., 'GENDER', 'gender'), 'gender')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+      ]
+    },
+    {
+      "key": "hispanic",
+      "values": "hispanic",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:.select__option",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//label[contains(translate(., 'HISPANIC', 'hispanic'), 'hispanic')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+      ]
+    },
+    {
+      "key": "ethnicity",
+      "values": "ethnicity",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:.select__option",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//label[contains(translate(., 'RACE', 'race'), 'race')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+      ]
+    },
+    {
+      "key": "veteran",
+      "values": "veteran",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:.select__option",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//label[contains(translate(., 'VETERAN', 'veteran'), 'veteran')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+      ]
+    },
+    {
+      "key": "disability",
+      "values": "disability",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:.select__option",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//label[contains(translate(., 'DISABILITY', 'disability'), 'disability')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+      ]
+    }
+  ],
+  "submit": [
+    ".//input[@type='submit' and @data-trackingid='job-application-submit']",
+    ".//button[@type='submit' and (contains(., 'Submit') or contains(., 'Apply'))]",
+    ".//*[@id='submit_app']"
+  ],
+  "success": [
+    ".//div[@class='confirmation__content']",
+    ".//h2[contains(., 'We got your application')]"
+  ]
+}

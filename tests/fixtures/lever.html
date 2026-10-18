@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Lever-like application</title>
+<style>body{font:14px system-ui;margin:24px;max-width:720px} label{display:block;margin-top:12px;font-weight:600} input,select,textarea{width:100%;padding:6px;margin-top:4px}</style></head>
+<body>
+<h1>Apply for this job</h1>
+<form id="application-form" onsubmit="return false">
+  <div class="application-field"><label>Resume/CV ✱</label><input type="file" name="resume" id="resume-upload-input" /></div>
+  <div class="application-field"><label>Full name ✱</label><input type="text" name="name" /></div>
+  <div class="application-field"><label>Email ✱</label><input type="email" name="email" /></div>
+  <div class="application-field"><label>Phone ✱</label><input type="text" name="phone" /></div>
+  <div class="application-field"><label>Current location</label><input type="text" name="location" /></div>
+  <div class="application-field"><label>Current company</label><input type="text" name="org" /></div>
+  <h3>Links</h3>
+  <div class="application-field"><label>LinkedIn URL</label><input type="text" name="urls[LinkedIn]" /></div>
+  <div class="application-field"><label>GitHub URL</label><input type="text" name="urls[GitHub]" /></div>
+  <div class="application-field"><label>Portfolio URL</label><input type="text" name="urls[Portfolio]" /></div>
+  <div class="application-field"><label>Other website</label><input type="text" name="urls[Other]" /></div>
+  <div class="application-field"><label>Additional information</label><textarea name="comments"></textarea></div>
+  <h3>Custom questions</h3>
+  <div class="application-question"><label>Are you authorized to work lawfully in the United States?</label>
+    <ul><li><label><input type="radio" name="cards[abc][field0]" value="Yes" /> Yes</label></li><li><label><input type="radio" name="cards[abc][field0]" value="No" /> No</label></li></ul></div>
+  <div class="application-question"><label>What is your desired salary?</label><input type="text" name="cards[abc][field1]" /></div>
+  <h3>U.S. Equal Employment Opportunity information</h3>
+  <div class="application-field"><label>Gender</label><select name="eeo[gender]"><option value="">Select ...</option><option>Male</option><option>Female</option><option>Decline to self-identify</option></select></div>
+  <div class="application-field"><label>Race</label><select name="eeo[race]"><option value="">Select ...</option><option>Asian (Not Hispanic or Latino)</option><option>White (Not Hispanic or Latino)</option><option>Decline to self-identify</option></select></div>
+  <div class="application-field"><label>Veteran status</label><select name="eeo[veteran]"><option value="">Select ...</option><option>I am not a protected veteran</option><option>I am a protected veteran</option><option>Decline to self-identify</option></select></div>
+  <div class="application-field"><label><input type="checkbox" name="consent[marketing]" /> I agree to receive marketing emails</label></div>
+  <button type="submit" class="postings-btn" id="btn-submit">Submit application</button>
+</form>
+</body></html>

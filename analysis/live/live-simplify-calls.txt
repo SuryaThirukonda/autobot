@@ -1,0 +1,17 @@
+time(s)  method status  url   [hosts: api.simplify.jobs, sabre.simplify.jobs, simplify assets, update]
+    0.0  GET   200 OK http://clients2.google.com/time/1/current?cup2key=10:FgL8n0COr-oapo77jayfnTSQ-OBw-eAXote-h5yFXOY&cup2hreq=e3b0c44298fc1c149afbf4c8996fb92427
+    0.5  GET   200    https://sabre.simplify.jobs/?v=3.1.9
+    5.4  GET   200    https://storage.googleapis.com/simplify-public-assets/tutorial-resume/1704468484.pdf
+    5.8  GET   401    https://api.simplify.jobs/v2/candidate/me/resume/c553d62a-07da-4452-bfe6-d95d77852029
+    5.9  POST  401    https://api.simplify.jobs/v2/keywords/jd-to-keywords
+    5.9  GET   401    https://api.simplify.jobs/v2/candidate/me/resume/paginate?size=25&first_page_load_default_resume=true
+    6.5  GET   401    https://api.simplify.jobs/v2/candidate/me/resume/paginate?size=25&first_page_load_default_resume=true
+    6.5  GET   401    https://api.simplify.jobs/v2/candidate/me/resume/c553d62a-07da-4452-bfe6-d95d77852029
+    7.2  POST  401    https://api.simplify.jobs/v2/keywords/jd-to-keywords
+    9.4  POST  401    https://api.simplify.jobs/v2/keywords/jd-to-keywords
+   13.1  POST  401    https://api.simplify.jobs/v2/keywords/jd-to-keywords
+  116.9  GET   401    https://api.simplify.jobs/v2/candidate/me/
+  188.6  GET   401    https://api.simplify.jobs/v2/candidate/me/
+  382.0  POST  200    https://chromewebstore.googleapis.com/v2/items/-/storeMetadata:batchGet
+  481.0  GET   ?      https://sabre.simplify.jobs/?v=3.1.9
+  568.7  GET   ?      https://sabre.simplify.jobs/?v=3.1.9

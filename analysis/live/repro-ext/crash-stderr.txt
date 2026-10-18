@@ -1,0 +1,28 @@
+file:///home/surya/.npm/_npx/a1722018f28f9df2/node_modules/zod/v4/core/parse.js:13
+        throw e;
+        ^
+
+ZodError: [
+  {
+    "origin": "number",
+    "code": "too_small",
+    "minimum": 100,
+    "inclusive": true,
+    "path": [
+      "status"
+    ],
+    "message": "Too small: expected number to be >=100"
+  }
+]
+    at PlaywrightScenarioEvents.push (file:///home/surya/.npm/_npx/a1722018f28f9df2/node_modules/rea-agents/dist/cli-runtime/composition__browserScenario-BtPb1c1y.js:2043:47)
+    at Object.emit (file:///home/surya/.npm/_npx/a1722018f28f9df2/node_modules/rea-agents/dist/cli-runtime/composition__browserScenario-BtPb1c1y.js:1935:29)
+    at PlaywrightScenarioNetwork.response (file:///home/surya/.npm/_npx/a1722018f28f9df2/node_modules/rea-agents/dist/cli-runtime/composition__browserScenario-BtPb1c1y.js:1605:36)
+    at BrowserContext.onResponse (file:///home/surya/.npm/_npx/a1722018f28f9df2/node_modules/rea-agents/dist/cli-runtime/composition__browserScenario-BtPb1c1y.js:1956:50)
+    at BrowserContext._callHandler (/home/surya/.npm/_npx/a1722018f28f9df2/node_modules/playwright-core/lib/client/eventEmitter.js:66:29)
+    at BrowserContext.emit (/home/surya/.npm/_npx/a1722018f28f9df2/node_modules/playwright-core/lib/client/eventEmitter.js:56:12)
+    at BrowserContext._onResponse (/home/surya/.npm/_npx/a1722018f28f9df2/node_modules/playwright-core/lib/client/browserContext.js:179:10)
+    at Proxy.<anonymous> (/home/surya/.npm/_npx/a1722018f28f9df2/node_modules/playwright-core/lib/client/browserContext.js:132:63)
+    at Proxy._callHandler (/home/surya/.npm/_npx/a1722018f28f9df2/node_modules/playwright-core/lib/client/eventEmitter.js:66:29)
+    at Proxy.emit (/home/surya/.npm/_npx/a1722018f28f9df2/node_modules/playwright-core/lib/client/eventEmitter.js:56:12)
+
+Node.js v24.20.0

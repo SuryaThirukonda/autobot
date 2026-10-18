@@ -1,0 +1,166 @@
+{"ev":"request","url":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","sw":false,"type":"document"}
+{"ev":"response","status":200,"url":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"document"}
+{"ev":"request","url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/300/original/AnthropicSansDisplay-Semibold-Static.otf?1782317356","sw":false,"type":"font"}
+{"ev":"request","url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/000/original/Body_-_AnthropicSerif-Roman-Web.woff2?1782312604","sw":false,"type":"font"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/entry-CYrTbB0d.css","sw":false,"type":"stylesheet"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/entry-CYrTbB0d.css","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"stylesheet"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/vendor-da5IcPkB.css","sw":false,"type":"stylesheet"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/vendor-da5IcPkB.css","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"stylesheet"}
+{"ev":"request","url":"https://s8-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/040/300/original/2025-04-07-greenhouse.png?1744052732","sw":false,"type":"image"}
+{"ev":"response","status":200,"url":"https://s8-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/040/300/original/2025-04-07-greenhouse.png?1744052732","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/manifest-dc5ec512.js","sw":false,"type":"script"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/entry.client-ClhIqXFJ.js","sw":false,"type":"script"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/vendor-Ann2cuF6.js","sw":false,"type":"script"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/root-DNMzpkAo.js","sw":false,"type":"script"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/assets/_url_token_.jobs_._job_post_id-Bh7MTGHV.js","sw":false,"type":"script"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/fonts/UntitledSansWeb-Regular.woff","sw":false,"type":"font"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/fonts/UntitledSansWeb-Regular.woff","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/contentScriptMain.js","sw":false,"type":"script"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/contentScriptMain.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/contentScriptMain.js","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/manifest-dc5ec512.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/root-DNMzpkAo.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/_url_token_.jobs_._job_post_id-Bh7MTGHV.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/contentScriptMain.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/entry.client-ClhIqXFJ.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/assets/vendor-Ann2cuF6.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/300/original/AnthropicSansDisplay-Semibold-Static.otf?1782317356","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"response","status":200,"url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/000/original/Body_-_AnthropicSerif-Roman-Web.woff2?1782312604","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/locales/en/job_post.xARVcwpAozf1DR3o13mc-j7C04Jk3mAj0ab7ua2Lkwg.json","sw":false,"type":"fetch"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/locales/en/job_post.xARVcwpAozf1DR3o13mc-j7C04Jk3mAj0ab7ua2Lkwg.json","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"request","url":"https://job-boards.cdn.greenhouse.io/locales/en/common.JhgW1MtlxQMWLxqjNtT6nMMubUGRVw8hHuLsUmHD0-8.json","sw":false,"type":"fetch"}
+{"ev":"response","status":200,"url":"https://job-boards.cdn.greenhouse.io/locales/en/common.JhgW1MtlxQMWLxqjNtT6nMMubUGRVw8hHuLsUmHD0-8.json","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"request","url":"https://www.recaptcha.net/recaptcha/enterprise.js?render=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://www.recaptcha.net/recaptcha/enterprise.js?render=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/000/original/Body_-_AnthropicSerif-Roman-Web.woff2?1782312604","sw":false,"type":"font"}
+{"ev":"request","url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/300/original/AnthropicSansDisplay-Semibold-Static.otf?1782317356","sw":false,"type":"font"}
+{"ev":"request","url":"https://www.dropbox.com/static/api/2/dropins.js","sw":false,"type":"script"}
+{"ev":"request","url":"https://my.greenhouse.io/users/self?job_post_id=5183044008","sw":false,"type":"fetch"}
+{"ev":"request","url":"https://boards.greenhouse.io/uncacheable_attributes/presigned_fields?fields%5B%5D=resume","sw":false,"type":"fetch"}
+{"ev":"request","url":"https://c.spl.greenhouse.io/com.snowplowanalytics.snowplow/tp2","sw":false,"type":"fetch"}
+{"ev":"response","status":200,"url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/000/original/Body_-_AnthropicSerif-Roman-Web.woff2?1782312604","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"request","url":"https://apis.google.com/js/api.js","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://apis.google.com/js/api.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":200,"url":"https://s8-recruiting.cdn.greenhouse.io/job_board_renderer/custom_fonts/fonts/400/014/300/original/AnthropicSansDisplay-Semibold-Static.otf?1782317356","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"request","url":"https://accounts.google.com/gsi/client","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://accounts.google.com/gsi/client","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/recaptcha__en.js","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/recaptcha__en.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.gh7qIZtzO5w.O/m=client,picker/rt=j/sv=1/d=1/ed=1/rs=AHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw/cb=gapi.loaded_0?le=scs,fedcm_migration_mod","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.gh7qIZtzO5w.O/m=client,picker/rt=j/sv=1/d=1/ed=1/rs=AHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw/cb=gapi.loaded_0?le=scs,fedcm_migration_mod","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","sw":false,"type":"document"}
+{"ev":"response","status":401,"url":"https://my.greenhouse.io/users/self?job_post_id=5183044008","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"response","status":200,"url":"https://boards.greenhouse.io/uncacheable_attributes/presigned_fields?fields%5B%5D=resume","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"request","url":"https://content.googleapis.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.gh7qIZtzO5w.O%2Fd%3D1%2Frs%3DAHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw%2Fm%3D__features__","sw":false,"type":"document"}
+{"ev":"response","status":200,"url":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","fromSW":false,"sw":false,"frame":"","type":"document"}
+{"ev":"response","status":200,"url":"https://c.spl.greenhouse.io/com.snowplowanalytics.snowplow/tp2","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"request","url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/styles__ltr.css","sw":false,"type":"stylesheet"}
+{"ev":"request","url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/recaptcha__en.js","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/styles__ltr.css","fromSW":false,"sw":false,"frame":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","type":"stylesheet"}
+{"ev":"response","status":200,"url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/recaptcha__en.js","fromSW":false,"sw":false,"frame":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","type":"script"}
+{"ev":"response","status":200,"url":"https://content.googleapis.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.gh7qIZtzO5w.O%2Fd%3D1%2Frs%3DAHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw%2Fm%3D__features__","fromSW":false,"sw":false,"frame":"","type":"document"}
+{"ev":"request","url":"https://www.recaptcha.net/recaptcha/enterprise/webworker.js?hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8","sw":false,"type":"script"}
+{"ev":"request","url":"https://apis.google.com/js/googleapis.proxy.js?onload=startup","sw":false,"type":"script"}
+{"ev":"request","url":"https://www.gstatic.com/recaptcha/api2/logo_48.png","sw":false,"type":"image"}
+{"ev":"request","url":"https://fonts.gstatic.com/s/roboto/v48/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBA.woff2","sw":false,"type":"font"}
+{"ev":"response","status":200,"url":"https://www.gstatic.com/recaptcha/api2/logo_48.png","fromSW":false,"sw":false,"frame":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","type":"image"}
+{"ev":"response","status":200,"url":"https://fonts.gstatic.com/s/roboto/v48/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBA.woff2","fromSW":false,"sw":false,"frame":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","type":"font"}
+{"ev":"response","status":200,"url":"https://apis.google.com/js/googleapis.proxy.js?onload=startup","fromSW":false,"sw":false,"frame":"https://content.googleapis.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.gh7qIZtzO5w.O%2Fd%3D1%2Frs%3DAHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw%2Fm%3D__features__#parent=https%3A%2F%2Fjob-boards.greenhouse.io&rpctoken=659862036","type":"script"}
+{"ev":"response","status":200,"url":"https://www.recaptcha.net/recaptcha/enterprise/webworker.js?hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8","fromSW":false,"sw":false,"frame":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","type":"script"}
+{"ev":"request","url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/recaptcha__en.js","sw":false,"type":"other"}
+{"ev":"request","url":"https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.gh7qIZtzO5w.O/m=googleapis_proxy/rt=j/sv=1/d=1/ed=1/rs=AHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw/cb=gapi.loaded_0?le=scs","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.gh7qIZtzO5w.O/m=googleapis_proxy/rt=j/sv=1/d=1/ed=1/rs=AHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw/cb=gapi.loaded_0?le=scs","fromSW":false,"sw":false,"frame":"https://content.googleapis.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.gh7qIZtzO5w.O%2Fd%3D1%2Frs%3DAHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw%2Fm%3D__features__#parent=https%3A%2F%2Fjob-boards.greenhouse.io&rpctoken=659862036","type":"script"}
+{"ev":"response","status":200,"url":"https://www.gstatic.com/recaptcha/releases/4EDjxXf4knsx6UBM1L2V6cv8/recaptcha__en.js","fromSW":false,"sw":false,"frame":"https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&k=6LfmcbcpAAAAAChNTbhUShzUOAMj_wY9LQIvLFX0&co=aHR0cHM6Ly9qb2ItYm9hcmRzLmdyZWVuaG91c2UuaW86NDQz&hl=en&v=4EDjxXf4knsx6UBM1L2V6cv8&size=invisible&anchor-ms=20000&execute-ms=30000&cb=za1op1w9z8tt","type":"other"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/pageScript.js","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"https://www.dropbox.com/static/api/2/dropins.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/pageScript.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/pageScript.js","sw":false,"type":"script"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/pageScript.js","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"script"}
+{"ev":"request","url":"https://content.googleapis.com/discovery/v1/apis/drive/v3/rest?pp=0&fields=kind%2Cname%2Cversion%2CrootUrl%2CservicePath%2Cresources%2Cparameters%2Cmethods%2CbatchPath%2Cid","sw":false,"type":"xhr"}
+{"ev":"response","status":200,"url":"https://content.googleapis.com/discovery/v1/apis/drive/v3/rest?pp=0&fields=kind%2Cname%2Cversion%2CrootUrl%2CservicePath%2Cresources%2Cparameters%2Cmethods%2CbatchPath%2Cid","fromSW":false,"sw":false,"frame":"https://content.googleapis.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.gh7qIZtzO5w.O%2Fd%3D1%2Frs%3DAHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw%2Fm%3D__features__#parent=https%3A%2F%2Fjob-boards.greenhouse.io&rpctoken=659862036","type":"xhr"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/mono-favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"https://api.simplify.jobs/v2/candidate/me/","sw":true,"type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/mono-favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-16.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-32.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-48.png","sw":true,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/icons/favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-128.png","sw":true,"type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-16.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-32.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-48.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/icons/favicon-128.png","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/content-scripts/content.css","sw":false,"type":"fetch"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/content-scripts/content.css","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/content-scripts/content.css","sw":false,"type":"fetch"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/content-scripts/content.css","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"fetch"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/fonts/inter-latin-wght-normal.woff2","sw":false,"type":"font"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/village/mark.jpeg","sw":false,"type":"image"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/village/jane.png","sw":false,"type":"image"}
+{"ev":"request","url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/village/cecil.png","sw":false,"type":"image"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/village/mark.jpeg","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/village/mark.jpeg","sw":false,"type":"image"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/village/jane.png","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/village/jane.png","sw":false,"type":"image"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/village/cecil.png","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/village/cecil.png","sw":false,"type":"image"}
+{"ev":"response","status":0,"url":"chrome-extension://d38cceb6-7d47-470d-a29e-4e1ee3eca0cf/assets/fonts/inter-latin-wght-normal.woff2","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"request","url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/fonts/inter-latin-wght-normal.woff2","sw":false,"type":"font"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/village/mark.jpeg","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/village/jane.png","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/village/cecil.png","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"image"}
+{"ev":"response","status":200,"url":"chrome-extension://pbanhockgagggenencehbnadejlgchfc/assets/fonts/inter-latin-wght-normal.woff2","fromSW":false,"sw":false,"frame":"https://job-boards.greenhouse.io/anthropic/jobs/5183044008","type":"font"}
+{"ev":"response","status":401,"url":"https://api.simplify.jobs/v2/candidate/me/","fromSW":false,"sw":true,"frame":"<no frame: service worker>","type":"fetch"}

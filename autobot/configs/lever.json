@@ -1,0 +1,147 @@
+{
+  "id": "lever",
+  "name": "Lever",
+  "urls": [
+    "*://jobs.lever.co/*/apply*",
+    "*://jobs.eu.lever.co/*/apply*",
+    "*://jobs.lever.co/*"
+  ],
+  "probes": [
+    [
+      "//form[@id='application-form'][.//input[@name='name']][.//input[@name='email']]"
+    ],
+    [
+      "//input[@name='urls[LinkedIn]']"
+    ],
+    [
+      "//select[@name='eeo[gender]']"
+    ]
+  ],
+  "container": [
+    "//form[@id='application-form']",
+    "//form[.//input[@name='name'] and .//input[@name='email']]"
+  ],
+  "defaultMethod": "default",
+  "fields": [
+    {
+      "key": "resume",
+      "method": "upload",
+      "path": [
+        ".//input[@type='file' and @name='resume']",
+        ".//input[@type='file' and @id='resume-upload-input']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "full_name",
+      "path": [
+        ".//input[@name='name']"
+      ]
+    },
+    {
+      "key": "email",
+      "path": [
+        ".//input[@name='email']"
+      ]
+    },
+    {
+      "key": "phone",
+      "path": [
+        ".//input[@name='phone']"
+      ]
+    },
+    {
+      "key": "location",
+      "method": "combobox",
+      "path": [
+        ".//input[@name='location']"
+      ],
+      "allowFailure": true,
+      "optionsPath": [
+        "css:.location-suggestion, css:[class*='suggestion'], css:[role=option]"
+      ]
+    },
+    {
+      "key": "current_company",
+      "path": [
+        ".//input[@name='org']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "linkedin",
+      "path": [
+        ".//input[@name='urls[LinkedIn]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "github",
+      "path": [
+        ".//input[@name='urls[GitHub]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "portfolio",
+      "path": [
+        ".//input[@name='urls[Portfolio]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "twitter",
+      "path": [
+        ".//input[@name='urls[Twitter]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "website",
+      "path": [
+        ".//input[@name='urls[Other]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "gender",
+      "values": "gender",
+      "path": [
+        ".//select[@name='eeo[gender]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "ethnicity",
+      "values": "ethnicity",
+      "path": [
+        ".//select[@name='eeo[race]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "veteran",
+      "values": "veteran",
+      "path": [
+        ".//select[@name='eeo[veteran]']"
+      ],
+      "allowFailure": true
+    },
+    {
+      "key": "disability",
+      "values": "disability",
+      "path": [
+        ".//select[@name='eeo[disability]']"
+      ],
+      "allowFailure": true
+    }
+  ],
+  "submit": [
+    ".//button[@type='submit' and contains(@class, 'postings-btn')]",
+    ".//button[@id='btn-submit']"
+  ],
+  "success": [
+    ".//*[contains(@class, 'application-confirmation')]",
+    ".//h3[contains(., 'Application submitted')]"
+  ]
+}
