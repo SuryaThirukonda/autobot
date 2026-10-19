@@ -76,11 +76,13 @@ try {
       const first = inputs[0]; let q = ""; let box = first.closest("label")?.parentElement || first.parentElement;
       for (let i = 0; box && i < 6 && !q; i++, box = box.parentElement) { const c = Array.from(box.querySelectorAll("legend, [class*='label'], [class*='question'], h3, h4, p, span, div")).find((c) => !c.contains(first) && !c.querySelector("input") && txt(c).length > 3 && txt(c).length < 200); if (c) q = txt(c); }
       const checked = inputs.filter((i) => i.checked).map((i) => txt(i.closest("label")) || txt(document.querySelector(`label[for="${CSS.escape(i.id)}"]`)) || i.value);
-      out.push({ type: first.type, q: q.slice(0, 70), options: inputs.length, checked });
+      // Yes/No buttons over a hidden checkbox (Ashby): the pressed button is the answer, not the checkbox.
+      const pressed = Array.from(first.parentElement?.querySelectorAll("button[aria-pressed='true'], [role=button][aria-pressed='true']") || []).map(txt);
+      out.push({ type: first.type, q: q.slice(0, 70), options: inputs.length, checked, pressed });
     }
     return out;
   });
-  console.log("choice groups (question → checked):"); for (const g of groups) console.log(`  ${g.type.padEnd(8)} [${String(g.options).padStart(2)}] ${g.q.padEnd(72)} → ${g.checked.join(" | ") || "(none)"}`);
+  console.log("choice groups (question → checked):"); for (const g of groups) console.log(`  ${g.type.padEnd(8)} [${String(g.options).padStart(2)}] ${g.q.padEnd(72)} → ${g.checked.join(" | ") || "(none)"}${g.pressed.length ? ` (pressed: ${g.pressed.join(", ")})` : ""}`);
   const layout = await page.evaluate(() => { const cs = getComputedStyle(document.documentElement); const fixed = Array.from(document.querySelectorAll("html > div, body > div")).filter((d) => getComputedStyle(d).position === "fixed" || d.shadowRoot).map((d) => { const inner = d.shadowRoot?.querySelector(".col, .column, [class*='panel']"); const r = (inner || d).getBoundingClientRect(); return { id: d.id || d.getAttribute("data-autobot-panel") && "autobot" || d.className?.toString().slice(0, 30) || d.tagName, left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) }; }); return { htmlMarginRight: cs.marginRight, htmlMaxWidth: cs.maxWidth, bodyWidth: document.body.getBoundingClientRect().width, scrollY: window.scrollY, fixed: fixed.filter((f) => f.width > 100) }; });
   console.log("layout:", JSON.stringify(layout));
   const shot = path.join(root, "tests", "out-live.png"); await page.screenshot({ path: shot, fullPage: false }); console.log("screenshot:", shot);

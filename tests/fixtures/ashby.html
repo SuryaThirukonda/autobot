@@ -1,0 +1,191 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Ashby-like application (2026 markup: Legal Name, "Autofill from resume")</title>
+<style>
+body{font:14px system-ui;margin:24px;max-width:760px} label{display:block;font-weight:600;margin-top:14px} input[type=text],input[type=email],input[type=tel],textarea{width:100%;padding:6px;margin-top:4px;box-sizing:border-box}
+.ashby-application-form-autofill-uploader{border:1px dashed #888;padding:12px;margin-bottom:12px;position:relative}
+.ashby-application-form-autofill-input-root > input[type=file], .ashby-application-form-input-file > input[type=file]{display:none}
+.ashby-application-form-autofill-input-drag-layer, .ashby-application-form-autofill-input-pending-layer{display:flex;visibility:hidden;opacity:0}
+.parsing .ashby-application-form-autofill-input-pending-layer{visibility:visible;opacity:1}
+.ashby-application-form-input-yesno{position:relative} .ashby-application-form-input-yesno > input{position:absolute;opacity:0;width:1px;height:1px}
+._active_1svni_57{background:#246;color:#fff}
+[role=listbox]{position:absolute;background:#fff;border:1px solid #999;z-index:5;min-width:320px} [role=option]{padding:4px 8px;cursor:pointer} [role=option][aria-selected=true]{background:#def}
+</style></head>
+<body>
+<div id="root">
+  <div class="_navRoot_5bhg5_28 ashby-job-posting-header"><h1 class="ashby-job-posting-heading">Software Engineer, Infrastructure</h1></div>
+  <div class="ashby-job-posting-right-pane">
+    <nav class="_tabs_5yu8i_29" role="tablist"><a id="job-overview" role="tab" tabindex="-1">Overview</a><a id="job-application-form" role="tab" tabindex="0">Application</a></nav>
+    <div id="form" role="tabpanel" aria-labelledby="job-application-form" tabindex="0">
+      <!-- Ashby's resume parser: a file here locks the form while parsing, then overwrites fields. autobot must never touch it. -->
+      <div class="_autofillPane_5yu8i_448 ashby-application-form-autofill-uploader _container_f7cvd_28">
+        <div class="_root_xd2v0_1 ashby-application-form-autofill-input-root" role="presentation">
+          <input type="file" accept="application/pdf,.pdf,application/msword,.doc" tabindex="-1">
+          <div class="_base_xd2v0_31 ashby-application-form-autofill-input-base-layer"><div class="_content_xd2v0_36"><div class="_header_xd2v0_43">
+            <h3 class="_title_xd2v0_64 ashby-application-form-autofill-input-title">Autofill from resume</h3></div>
+            <p class="_description_xd2v0_76 ashby-application-form-autofill-input-description">Upload your resume here to autofill key application fields.</p>
+            <div class="_cta_xd2v0_88"><button class="_button_zyh3g_28 _secondary_zyh3g_115 _ctaButton_xd2v0_94">Upload file</button></div></div></div>
+          <div class="_drag_xd2v0_120 ashby-application-form-autofill-input-drag-layer"><span>Drop your resume here!</span></div>
+          <div class="_pending_xd2v0_121 ashby-application-form-autofill-input-pending-layer"><span role="progressbar" aria-label="Loading..."></span><span>Parsing your resume. Autofilling key fields...</span></div>
+        </div>
+      </div>
+      <div class="_applicationLimitCallout_5yu8i_447 ashby-application-blocking-disclosure _container_f7cvd_28"><div><span>This job has application limits</span></div></div>
+
+      <div class="_jobPostingForm_5yu8i_402 ashby-application-form-container _container_f7cvd_28">
+        <div class="_section_5yu8i_86 ashby-application-form-section-container">
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="_systemfield_name">Legal Name</label>
+            <div class="_description_1e3gg_48 ashby-application-form-question-description"><p>Your legal name as shown on your government-issued ID.</p></div>
+            <div><input class="_input_80epu_28 _input_1e3gg_32 ashby-application-form-input-text" id="_systemfield_name" name="_systemfield_name" type="text" placeholder="Type here..." value=""></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _label_1e3gg_42 ashby-application-form-question-title" for="5d0b7c2e-1f4a-4c8e-9a61-0c2f3e4d5a6b">Preferred Name (if applicable)</label>
+            <div><input class="_input_80epu_28 _input_1e3gg_32 ashby-application-form-input-text" id="5d0b7c2e-1f4a-4c8e-9a61-0c2f3e4d5a6b" name="5d0b7c2e-1f4a-4c8e-9a61-0c2f3e4d5a6b" type="text" placeholder="Type here..." value=""></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="_systemfield_email">Email</label>
+            <div><input class="_input_80epu_28 _input_1e3gg_32 ashby-application-form-input-text" id="_systemfield_email" name="_systemfield_email" type="email" placeholder="hello@example.com..." value=""></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="_systemfield_resume">Resume</label>
+            <div class="_container_10xk4_70 ashby-application-form-input-file" role="presentation">
+              <input id="_systemfield_resume" type="file" accept="application/pdf,.pdf,application/msword,.doc" tabindex="-1">
+              <div class="_instructions_10xk4_33 ashby-application-form-input-file-dropzone"><button class="_button_zyh3g_28 _secondary_zyh3g_115 ashby-application-form-input-file-dropzone-upload"><span><span id="resume-shown">Upload File</span></span></button>
+                <p class="_dragInstructions_10xk4_28 ashby-application-form-input-file-dropzone-instructions">or drag and drop here</p></div>
+            </div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="8c1e2f3a-4b5d-4e6f-8a7b-9c0d1e2f3a4b">Phone Number</label>
+            <input class="_input_80epu_28 _input_1e3gg_32 ashby-application-form-input-text" id="8c1e2f3a-4b5d-4e6f-8a7b-9c0d1e2f3a4b" name="8c1e2f3a-4b5d-4e6f-8a7b-9c0d1e2f3a4b" type="tel" placeholder="1-415-555-1234..." value="">
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <!-- The label still points at _systemfield_location, but the combobox input has no id. -->
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="_systemfield_location">Where are you currently located?</label>
+            <div class="_inputContainer_d7ago_28"><input class="_input_d7ago_28 ashby-application-form-input-autocomplete" placeholder="Start typing..." aria-autocomplete="list" aria-expanded="false" aria-haspopup="listbox" role="combobox" value=""><button class="_container_pjyt6_1 _toggleButton_d7ago_32" aria-label="Toggle"></button></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="2a3b4c5d-6e7f-4a8b-9c0d-1e2f3a4b5c6d">When can you start a new role?</label>
+            <div class="react-datepicker-wrapper"><div class="react-datepicker__input-container"><input class="_input_gc9ve_28 _greedy_gc9ve_61 ashby-application-form-input-date" type="text" placeholder="Pick date..." value=""></div></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="3b4c5d6e-7f8a-4b9c-8d0e-1f2a3b4c5d6e">Are you authorized to work in the country where the job is located?</label>
+            <div class="_container_1svni_28 _yesno_1e3gg_148 ashby-application-form-input-yesno" id="yn-auth"><button class="_container_pjyt6_1 _option_1svni_32 ashby-application-form-input-yesno-option" aria-pressed="false">Yes</button><button class="_container_pjyt6_1 _option_1svni_32 ashby-application-form-input-yesno-option" aria-pressed="false">No</button><input class="_input_1svni_78" name="3b4c5d6e-7f8a-4b9c-8d0e-1f2a3b4c5d6e" type="checkbox" tabindex="-1"></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="4c5d6e7f-8a9b-4c0d-9e1f-2a3b4c5d6e7f">Will you now or in the future require sponsorship for employment visa status?</label>
+            <div class="_description_1e3gg_48 ashby-application-form-question-description"><p>Sponsorship support depends on the role and location.</p></div>
+            <div class="_container_1svni_28 _yesno_1e3gg_148 ashby-application-form-input-yesno" id="yn-sponsor"><button class="_container_pjyt6_1 _option_1svni_32 ashby-application-form-input-yesno-option" aria-pressed="false">Yes</button><button class="_container_pjyt6_1 _option_1svni_32 ashby-application-form-input-yesno-option" aria-pressed="false">No</button><input class="_input_1svni_78" name="4c5d6e7f-8a9b-4c0d-9e1f-2a3b4c5d6e7f" type="checkbox" tabindex="-1"></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="5d6e7f8a-9b0c-4d1e-8f2a-3b4c5d6e7f8a">Are you able to work from our office three days per week?</label>
+            <div class="_container_1svni_28 _yesno_1e3gg_148 ashby-application-form-input-yesno" id="yn-office"><button class="_container_pjyt6_1 _option_1svni_32 ashby-application-form-input-yesno-option" aria-pressed="false">Yes</button><button class="_container_pjyt6_1 _option_1svni_32 ashby-application-form-input-yesno-option" aria-pressed="false">No</button><input class="_input_1svni_78" name="5d6e7f8a-9b0c-4d1e-8f2a-3b4c5d6e7f8a" type="checkbox" tabindex="-1"></div>
+          </div>
+          <div class="_fieldEntry_1e3gg_28 ashby-application-form-field-entry">
+            <label class="_heading_f7cvd_52 _label_1e3gg_42 ashby-application-form-question-title" for="6e7f8a9b-0c1d-4e2f-9a3b-4c5d6e7f8a9b">Additional Information</label>
+            <div class="_description_1e3gg_48 ashby-application-form-question-description"><p>Anything else you want us to know.</p></div>
+            <textarea class="_input_zf0lr_28 _input_1e3gg_32 ashby-application-form-input-textarea" id="6e7f8a9b-0c1d-4e2f-9a3b-4c5d6e7f8a9b" name="6e7f8a9b-0c1d-4e2f-9a3b-4c5d6e7f8a9b" placeholder="Type here..."></textarea>
+          </div>
+        </div>
+        <div class="_section_5yu8i_86 ashby-application-form-section-container">
+          <div><fieldset class="_container_1258i_28 _fieldEntry_1e3gg_28 ashby-application-form-input-checkbox-group">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="7f8a9b0c-1d2e-4f3a-8b4c-5d6e7f8a9b0c">Applicant Arbitration Agreement Acknowledgement</label>
+            <div class="_option_1258i_34 ashby-application-form-input-checkbox-group-option"><span class="ashby-application-form-input-checkbox-group-option-checkbox _container_1danv_28"><input id="arb-labeled-checkbox-0" name="I acknowledge the Arbitration Agreement." type="checkbox"></span>
+              <label class="_label_1258i_42 ashby-application-form-input-checkbox-group-option-label" for="arb-labeled-checkbox-0">I acknowledge that I have read the Arbitration Agreement.</label></div>
+          </fieldset></div>
+          <div><fieldset class="_container_1258i_28 _fieldEntry_1e3gg_28 ashby-application-form-input-checkbox-group">
+            <label class="_heading_f7cvd_52 _required_f7cvd_91 _label_1e3gg_42 ashby-application-form-question-title" for="8a9b0c1d-2e3f-4a4b-9c5d-6e7f8a9b0c1d">I certify that the information in this application is accurate.</label>
+            <div class="_option_1258i_34 ashby-application-form-input-checkbox-group-option"><span class="ashby-application-form-input-checkbox-group-option-checkbox _container_1danv_28"><input id="cert-labeled-checkbox-0" name="I confirm I have read the above." type="checkbox"></span>
+              <label class="_label_1258i_42 ashby-application-form-input-checkbox-group-option-label" for="cert-labeled-checkbox-0">I confirm I have read the above.</label></div>
+          </fieldset></div>
+        </div>
+      </div>
+
+      <!-- Voluntary EEO survey: a second form container, outside the first one. -->
+      <div class="ashby-survey-form-container"><div class="_jobPostingForm_5yu8i_402 ashby-application-form-container _container_f7cvd_28">
+        <div class="_section_5yu8i_86 ashby-application-form-section-container">
+          <div class="_sectionHeader_5yu8i_93 ashby-application-form-section-header"><div class="ashby-application-form-section-header-description"><p><strong>U.S. EQUAL EMPLOYMENT OPPORTUNITY INFORMATION</strong> (completion is voluntary)</p></div></div>
+          <div id="eeo"></div>
+        </div>
+      </div></div>
+      <button class="_button_zyh3g_28 _primary_zyh3g_97 _submitButton_5yu8i_411 ashby-application-form-submit-button" id="submit"><span>Submit Application</span></button>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  window.__autofillParses = 0; window.__submitClicks = 0; window.__resumeUploads = []; window.__locQueries = []; window.__location = ""; window.__yesno = {};
+
+  // EEO radio groups, built the way Ashby renders them (fieldset > title label > option divs with a sibling label).
+  const GROUPS = [
+    ["_systemfield_eeoc_gender", "Gender", ["Male", "Female", "Decline to self-identify"]],
+    ["_systemfield_eeoc_race", "Race", ["Hispanic or Latino", "White (Not Hispanic or Latino)", "Black or African American (Not Hispanic or Latino)", "Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)", "Asian (Not Hispanic or Latino)", "American Indian or Alaska Native (Not Hispanic or Latino)", "Two or More Races (Not Hispanic or Latino)", "Decline to self-identify"]],
+    ["_systemfield_eeoc_veteran_status", "Veteran Status", ["I identify as one or more of the classifications of protected veteran", "I am not a protected veteran", "I decline to self-identify for protected veteran status"]],
+  ];
+  $("#eeo").innerHTML = GROUPS.map(([sys, title, opts]) => { const name = `9b0c1d2e-3f4a-4b5c-8d6e-7f8a9b0c1d2e_${sys}`; return `<div><fieldset class="_container_1258i_28 _fieldEntry_1e3gg_28 ashby-application-form-input-radio-group">
+    <label class="_heading_f7cvd_52 _label_1e3gg_42 ashby-application-form-question-title" for="${sys}">${title}</label>
+    ${opts.map((o, i) => `<div class="_option_1258i_34 false ashby-application-form-input-radio-group-option"><span class="_container_132c8_28"><span class="_circle_132c8_77"></span><input class="ashby-application-form-input-radio-group-option-radio" id="${name}-labeled-radio-${i}" name="${name}" type="radio"></span><label class="_label_1258i_42 ashby-application-form-input-radio-group-option-label" for="${name}-labeled-radio-${i}">${o}</label></div>`).join("")}
+  </fieldset></div>`; }).join("");
+
+  // "Autofill from resume": parsing disables the whole form, then overwrites the name.
+  const pane = $(".ashby-application-form-autofill-input-root");
+  pane.querySelector("input[type=file]").addEventListener("change", () => {
+    window.__autofillParses++;
+    pane.classList.add("parsing");
+    const ctrls = document.querySelectorAll("#form .ashby-application-form-container input, #form .ashby-application-form-container textarea");
+    ctrls.forEach((c) => { c.disabled = true; });
+    setTimeout(() => { $("#_systemfield_name").value = "Parsed From Resume"; ctrls.forEach((c) => { c.disabled = false; }); pane.classList.remove("parsing"); }, 1200);
+  });
+
+  // Resume dropzone: shows the chosen file at once, as Ashby does, while the upload runs for 800 ms. Ashby saves every
+  // field on its server and each save answers with the whole form, so a save of another field still in flight when
+  // the upload lands can come back last and drop the file. Modelled here: editing another field mid-upload drops it.
+  const resume = $("#_systemfield_resume");
+  let uploading = false;
+  window.__resumeDropped = 0;
+  resume.addEventListener("change", (e) => { const f = e.target.files[0]; if (!f) return; window.__resumeUploads.push(f.name); $("#resume-shown").textContent = `${f.name} Replace`; uploading = true; setTimeout(() => { uploading = false; }, 800); });
+  for (const t of ["input", "change"]) $("#form").addEventListener(t, (e) => {
+    if (!uploading || e.target === resume || pane.contains(e.target)) return;
+    uploading = false; window.__resumeDropped++; resume.value = ""; $("#resume-shown").textContent = "Upload File";
+  }, true);
+
+  // Yes/no buttons with a hidden checkbox: checked = Yes, unchecked after an answer = No, clicking the pressed button
+  // clears the answer.
+  for (const g of document.querySelectorAll(".ashby-application-form-input-yesno")) {
+    const [yes, no] = g.querySelectorAll("button"); const cb = g.querySelector("input");
+    let state = null;
+    const render = () => { for (const [b, v] of [[yes, true], [no, false]]) { b.setAttribute("aria-pressed", String(state === v)); b.classList.toggle("_active_1svni_57", state === v); } cb.checked = state === true; window.__yesno[g.id] = state; };
+    cb.addEventListener("change", () => { state = cb.checked; render(); });
+    for (const [b, v] of [[yes, true], [no, false]]) b.addEventListener("click", () => { state = state === v ? null : v; render(); });
+    render();
+  }
+
+  // Location: an ARIA combobox whose listbox is a floating portal at the end of <body>, wired up only while open.
+  const LOCS = ["Austin, Texas, United States", "Austin, Minnesota, United States", "Austin, Nevada, United States", "Austintown, Ohio, United States", "Austin, Indiana, United States", "Boston, Massachusetts, United States"];
+  const loc = $(".ashby-application-form-input-autocomplete");
+  let menu = null, timer = null, uid = 0;
+  const close = () => { menu?.remove(); menu = null; loc.removeAttribute("aria-controls"); loc.setAttribute("aria-expanded", "false"); };
+  const open = (items) => {
+    close();
+    menu = document.createElement("div"); menu.id = `:r${uid++}:`; menu.setAttribute("role", "listbox"); menu.className = "_floatingContainer_d7ago_103";
+    const r = loc.getBoundingClientRect(); menu.style.left = `${r.left + window.scrollX}px`; menu.style.top = `${r.bottom + window.scrollY}px`;
+    const box = document.createElement("div"); box.className = "_resultContainer_d7ago_116"; menu.appendChild(box);
+    items.forEach((label, i) => {
+      const o = document.createElement("div"); o.setAttribute("role", "option"); o.id = `:r${uid++}:`; o.setAttribute("aria-selected", String(i === 0)); o.className = "_result_d7ago_107 ashby-application-form-input-autocomplete-result"; o.textContent = label;
+      o.addEventListener("mousedown", (e) => e.preventDefault());
+      o.addEventListener("click", () => { loc.value = label; window.__location = label; close(); });
+      box.appendChild(o);
+    });
+    document.body.appendChild(menu); loc.setAttribute("aria-controls", menu.id); loc.setAttribute("aria-expanded", "true");
+  };
+  loc.addEventListener("input", () => {
+    clearTimeout(timer); window.__location = "";
+    const q = loc.value.trim().toLowerCase(); if (!q) { close(); return; }
+    // Like Ashby's geo search: every place sharing the first word, so the resolver has to pick among look-alikes.
+    timer = setTimeout(() => { window.__locQueries.push(loc.value); const head = q.split(/[ ,]+/)[0]; open(LOCS.filter((l) => l.toLowerCase().includes(head))); }, 150);
+  });
+  loc.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+
+  $("#submit").addEventListener("click", () => { window.__submitClicks++; });
+})();
+</script>
+</body></html>

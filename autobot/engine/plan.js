@@ -118,6 +118,7 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
         const expectsWait = step.time !== undefined || field.time !== undefined || steps.indexOf(step) > 0;
         el = expectsWait ? await AB.waitFor(paths, { ctx: container, timeout: step.time ?? field.time ?? 2500, signal }) : AB.queryAny(paths, container);
       }
+      if (el && state.excluded?.(el)) el = null;
       if (!el) {
         if (step.allowFailure || field.allowFailure) continue;
         onStatus(fullKey, anyWrite ? "filled" : "not-found", paths[0]);
@@ -162,14 +163,16 @@ AB.runHeuristics = async (state, touched) => {
   for (let el of controls) {
     if (signal?.aborted) return n;
     if (touched.has(el) || touchedKeys.has(el.id || el.name)) continue; // same control after a framework re-render
+    if (state.excluded?.(el)) continue;
     if (el instanceof HTMLInputElement && el.type === "file") {
       const lbl = AB.labelFor(el).join(" ");
       if (/resume|cv|curriculum/.test(lbl) && resume?.dataBase64 && !el.files?.length) { if (await AB.writeFile(el, resume)) { onStatus("resume", "filled", resume.name); n++; } }
       continue;
     }
+    const yesNo = AB.yesNoButtons(el);   // Yes/No buttons over a hidden checkbox (Ashby)
     const current = AB.readBack(el);
     const hasValue = el instanceof HTMLSelectElement ? el.selectedIndex > 0 && el.value !== "" && !/^(select|choose|please|--|none|pick)/.test(AB.norm(current)) : Boolean(current);
-    if (hasValue) continue; // already has a value
+    if (hasValue && !yesNo) continue; // already has a value (a Yes/No pair reports its answer below)
     const { key, label, labels, via } = AB.classify(el);
     if (via === "search-box") continue; // widget-internal search boxes are not questions
     const answerFor = () => { for (const l of labels || [label]) { const a = AB.lookupAnswer(profile, l); if (a !== undefined) return a; } return undefined; };
@@ -177,6 +180,22 @@ AB.runHeuristics = async (state, touched) => {
     if (isCheckbox) {
       // Never tick consent/marketing/certification boxes, and only tick boxes whose question is a yes/no profile fact.
       if (/agree|consent|acknowledg|certif|marketing|newsletter|subscribe|terms|privacy|policy|confirm|accurate|signature/.test(label)) continue;
+      if (yesNo) {
+        // Press the wanted button once. An answered question keeps its answer: a second press would clear it.
+        const fact = ["work_auth_us", "sponsorship", "over18"].includes(key) ? key : null;
+        const name = fact || `? ${label.slice(0, 40)}`;
+        const a = fact ? AB.getProfileValue(profile, fact) : answerFor();
+        const t = AB.norm(AB.boolToYesNo(a ?? ""));
+        const want = /^(yes|true|y)$/.test(t) ? "Yes" : /^(no|false|n)$/.test(t) ? "No" : null;
+        touched.add(el);
+        if (yesNo.pressed) { if (want) onStatus(name, yesNo.pressed === want ? "filled" : "skipped", yesNo.pressed === want ? `${want} (already selected)` : `kept the existing answer "${yesNo.pressed}"`); continue; }
+        if (!want) { if (label) onStatus(name, "unknown", a === undefined || a === "" ? (fact ? `${fact} (empty in profile)` : "no rule") : `answer "${String(a).slice(0, 30)}" is not yes or no`); continue; }
+        const ok = await AB.writeYesNo(el, want);
+        onStatus(name, ok ? "filled" : "error", ok ? want : "yes/no press did not register");
+        if (ok) n++;
+        await AB.sleep(50);
+        continue;
+      }
       if (!["work_auth_us", "sponsorship", "over18"].includes(key)) { const a = answerFor(); if (a === undefined) continue; const yes = /^(yes|true|y)$/i.test(String(a)); const ok = AB.setChecked(el, yes); touched.add(el); onStatus(`? ${label.slice(0, 40)}`, ok ? "filled" : "error", String(a)); if (ok) n++; continue; }
     }
     let value, values;
@@ -214,7 +233,10 @@ AB.fill = async ({ config, profile, resume, settings, onStatus = () => {}, signa
   AB.searchResults = new WeakMap();   // search outcomes belong to this run only
   const container = AB.findContainer(config);
   const touched = new Set();
-  const state = { config, container, profile, resume, settings, onStatus, signal, touched };
+  // Regions inside the container that are never written (containerExcluded), e.g. Ashby's "Autofill from resume" box:
+  // a file there starts the ATS's resume parser, which locks the form and overwrites fields.
+  const excluded = (el) => AB.arr(config.containerExcluded).some((p) => AB.query(p, document, true).some((r) => r.contains(el)));
+  const state = { config, container, profile, resume, settings, onStatus, signal, touched, excluded };
   const statusWrap = (k, s, d) => { onStatus(k, s, d); };
   state.onStatus = statusWrap;
   // Pre-steps (e.g. click "Apply" to reveal the form).
