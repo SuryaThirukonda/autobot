@@ -1,5 +1,7 @@
 # autobot
 
+**To use the extension, start with [USAGE.md](USAGE.md):** installing it, setting up your profile, filling applications, settings and troubleshooting. This README covers how autobot works inside.
+
 A deterministic job-application autofill extension (Manifest V3). No AI, no server, no telemetry. Your profile lives in `chrome.storage.local` and never leaves the browser.
 
 autobot is a clean-room reconstruction built from two reverse-engineering passes:

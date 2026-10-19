@@ -1,5 +1,7 @@
 # simplify_rea: reverse-engineering two autofill extensions into autobot
 
+**Using autobot:** see [autobot/USAGE.md](autobot/USAGE.md) for installing the extension, setting up your profile and filling applications.
+
 | Folder | What |
 |---|---|
 | `autobot/` | **The deliverable.** autobot 0.2.0, a deterministic, local-only job-application autofill extension. It combines both reverse-engineering passes: the config-driven fill engine from Simplify Copilot and Jobright, and Jobright's multi-round option search with a local resolver. See `autobot/README.md`. |
@@ -24,4 +26,4 @@ npm run test:all     # search-logic unit tests, then the browser fixture suite a
 npm run pack         # dist/autobot-<version>.zip, without your profile file
 ```
 
-Then load `autobot/` as an unpacked extension: `chrome://extensions` → Developer mode → Load unpacked.
+Then load `autobot/` as an unpacked extension: `chrome://extensions` → Developer mode → Load unpacked. The full walkthrough is [autobot/USAGE.md](autobot/USAGE.md).
