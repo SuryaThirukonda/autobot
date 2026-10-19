@@ -39,8 +39,14 @@ AB.isVisible = (el) => {
 
 AB.textOf = (el) => (el ? AB.norm(el.innerText || el.textContent) : "");
 
+// Whole-word tests on AB.norm output (words are single-space separated): "man" is in "cisgender man" but not in
+// "woman", and "no" is not in "not".
+AB.hasWords = (text, words) => Boolean(text && words) && (" " + text + " ").includes(" " + words + " ");
+AB.startsWithWords = (text, words) => Boolean(text && words) && (text + " ").startsWith(words + " ");
+
 // Deterministic best-match of a wanted value against a list of option labels.
-// Returns index or -1. Exact > exact-normalized > synonym > startsWith > contains > token overlap.
+// Returns index or -1. Exact > exact-normalized > synonym > startsWith > contains > token overlap; the last three
+// compare whole words only.
 AB.bestOption = (wanted, labels, synonyms) => {
   const wants = AB.arr(wanted).map(String);
   const nl = labels.map(AB.norm);
@@ -65,13 +71,13 @@ AB.bestOption = (wanted, labels, synonyms) => {
       }
     }
   }
-  if (i < 0) i = tryEach((nw, l) => l.startsWith(nw) || nw.startsWith(l));
-  if (i < 0) i = tryEach((nw, l) => l.includes(nw) || nw.includes(l));
+  if (i < 0) i = tryEach((nw, l) => AB.startsWithWords(l, nw) || AB.startsWithWords(nw, l));
+  if (i < 0) i = tryEach((nw, l) => AB.hasWords(l, nw) || AB.hasWords(nw, l));
   if (i < 0) {
     // token overlap: all wanted tokens present in label
     i = tryEach((nw, l) => {
       const toks = nw.split(" ").filter((t) => t.length > 2);
-      return toks.length > 0 && toks.every((t) => l.includes(t));
+      return toks.length > 0 && toks.every((t) => AB.hasWords(l, t));
     });
   }
   return i;

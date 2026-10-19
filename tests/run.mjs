@@ -19,6 +19,8 @@ const extDir = path.resolve(root, extArg ? extArg.slice(6) : process.env.AUTOBOT
 const hasSearch = fs.existsSync(path.join(extDir, "engine", "search.js"));
 // Per-ATS names and the rerun checks arrived in 0.2.0; older folders (legacy/) skip those blocks.
 const has020 = hasSearch && /S\.atsAlternates\s*=/.test(fs.readFileSync(path.join(extDir, "engine", "search.js"), "utf8"));
+// Whole-word option matching and checked react-select picks came with the EEO fix; older folders skip that block.
+const hasWholeWords = /AB\.hasWords\s*=/.test(fs.readFileSync(path.join(extDir, "engine", "util.js"), "utf8"));
 const headed = process.argv.includes("--headed");
 
 const PROFILE = {
@@ -83,6 +85,14 @@ const readJobboards = (page) => page.evaluate(() => { const sv = (id) => documen
   q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
 // Statuses that report a choice the control already showed, as "key" strings.
 const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s) => s[1] === "filled" && /already selected/.test(s[2])).map((s) => s[0]));
+// greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits, the
+// values of react-select's hidden "required" inputs (never written) and every text typed into each react-select.
+const readEeo = (page) => page.evaluate(() => ({
+  shown: Object.fromEntries(Array.from(document.querySelectorAll("input[role=combobox]")).map((i) => [i.id, i.closest(".select__control").querySelector(".select__single-value")?.textContent || ""])),
+  picks: Object.keys(window.__picks).sort().map((k) => `${k}=${window.__picks[k].join("|")}`), boxes: Array.from(document.querySelectorAll("input[type=checkbox]")).map((c) => c.checked), submits: window.__submits,
+  required: Array.from(document.querySelectorAll("input[aria-hidden=true][tabindex='-1']")).map((i) => i.value), typed: window.__typed }));
+// Status lines made from react-select's hidden "required" input, whose label is the placeholder or the live region.
+const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map((s) => s[0]).filter((k) => /^\? (select\b|option\b.*\bselected|\d+ results? available)/.test(k)));
 
 (async () => {
   const { srv, base } = await serve();
@@ -373,12 +383,82 @@ const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s)
       check("jobboards: end year", v.endYear, "2028");
       check("jobboards: MM text fields leave the month selects alone", statusOf(summary, "education[0].start_month|MM") + statusOf(summary, "education[0].end_month|MM"), (t) => (t.match(/"absent"/g) || []).length === 2);
       check("jobboards: school searched once", JSON.stringify(v.q), JSON.stringify([CS]));
+      check("jobboards: no status from react-select's hidden required inputs", hiddenInputKeys(summary), "[]");
       const again = await fillAndWait(page);
       const r = await readJobboards(page);
       check("jobboards rerun: no new search", JSON.stringify(r.q), JSON.stringify([CS]));
       check("jobboards rerun: values unchanged", JSON.stringify(r), JSON.stringify(v));
       check("jobboards rerun: selects report already selected", keptKeys(again), JSON.stringify(["education[0].school", "education[0].degree", "education[0].major", "education[0].start_month", "education[0].end_month"]));
       check("jobboards: never submitted", r.submits, 0);
+      await page.close();
+      await setStorage({ profile: PROFILE });
+    }
+    // ---- Greenhouse job-boards EEO: the EEOC block, demographic surveys and a company's own questions ----
+    // The EEO paths read only Greenhouse's EEOC questions. Everything else is left to the heuristic pass, which reads
+    // each control by its own label and never answers "gender identity". A react-select pick counts only once shown.
+    if (hasWholeWords) {
+      const MALE = { ...PROFILE, gender: "Male" };
+      // Robinhood (demographic survey only): the gender path used to land on "What is your gender identity?", type
+      // "Man" and commit "Cisgender woman" while the status said "filled gender Man".
+      await setStorage({ profile: MALE });
+      let page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html?form=robinhood`);
+      let summary = await fillAndWait(page);
+      let v = await readEeo(page);
+      check("eeo robinhood: gender identity left alone", JSON.stringify([v.shown["1255"], v.picks.filter((p) => p.startsWith("1255="))]), JSON.stringify(["", []]));
+      check("eeo robinhood: no gender status says filled", statusOf(summary, "gender"), (t) => t !== "[]" && !/"filled"/.test(t));
+      check("eeo robinhood: gender identity needs you", statusOf(summary, "? what is your gender identity"), (t) => /"unknown"/.test(t));
+      check("eeo robinhood: race picks the decline option", v.shown["1258"], "I don't wish to answer");
+      check("eeo robinhood: status names the option shown", statusOf(summary, "ethnicity"), (t) => /"filled","I don't wish to answer"/.test(t));
+      // "I am not a protected veteran" lists nothing; the full list is matched next (a "No options" row is no option).
+      check("eeo robinhood: military status searched, then the full list", JSON.stringify(v.typed["1259"]), JSON.stringify(["I am not a protected veteran", ""]));
+      check("eeo robinhood: military status not answered", JSON.stringify([v.shown["1259"], /"filled"/.test(statusOf(summary, "veteran"))]), JSON.stringify(["", false]));
+      check("eeo robinhood: disability decline", v.shown["1261"], "I don't wish to answer");
+      check("eeo robinhood: consent box untouched", JSON.stringify(v.boxes), "[false]");
+      // Unanswered required questions keep react-select's hidden required input; it is no question of its own.
+      check("eeo robinhood: no status from react-select's hidden inputs", hiddenInputKeys(summary), "[]");
+      check("eeo robinhood: hidden required inputs left empty", JSON.stringify(v.required), JSON.stringify(["", ""]));
+      await page.close();
+      // Airbnb (its own Gender / Race / Veteran questions): "Man" was typed into Gender (Male / Female / Other /
+      // Decline), nothing was chosen, and the status said filled.
+      page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html?form=airbnb`);
+      summary = await fillAndWait(page);
+      v = await readEeo(page);
+      check("eeo airbnb: Gender shows Male", v.shown.question_69899960, "Male");
+      check("eeo airbnb: gender status says Male", statusOf(summary, "gender"), (t) => /"filled","Male"/.test(t) && !/"Man"/.test(t));
+      check("eeo airbnb: race and veteran", JSON.stringify([v.shown.question_69899961, v.shown.question_69899962]), JSON.stringify(["Decline to Self Identify", "I am not a protected veteran"]));
+      check("eeo airbnb: decline-to-answer box untouched", JSON.stringify(v.boxes), "[false]");
+      // The phone country lists "United States +1" and shows "+1": still a pick of that option.
+      check("eeo airbnb: phone country shows its code", v.shown.country, "+1");
+      check("eeo airbnb: phone country status filled", statusOf(summary, "country"), (t) => /"filled","\+1"/.test(t));
+      await page.close();
+      // A demographic survey ahead of the EEOC block (Discord): the config answers the EEOC questions, the heuristic
+      // pass the survey's own Gender question. Hispanic "No" reveals the race question.
+      await setStorage({ profile: { ...MALE, hispanic: "No", ethnicity: "Asian" } });
+      page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html`);
+      summary = await fillAndWait(page);
+      v = await readEeo(page);
+      check("eeo both: EEOC answers", JSON.stringify([v.shown.gender, v.shown.hispanic_ethnicity, v.shown.race, v.shown.veteran_status]), JSON.stringify(["Male", "No", "Asian", "I am not a protected veteran"]));
+      check("eeo both: survey Gender Male, gender identity alone", JSON.stringify([v.shown["4033064002"], v.shown["4033068002"]]), JSON.stringify(["Male", ""]));
+      check("eeo both: one pick per answered control", JSON.stringify(v.picks), JSON.stringify(["4033064002=Male", "gender=Male", "hispanic_ethnicity=No", "race=Asian", "veteran_status=I am not a protected veteran"]));
+      const again = await fillAndWait(page);
+      const r = await readEeo(page);
+      check("eeo both rerun: no new picks", JSON.stringify(r.picks), JSON.stringify(v.picks));
+      check("eeo both rerun: EEOC choices already selected", keptKeys(again), (t) => ["gender", "hispanic", "ethnicity", "veteran"].every((k) => t.includes(`"${k}"`)));
+      check("eeo both: never submitted", r.submits, 0);
+      await page.close();
+      // No option for the profile's value: nothing is chosen and no gender status says filled.
+      await setStorage({ profile: { ...PROFILE, gender: "Non-binary" } });
+      page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html`);
+      summary = await fillAndWait(page);
+      v = await readEeo(page);
+      check("eeo no match: gender questions left empty", JSON.stringify([v.shown.gender, v.shown["4033064002"], v.picks.filter((p) => /^(gender|4033064002)=/.test(p))]), JSON.stringify(["", "", []]));
+      check("eeo no match: no gender status says filled", statusOf(summary, "gender"), (t) => t !== "[]" && !/"filled"/.test(t));
+      check("eeo no match: no status from react-select's hidden inputs", hiddenInputKeys(summary), "[]");
+      check("eeo no match: hidden required inputs left empty", JSON.stringify(v.required), JSON.stringify(["", ""]));
       await page.close();
       await setStorage({ profile: PROFILE });
     }

@@ -277,7 +277,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'GENDER', 'gender'), 'gender')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='gender' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[gender]' or @id='job_application_gender']"
       ]
     },
     {
@@ -290,7 +291,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'HISPANIC', 'hispanic'), 'hispanic')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='hispanic_ethnicity' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[hispanic_ethnicity]' or @id='job_application_hispanic_ethnicity']"
       ]
     },
     {
@@ -303,7 +305,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'RACE', 'race'), 'race')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='race' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[race]' or @id='job_application_race']"
       ]
     },
     {
@@ -316,7 +319,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'VETERAN', 'veteran'), 'veteran')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='veteran_status' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[veteran_status]' or @id='job_application_veteran_status']"
       ]
     },
     {
@@ -329,7 +333,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'DISABILITY', 'disability'), 'disability')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='disability_status' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[disability_status]' or @id='job_application_disability_status']"
       ]
     }
   ],

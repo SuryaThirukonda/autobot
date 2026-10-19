@@ -136,7 +136,9 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
   }
   if (!anyFound) { onStatus(fullKey, "absent", "no matching element on this page"); return false; }
   const sr = lastEl && AB.searchResults?.get(lastEl);
-  onStatus(fullKey, anyWrite ? "filled" : "skipped", sr?.decided ? AB.search.describe(sr).slice(0, 120) : anyWrite ? String(AB.readBack(AB.refresh(lastEl)) || candidates[0] || "").slice(0, 60) : "write failed or nothing to write");
+  // Report what the control shows (a react-select's chosen label), not the value that was typed into it.
+  const shown = () => { const el = AB.refresh(lastEl); return AB.shownChoices(el)[0] || AB.readBack(el) || candidates[0] || ""; };
+  onStatus(fullKey, anyWrite ? "filled" : "skipped", sr?.decided ? AB.search.describe(sr).slice(0, 120) : anyWrite ? String(shown()).slice(0, 60) : "write failed or nothing to write");
   return anyWrite;
 };
 
@@ -187,7 +189,7 @@ AB.runHeuristics = async (state, touched) => {
     } catch (e) { AB.log("heuristic write failed", e); }
     touched.add(el);
     const sr = AB.searchResults?.get(el);
-    onStatus(key || `? ${label.slice(0, 40)}`, ok ? "filled" : sr?.decided ? "unknown" : "error", sr?.decided ? AB.search.describe(sr).slice(0, 120) : ok ? String(candidates[0]).slice(0, 60) : "write failed");
+    onStatus(key || `? ${label.slice(0, 40)}`, ok ? "filled" : sr?.decided ? "unknown" : "error", sr?.decided ? AB.search.describe(sr).slice(0, 120) : ok ? String(AB.shownChoices(AB.refresh(el))[0] || candidates[0]).slice(0, 60) : "write failed");
     if (ok) n++;
     await AB.sleep(50);
   }
