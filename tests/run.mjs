@@ -169,18 +169,31 @@ const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementB
       check("ashby autofill-from-resume box untouched", v.autofillFiles, 0); check("ashby resume parser never started", v.parses, 0);
       check("ashby resume kept: nothing else edited mid-upload", v.dropped, 0);
       check("ashby location committed", v.location, "Austin, Texas, United States"); check("ashby location picked from the list", v.picked, "Austin, Texas, United States");
-      check("ashby work auth = Yes (heuristic)", v.yesno["yn-auth"], true); check("ashby sponsorship not ticked", v.yesno["yn-sponsor"], (s) => s !== true);
+      // Yes/No buttons: the hidden checkbox mirrors only "Yes", so "No" must press the No button.
+      check("ashby work auth = Yes (heuristic)", v.yesno["yn-auth"], true); check("ashby sponsorship = No (heuristic)", v.yesno["yn-sponsor"], false);
+      check("ashby sponsorship status", statusOf(summary, "sponsorship"), JSON.stringify([["sponsorship", "filled", "No"]]));
       check("ashby office days left alone (no rule)", v.yesno["yn-office"], (s) => s === null);
+      check("ashby office days reported unknown", JSON.stringify(summary.statuses), (t) => /"\? are you able to work from our office[^"]*","unknown","no rule"/.test(t));
       check("ashby gender (heuristic)", v.gender, "Decline to self-identify"); check("ashby race (heuristic)", v.race, "Decline to self-identify"); check("ashby veteran (heuristic)", v.veteran, "I am not a protected veteran");
       check("ashby consent checkboxes untouched", JSON.stringify(v.consent), "[false,false]");
-      // Rerun: the yes/no proxy checkbox is already ticked, so it is not clicked again (a second click answers "No").
-      await fillAndWait(page);
+      // Rerun: answered Yes/No questions are not pressed again (a press on the pressed button clears the answer).
+      const again = await fillAndWait(page);
       const r = await read();
-      check("ashby rerun: work auth still Yes", r.yesno["yn-auth"], true); check("ashby rerun: autofill box still untouched", r.parses + r.autofillFiles, 0);
+      check("ashby rerun: work auth still Yes", r.yesno["yn-auth"], true); check("ashby rerun: sponsorship still No", r.yesno["yn-sponsor"], false);
+      check("ashby rerun: yes/no report already selected", statusOf(again, "work_auth_us") + statusOf(again, "sponsorship"), (t) => /Yes \(already selected\).*No \(already selected\)/.test(t));
+      check("ashby rerun: autofill box still untouched", r.parses + r.autofillFiles, 0);
       check("ashby rerun: resume kept", `${r.resume}/${r.dropped}`, "ada-resume.pdf/0"); check("ashby rerun: name kept", r.name, "Ada Lovelace"); check("ashby rerun: location kept", r.location, "Austin, Texas, United States");
       check("ashby submit never clicked", r.submits, 0);
       if (headed) await page.screenshot({ path: path.join(root, "tests", "out-ashby.png"), fullPage: true });
       await page.close();
+      // A question the user already answered differently keeps that answer.
+      const mine = await ctx.newPage();
+      await mine.goto(`${base}/ashby.html`);
+      await mine.evaluate(() => document.querySelector("#yn-sponsor button").click());   // "Yes"
+      const kept = await fillAndWait(mine);
+      check("ashby: user's sponsorship answer kept", await mine.evaluate(() => window.__yesno["yn-sponsor"]), true);
+      check("ashby: status says kept the existing answer", statusOf(kept, "sponsorship"), (t) => t.includes('kept the existing answer \\"Yes\\"'));
+      await mine.close();
     }
     // ---- Unknown ATS ----
     {

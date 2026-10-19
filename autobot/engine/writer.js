@@ -117,6 +117,25 @@ AB.writeRadio = (anyRadio, value, synonyms) => {
   return AB.setChecked(group[i], true);
 };
 
+// Yes/No question drawn as two aria-pressed buttons over a hidden checkbox (Ashby). The checkbox mirrors only "Yes"
+// (unticked is "No" or unanswered), and a click on the pressed button clears the answer. Returns { yes, no, pressed }
+// with pressed "Yes", "No" or null, or null for an ordinary checkbox.
+AB.yesNoButtons = (el) => {
+  if (!(el instanceof HTMLInputElement && el.type === "checkbox") || !el.parentElement) return null;
+  const btns = Array.from(el.parentElement.querySelectorAll("button[aria-pressed], [role=button][aria-pressed]"));
+  const yes = btns.find((b) => AB.norm(b.textContent) === "yes"), no = btns.find((b) => AB.norm(b.textContent) === "no");
+  if (btns.length !== 2 || !yes || !no) return null;
+  return { yes, no, pressed: yes.getAttribute("aria-pressed") === "true" ? "Yes" : no.getAttribute("aria-pressed") === "true" ? "No" : null };
+};
+// Press "Yes" or "No" once and wait for the page to show it pressed.
+AB.writeYesNo = async (el, want) => {
+  const yn = AB.yesNoButtons(el);
+  if (!yn) return false;
+  AB.fire(want === "Yes" ? yn.yes : yn.no, ["mousedown", "mouseup", "click"]);
+  for (let i = 0; i < 20; i++) { if (AB.yesNoButtons(AB.refresh(el))?.pressed === want) return true; await AB.sleep(50); }
+  return false;
+};
+
 // Upload when the page only exposes a button (hidden/absent <input type=file>): intercept the picker in the page world.
 AB.uploadViaPicker = async (el, file) => {
   if (!file?.dataBase64) return false;

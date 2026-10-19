@@ -153,9 +153,10 @@ AB.runHeuristics = async (state, touched) => {
       if (/resume|cv|curriculum/.test(lbl) && resume?.dataBase64 && !el.files?.length) { if (await AB.writeFile(el, resume)) { onStatus("resume", "filled", resume.name); n++; } }
       continue;
     }
+    const yesNo = AB.yesNoButtons(el);   // Yes/No buttons over a hidden checkbox (Ashby)
     const current = AB.readBack(el);
     const hasValue = el instanceof HTMLSelectElement ? el.selectedIndex > 0 && el.value !== "" && !/^(select|choose|please|--|none|pick)/.test(AB.norm(current)) : Boolean(current);
-    if (hasValue) continue; // already has a value
+    if (hasValue && !yesNo) continue; // already has a value (a Yes/No pair reports its answer below)
     const { key, label, labels, via } = AB.classify(el);
     if (via === "search-box") continue; // widget-internal search boxes are not questions
     const answerFor = () => { for (const l of labels || [label]) { const a = AB.lookupAnswer(profile, l); if (a !== undefined) return a; } return undefined; };
@@ -163,6 +164,22 @@ AB.runHeuristics = async (state, touched) => {
     if (isCheckbox) {
       // Never tick consent/marketing/certification boxes, and only tick boxes whose question is a yes/no profile fact.
       if (/agree|consent|acknowledg|certif|marketing|newsletter|subscribe|terms|privacy|policy|confirm|accurate|signature/.test(label)) continue;
+      if (yesNo) {
+        // Press the wanted button once. An answered question keeps its answer: a second press would clear it.
+        const fact = ["work_auth_us", "sponsorship", "over18"].includes(key) ? key : null;
+        const name = fact || `? ${label.slice(0, 40)}`;
+        const a = fact ? AB.getProfileValue(profile, fact) : answerFor();
+        const t = AB.norm(AB.boolToYesNo(a ?? ""));
+        const want = /^(yes|true|y)$/.test(t) ? "Yes" : /^(no|false|n)$/.test(t) ? "No" : null;
+        touched.add(el);
+        if (yesNo.pressed) { if (want) onStatus(name, yesNo.pressed === want ? "filled" : "skipped", yesNo.pressed === want ? `${want} (already selected)` : `kept the existing answer "${yesNo.pressed}"`); continue; }
+        if (!want) { if (label) onStatus(name, "unknown", a === undefined || a === "" ? (fact ? `${fact} (empty in profile)` : "no rule") : `answer "${String(a).slice(0, 30)}" is not yes or no`); continue; }
+        const ok = await AB.writeYesNo(el, want);
+        onStatus(name, ok ? "filled" : "error", ok ? want : "yes/no press did not register");
+        if (ok) n++;
+        await AB.sleep(50);
+        continue;
+      }
       if (!["work_auth_us", "sponsorship", "over18"].includes(key)) { const a = answerFor(); if (a === undefined) continue; const yes = /^(yes|true|y)$/i.test(String(a)); const ok = AB.setChecked(el, yes); touched.add(el); onStatus(`? ${label.slice(0, 40)}`, ok ? "filled" : "error", String(a)); if (ok) n++; continue; }
     }
     let value, values;
