@@ -99,9 +99,11 @@
   // react-select behaviour the engine relies on: the control opens the menu, typing filters it by substring ("No
   // options" when nothing contains the text), Enter picks the focused option, a click picks that option, Escape clears
   // the typed text and closes the menu, blur clears it too. A pick shows the label as select__single-value, empties the
-  // input and drops the required input. Answering the Hispanic question "No" adds the race question to its wrapper.
+  // input and drops the required input. While the control has focus its live region (role=log) reads out the result
+  // count or the pick. Answering the Hispanic question "No" adds the race question to its wrapper.
   const rs = (id, items) => {
     const input = document.getElementById(id), shell = input.closest(".select-shell"), control = shell.querySelector(".select__control"), box = control.querySelector(".select__value-container");
+    const log = shell.querySelector("[role=log]");
     const listId = `react-select-${id}-listbox`;
     let menu = null, shown = [];
     const close = () => { if (menu) menu.remove(); menu = null; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-controls"); };
@@ -122,6 +124,7 @@
       const chosen = box.querySelector(".select__single-value")?.textContent;
       draw(shown.length ? `<div class="select__menu-list remix-css-qr46ko" role="listbox" aria-multiselectable="false" id="${listId}">${shown.map((t, i) => `<div class="select__option${i === 0 ? " select__option--is-focused" : ""} remix-css-1yzbtda-option" aria-disabled="false" id="react-select-${id}-option-${i}" tabindex="-1" role="option" aria-selected="${t === chosen}">${esc(t)}</div>`).join("")}</div>`
         : `<div class="select__menu-notice select__menu-notice--no-options remix-css-1wlit7h-NoOptionsMessage">No options</div>`);
+      log.textContent = `${shown.length} result${shown.length === 1 ? "" : "s"} available${q ? ` for search term ${q}` : ""}. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.`;
     };
     const pick = (t) => {
       (window.__picks[id] ||= []).push(t);
@@ -132,6 +135,7 @@
       shell.querySelector(".remix-css-1a0ro4n-requiredInput")?.remove();
       input.value = "";
       close();
+      log.textContent = `option ${t}, selected.`;
       if (id === "hispanic_ethnicity" && t === "No" && !document.getElementById("race")) {
         const wrapper = input.closest(".eeoc__question__wrapper");
         wrapper.insertAdjacentHTML("beforeend", slot("race", "Please identify your race", true));
@@ -145,7 +149,7 @@
       else if (e.key === "Enter" && menu && shown.length) { e.preventDefault(); pick(shown[0]); }
       else if (e.key === "Escape") { input.value = ""; close(); }
     });
-    input.addEventListener("blur", () => { input.value = ""; close(); });
+    input.addEventListener("blur", () => { input.value = ""; close(); log.textContent = ""; });
   };
   for (const s of Array.from(document.querySelectorAll(".rs"))) expand(s);
 })();

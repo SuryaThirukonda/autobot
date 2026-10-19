@@ -161,6 +161,14 @@ AB.displayLabel = (labels) => {
   return (good.sort((a, b) => b.length - a.length)[0]) || labels[0] || "";
 };
 
+// A control taken out of the page's tab order and hidden from assistive tech is never a question a person answers:
+// react-select's empty "required" input (opacity 0 under a required question until something is picked; its label
+// would be the placeholder or the live region, "? select", "? 7 results available …"), or a honeypot. Checkboxes,
+// radios, file inputs and selects stay: widgets drive those from a visible button, and some read changes on them.
+AB.isHiddenFromPeople = (el) =>
+  el.getAttribute("aria-hidden") === "true" && el.getAttribute("tabindex") === "-1" &&
+  !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(checkbox|radio|file)$/.test(el.type));
+
 // Enumerate fillable controls under a container, deduplicating radio groups and hidden widgets.
 AB.enumerateControls = (container) => {
   const sel = 'input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]), textarea, select, [role=combobox], [role=textbox], [contenteditable=true]';
@@ -173,6 +181,7 @@ AB.enumerateControls = (container) => {
     if (el.disabled || el.readOnly) continue;
     if (el.closest("[data-autobot-panel]")) continue;
     if (!AB.isVisible(el) && el.type !== "file" && el.type !== "radio" && el.type !== "checkbox") continue;
+    if (AB.isHiddenFromPeople(el)) continue;
     const key = el.type === "radio" && el.name ? `radio:${el.name}` : el;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -85,10 +85,14 @@ const readJobboards = (page) => page.evaluate(() => { const sv = (id) => documen
   q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
 // Statuses that report a choice the control already showed, as "key" strings.
 const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s) => s[1] === "filled" && /already selected/.test(s[2])).map((s) => s[0]));
-// greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits.
+// greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits, and the
+// values of react-select's hidden "required" inputs (never written).
 const readEeo = (page) => page.evaluate(() => ({
   shown: Object.fromEntries(Array.from(document.querySelectorAll("input[role=combobox]")).map((i) => [i.id, i.closest(".select__control").querySelector(".select__single-value")?.textContent || ""])),
-  picks: Object.keys(window.__picks).sort().map((k) => `${k}=${window.__picks[k].join("|")}`), boxes: Array.from(document.querySelectorAll("input[type=checkbox]")).map((c) => c.checked), submits: window.__submits }));
+  picks: Object.keys(window.__picks).sort().map((k) => `${k}=${window.__picks[k].join("|")}`), boxes: Array.from(document.querySelectorAll("input[type=checkbox]")).map((c) => c.checked), submits: window.__submits,
+  required: Array.from(document.querySelectorAll("input[aria-hidden=true][tabindex='-1']")).map((i) => i.value) }));
+// Status lines made from react-select's hidden "required" input, whose label is the placeholder or the live region.
+const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map((s) => s[0]).filter((k) => /^\? (select\b|option\b.*\bselected|\d+ results? available)/.test(k)));
 
 (async () => {
   const { srv, base } = await serve();
@@ -379,6 +383,7 @@ const readEeo = (page) => page.evaluate(() => ({
       check("jobboards: end year", v.endYear, "2028");
       check("jobboards: MM text fields leave the month selects alone", statusOf(summary, "education[0].start_month|MM") + statusOf(summary, "education[0].end_month|MM"), (t) => (t.match(/"absent"/g) || []).length === 2);
       check("jobboards: school searched once", JSON.stringify(v.q), JSON.stringify([CS]));
+      check("jobboards: no status from react-select's hidden required inputs", hiddenInputKeys(summary), "[]");
       const again = await fillAndWait(page);
       const r = await readJobboards(page);
       check("jobboards rerun: no new search", JSON.stringify(r.q), JSON.stringify([CS]));
@@ -408,6 +413,9 @@ const readEeo = (page) => page.evaluate(() => ({
       check("eeo robinhood: military status not answered", JSON.stringify([v.shown["1259"], /"filled"/.test(statusOf(summary, "veteran"))]), JSON.stringify(["", false]));
       check("eeo robinhood: disability decline", v.shown["1261"], "I don't wish to answer");
       check("eeo robinhood: consent box untouched", JSON.stringify(v.boxes), "[false]");
+      // Unanswered required questions keep react-select's hidden required input; it is no question of its own.
+      check("eeo robinhood: no status from react-select's hidden inputs", hiddenInputKeys(summary), "[]");
+      check("eeo robinhood: hidden required inputs left empty", JSON.stringify(v.required), JSON.stringify(["", ""]));
       await page.close();
       // Airbnb (its own Gender / Race / Veteran questions): "Man" was typed into Gender (Male / Female / Other /
       // Decline), nothing was chosen, and the status said filled.
@@ -447,6 +455,8 @@ const readEeo = (page) => page.evaluate(() => ({
       v = await readEeo(page);
       check("eeo no match: gender questions left empty", JSON.stringify([v.shown.gender, v.shown["4033064002"], v.picks.filter((p) => /^(gender|4033064002)=/.test(p))]), JSON.stringify(["", "", []]));
       check("eeo no match: no gender status says filled", statusOf(summary, "gender"), (t) => t !== "[]" && !/"filled"/.test(t));
+      check("eeo no match: no status from react-select's hidden inputs", hiddenInputKeys(summary), "[]");
+      check("eeo no match: hidden required inputs left empty", JSON.stringify(v.required), JSON.stringify(["", ""]));
       await page.close();
       await setStorage({ profile: PROFILE });
     }
