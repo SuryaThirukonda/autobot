@@ -19,6 +19,8 @@ const extDir = path.resolve(root, extArg ? extArg.slice(6) : process.env.AUTOBOT
 const hasSearch = fs.existsSync(path.join(extDir, "engine", "search.js"));
 // Per-ATS names and the rerun checks arrived in 0.2.0; older folders (legacy/) skip those blocks.
 const has020 = hasSearch && /S\.atsAlternates\s*=/.test(fs.readFileSync(path.join(extDir, "engine", "search.js"), "utf8"));
+// The Ashby config for the 2026 markup needs containerExcluded (fence off "Autofill from resume"); legacy/ lacks it.
+const hasExcluded = /containerExcluded/.test(fs.readFileSync(path.join(extDir, "engine", "plan.js"), "utf8"));
 const headed = process.argv.includes("--headed");
 
 const PROFILE = {
@@ -141,6 +143,43 @@ const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementB
       check("lever resume", v.resume, "ada-resume.pdf"); check("lever custom radio (heuristic)", v.auth, "Yes"); check("lever salary (heuristic)", v.salary, PROFILE.salary);
       check("lever gender", v.gender, "Decline to self-identify"); check("lever race", v.race, "Decline to self-identify"); check("lever veteran", v.vet, "I am not a protected veteran");
       check("lever marketing checkbox untouched", v.marketing, false);
+      await page.close();
+    }
+    // ---- Ashby-like (2026 markup: no <form>, an "Autofill from resume" box above the form, EEO survey in a second
+    // form container, yes/no buttons over a hidden checkbox, location in a portal listbox) ----
+    if (hasExcluded) {
+      const page = await ctx.newPage();
+      await page.goto(`${base}/ashby.html`);
+      const read = () => page.evaluate(() => {
+        const q = (s) => document.querySelector(s);
+        const choice = (sys) => { const r = q(`input[type=radio][name$='_${sys}']:checked`); return r ? q(`label[for="${CSS.escape(r.id)}"]`).textContent : ""; };
+        return { detected: document.documentElement.dataset.autobotDetected, name: q("#_systemfield_name").value, email: q("#_systemfield_email").value, phone: q("input[type=tel]").value,
+          resume: q("#_systemfield_resume").files[0]?.name, resumeShown: q("#resume-shown").textContent, autofillFiles: q(".ashby-application-form-autofill-input-root input[type=file]").files.length,
+          parses: window.__autofillParses, dropped: window.__resumeDropped, location: q(".ashby-application-form-input-autocomplete").value, picked: window.__location, yesno: { ...window.__yesno },
+          gender: choice("_systemfield_eeoc_gender"), race: choice("_systemfield_eeoc_race"), veteran: choice("_systemfield_eeoc_veteran_status"),
+          consent: [q("#arb-labeled-checkbox-0").checked, q("#cert-labeled-checkbox-0").checked], submits: window.__submitClicks };
+      });
+      const summary = await fillAndWait(page);
+      console.log("ashby summary:", summary);
+      const v = await read();
+      check("ashby detected", v.detected, "ashby");
+      check("ashby no system field not-found", JSON.stringify(summary.statuses.filter((s) => s[1] === "not-found")), "[]");
+      check("ashby legal name", v.name, "Ada Lovelace"); check("ashby email", v.email, PROFILE.email); check("ashby phone", v.phone, PROFILE.phone);
+      check("ashby resume in the Resume field", v.resume, "ada-resume.pdf"); check("ashby resume shown by its dropzone", v.resumeShown, "ada-resume.pdf Replace");
+      check("ashby autofill-from-resume box untouched", v.autofillFiles, 0); check("ashby resume parser never started", v.parses, 0);
+      check("ashby resume kept: nothing else edited mid-upload", v.dropped, 0);
+      check("ashby location committed", v.location, "Austin, Texas, United States"); check("ashby location picked from the list", v.picked, "Austin, Texas, United States");
+      check("ashby work auth = Yes (heuristic)", v.yesno["yn-auth"], true); check("ashby sponsorship not ticked", v.yesno["yn-sponsor"], (s) => s !== true);
+      check("ashby office days left alone (no rule)", v.yesno["yn-office"], (s) => s === null);
+      check("ashby gender (heuristic)", v.gender, "Decline to self-identify"); check("ashby race (heuristic)", v.race, "Decline to self-identify"); check("ashby veteran (heuristic)", v.veteran, "I am not a protected veteran");
+      check("ashby consent checkboxes untouched", JSON.stringify(v.consent), "[false,false]");
+      // Rerun: the yes/no proxy checkbox is already ticked, so it is not clicked again (a second click answers "No").
+      await fillAndWait(page);
+      const r = await read();
+      check("ashby rerun: work auth still Yes", r.yesno["yn-auth"], true); check("ashby rerun: autofill box still untouched", r.parses + r.autofillFiles, 0);
+      check("ashby rerun: resume kept", `${r.resume}/${r.dropped}`, "ada-resume.pdf/0"); check("ashby rerun: name kept", r.name, "Ada Lovelace"); check("ashby rerun: location kept", r.location, "Austin, Texas, United States");
+      check("ashby submit never clicked", r.submits, 0);
+      if (headed) await page.screenshot({ path: path.join(root, "tests", "out-ashby.png"), fullPage: true });
       await page.close();
     }
     // ---- Unknown ATS ----

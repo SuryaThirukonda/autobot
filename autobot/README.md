@@ -21,7 +21,7 @@ Version 0.2.0 merges both into this folder. The two earlier builds are frozen in
 
 1. `engine/detect.js` loads `configs/*.json` (plus any overrides from settings), matches the URL against each config's `urls` globs, then runs XPath `probes`. Otherwise the `generic` plan is used when the page has 3 or more controls.
 2. `engine/plan.js` walks `fields[]`: resolve the profile value (`key`, `valueKey`, `value`, formatters like `start_date|MM/YYYY`), map it to vendor labels (`values`), find the element (`path`, with `%VALUE%` templating), and write with the chosen `method`. Array sections (`education`, `experience`) repeat per profile entry and can click an `add` button. Fields missing from the page are reported at once instead of waited for.
-3. `engine/heuristics.js` then enumerates every remaining control, derives its label (label[for], aria-labelledby, aria-label, wrapping label, fieldset legend, nearest preceding text, placeholder, name/id tokens, `autocomplete`) and classifies it with ordered word-boundary keyword rules → profile key. Unknown questions fall back to the saved-answers table. Consent and marketing checkboxes are never ticked.
+3. `engine/heuristics.js` then enumerates every remaining control outside the config's `containerExcluded` regions (such as Ashby's "Autofill from resume" box, which hands a file to the ATS's resume parser), derives its label (label[for], aria-labelledby, aria-label, wrapping label, fieldset legend, nearest preceding text, placeholder, name/id tokens, `autocomplete`) and classifies it with ordered word-boundary keyword rules → profile key. Unknown questions fall back to the saved-answers table. Consent and marketing checkboxes are never ticked.
 4. `engine/writer.js` writes. School, major, location and company dropdowns go through the option search first (next section). Everything else uses the native value setter plus `keydown/keypress/input/keyup/change`, `<select>` option matching (exact → synonym → prefix → contains → token overlap), radio and checkbox groups, react-select style comboboxes (open, type, wait for `[role=option]`, pick), and file inputs via `DataTransfer`. React-controlled inputs are written from the main world (`page.js`) by calling the component's `onChange`/`onInput` props with the native event, the same trick Simplify uses.
 5. The shadow-DOM panel lists every field with `filled / skipped / not-found / unknown / error`.
 
@@ -81,6 +81,7 @@ Pressing Autofill again on a form you already filled is safe:
   "urls": ["*://jobs.lever.co/*/apply*"], "urlsExcluded": [],
   "probes": [["//form[@id='application-form'][.//input[@name='name']]"]],   // groups; all XPaths in a group must be true
   "container": ["//form[@id='application-form']"],                           // field XPaths are relative to this
+  "containerExcluded": ["//*[contains(@class, 'autofill-uploader')]"],       // regions inside it that are never written
   "defaultMethod": "default",                                                // default | react | jquery
   "pre": [{ "path": ["//a[@id='apply_button']"], "time": 800, "delay": 900 }], // clicks before filling (reveal the form)
   "fields": [
@@ -127,7 +128,7 @@ It injects the engine files listed in `manifest.json`, including the option sear
 
 ```bash
 npm install
-npm test                                     # browser fixtures: Greenhouse, Lever, generic, search widgets, Workday, reruns, campus names
+npm test                                     # browser fixtures: Greenhouse, Lever, Ashby, generic, search widgets, Workday, reruns, campus names
 npm run test:search                          # search logic unit tests in Node: scorer, query plans, contract, resolver, driver, per-ATS names
 npm run test:all                             # both
 npm run test:headed                          # fixtures in a visible window, with screenshots
@@ -139,14 +140,14 @@ The browser tests load a temporary copy of the extension without `configs/profil
 
 ## Live results
 
-0.2.0 on 2026-10-18: throwaway browser, `tests/profile.local.json` (a Simplify import), no search aliases, nothing submitted.
+0.2.0 on 2026-10-18: throwaway browser, `tests/profile.local.json` (a Simplify import), no search aliases, nothing submitted. The Ashby row is a re-run on 2026-10-19 after OpenAI's form changed, with `tests/profile.sample.json`: Ashby saves every field to its server while you fill (`ApiSetFormValue`), before any submit, so the fake profile is the safer choice there.
 
 | ATS | Posting | Written | Left alone, or not reached |
 |---|---|---|---|
 | Greenhouse (job-boards) | Duolingo | first/last name, email, phone, resume, LinkedIn, website, GPA, and the school as "Texas A&M University - College Station" from the stored Greenhouse name (the v2 build left it empty) | free-text questions, name pronunciation. Degree, discipline and dates are not reached: the config paths miss this form's education fields (v1 and v2 too) |
 | Greenhouse (job-boards) | Anthropic | first/last name, email, phone, resume, country | free-text and custom questions with no rule or saved answer |
 | Lever | Palantir | resume, full name, email, phone, location typeahead, company, LinkedIn/GitHub/portfolio, work authorization = Yes, sponsorship = No, "how did you hear" = LinkedIn | the school: Lever lists Texas A&M only with campus suffixes and the profile has no Lever name, so search returns empty instead of guessing. Consent and residency radios, essays |
-| Ashby | OpenAI | resume only | the posting's form changed since the first pass (a "Legal Name" field and an "Autofill from resume" box): the config's field ids no longer match and the resume lands in that box. v1 does the same |
+| Ashby | OpenAI | legal name, email, phone, the resume in the form's own Resume field (uploaded first, then 2.5 s for Ashby's save to land), location typeahead "Austin, Texas, United States", work authorization = Yes, gender/race/veteran | the "Autofill from resume" box (excluded, so Ashby's parser never runs), preferred name, start date, sponsorship (profile says No: the hidden checkbox stays unticked, which leaves Ashby's Yes/No buttons unanswered), office days, additional information, arbitration and certification checkboxes |
 | Workday | NVIDIA | earlier pass: detection only, the application form is behind sign-in | everything |
 
 ## Troubleshooting ("it does nothing")

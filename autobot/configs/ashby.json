@@ -16,11 +16,32 @@
   ],
   "container": [
     "//form[.//input[@id='_systemfield_name' or @id='_systemfield_email']]",
-    "//*[contains(@class, 'ashby-application-form')]",
-    "//form"
+    "//input[@id='_systemfield_name' or @id='_systemfield_email']/ancestor::*[.//*[contains(@class, 'ashby-application-form-submit-button')]][1]",
+    "//*[contains(@class, 'ashby-application-form-container')]/.."
+  ],
+  "containerExcluded": [
+    "//*[contains(@class, 'ashby-application-form-autofill-uploader')]",
+    "//*[contains(@class, 'ashby-application-form-autofill-input-root')]"
   ],
   "defaultMethod": "react",
   "fields": [
+    {
+      "key": "resume",
+      "method": "upload",
+      "actions": [
+        {
+          "path": [
+            ".//input[@id='_systemfield_resume']",
+            ".//*[contains(@class, 'ashby-application-form-field-entry')][./label[@for='_systemfield_resume']]//input[@type='file']",
+            ".//*[contains(@class, 'ashby-application-form-field-entry')][./label[contains(translate(., 'RESUME', 'resume'), 'resume')]]//input[@type='file']"
+          ]
+        },
+        {
+          "delay": 2500
+        }
+      ],
+      "allowFailure": true
+    },
     {
       "key": "full_name",
       "path": [
@@ -32,24 +53,16 @@
       "key": "email",
       "path": [
         ".//input[@id='_systemfield_email']",
-        ".//input[@name='_systemfield_email']"
+        ".//input[@name='_systemfield_email']",
+        ".//*[contains(@class, 'ashby-application-form-field-entry')]//input[@type='email']"
       ]
     },
     {
       "key": "phone",
       "path": [
         ".//input[@id='_systemfield_phone']",
-        ".//input[@type='tel']"
-      ],
-      "allowFailure": true
-    },
-    {
-      "key": "resume",
-      "method": "upload",
-      "path": [
-        ".//input[@id='_systemfield_resume']",
-        ".//input[@type='file' and (contains(@id,'resume') or contains(@name,'resume'))]",
-        ".//input[@type='file'][1]"
+        ".//*[contains(@class, 'ashby-application-form-field-entry')]//input[@type='tel']",
+        ".//*[contains(@class, 'ashby-application-form-field-entry')][./label[contains(translate(., 'PHONE', 'phone'), 'phone')]]//input[not(@type='hidden')]"
       ],
       "allowFailure": true
     },
@@ -58,12 +71,11 @@
       "method": "combobox",
       "path": [
         ".//input[@id='_systemfield_location']",
-        ".//label[contains(translate(., 'LOCATION', 'location'), 'location')]/following::input[1]"
+        ".//*[contains(@class, 'ashby-application-form-field-entry')][./label[@for='_systemfield_location']]//input[not(@type='hidden')]"
       ],
       "allowFailure": true,
       "optionsPath": [
-        "css:[role=option]",
-        "css:[class*='option']"
+        "css:[role=listbox] [role=option]"
       ]
     },
     {
@@ -89,7 +101,8 @@
     }
   ],
   "submit": [
-    ".//button[@type='submit' and contains(., 'Submit')]"
+    ".//button[@type='submit' and contains(., 'Submit')]",
+    ".//button[contains(@class, 'ashby-application-form-submit-button')]"
   ],
   "success": [
     ".//*[contains(., 'Application submitted') or contains(., 'Thank you for applying')]"

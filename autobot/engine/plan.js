@@ -104,6 +104,7 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
         const expectsWait = step.time !== undefined || field.time !== undefined || steps.indexOf(step) > 0;
         el = expectsWait ? await AB.waitFor(paths, { ctx: container, timeout: step.time ?? field.time ?? 2500, signal }) : AB.queryAny(paths, container);
       }
+      if (el && state.excluded?.(el)) el = null;
       if (!el) {
         if (step.allowFailure || field.allowFailure) continue;
         onStatus(fullKey, anyWrite ? "filled" : "not-found", paths[0]);
@@ -146,6 +147,7 @@ AB.runHeuristics = async (state, touched) => {
   for (let el of controls) {
     if (signal?.aborted) return n;
     if (touched.has(el) || touchedKeys.has(el.id || el.name)) continue; // same control after a framework re-render
+    if (state.excluded?.(el)) continue;
     if (el instanceof HTMLInputElement && el.type === "file") {
       const lbl = AB.labelFor(el).join(" ");
       if (/resume|cv|curriculum/.test(lbl) && resume?.dataBase64 && !el.files?.length) { if (await AB.writeFile(el, resume)) { onStatus("resume", "filled", resume.name); n++; } }
@@ -196,7 +198,10 @@ AB.fill = async ({ config, profile, resume, settings, onStatus = () => {}, signa
   AB.searchResults = new WeakMap();   // search outcomes belong to this run only
   const container = AB.findContainer(config);
   const touched = new Set();
-  const state = { config, container, profile, resume, settings, onStatus, signal, touched };
+  // Regions inside the container that are never written (containerExcluded), e.g. Ashby's "Autofill from resume" box:
+  // a file there starts the ATS's resume parser, which locks the form and overwrites fields.
+  const excluded = (el) => AB.arr(config.containerExcluded).some((p) => AB.query(p, document, true).some((r) => r.contains(el)));
+  const state = { config, container, profile, resume, settings, onStatus, signal, touched, excluded };
   const statusWrap = (k, s, d) => { onStatus(k, s, d); };
   state.onStatus = statusWrap;
   // Pre-steps (e.g. click "Apply" to reveal the form).
