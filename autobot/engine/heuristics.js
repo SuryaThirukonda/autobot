@@ -11,6 +11,11 @@ AB.RULES = [
   ["pronouns", ["pronoun"], []],
   ["email", ["email", "e mail"], ["confirm", "verify", "re enter", "manager", "referr", "recruiter"]],
   ["email", ["confirm email", "verify email", "re enter email", "email confirmation"], []],
+  // A sponsorship question may name work authorization as what sponsorship keeps ("require company sponsorship to
+  // retain or extend your work authorization", Airbnb); work_auth_us below would claim it. Status questions that
+  // mention sponsorship ("authorized to work ... without sponsorship", "... and will not require sponsorship") skip this.
+  ["sponsorship", ["require sponsorship", "require company sponsorship", "require visa sponsorship", "require immigration sponsorship", "require employer sponsorship", "require employment sponsorship", "need sponsorship", "need visa sponsorship"],
+    ["without", "not", "who require", "who need", "legally authorized", "authorized to work", "authorised to work", "eligible to work", "legally eligible", "right to work"]],
   ["work_auth_us", ["legally authorized", "authorized to work", "eligible to work", "work authorization", "right to work", "authorised to work", "legally eligible", "authorized to work lawfully"], []],
   ["sponsorship", ["sponsorship", "sponsor", "visa"], []],
   ["over18", ["18 years", "over 18", "at least 18", "age of 18"], []],
@@ -145,12 +150,14 @@ AB.classify = (el) => {
   if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))
     return { key: null, via: "free-text", label: primary, labels };
   for (const label of labels) {
-    for (const [key, incl, excl] of AB.RULES) {
-      if (incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k))) return { key, via: "label", label, labels };
-    }
+    const key = AB.keyForLabel(label);
+    if (key) return { key, via: "label", label, labels };
   }
   return { key: null, via: null, label: AB.displayLabel(labels), labels };
 };
+
+// Profile key of the first rule whose keywords appear in a normalized label and whose exclusions do not, or null.
+AB.keyForLabel = (label) => AB.RULES.find(([, incl, excl]) => incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k)))?.[0] ?? null;
 
 AB.FREE_TEXT = /(^|\s)(how do you|how would you|why do you|why are you|why would you|what has been|what is your favorite|what are you|describe|tell us|explain|in what ways|anything else|additional information|comments?)(\s|$)/;
 
