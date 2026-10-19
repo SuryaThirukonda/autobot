@@ -1,5 +1,5 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Fixture: Duolingo careers form with Greenhouse education ids (web-ui pickers)</title>
+<html><head><meta charset="utf-8"><title>Fixture: Duolingo careers form with Greenhouse field ids (web-ui pickers and listbox buttons)</title>
 <style>
   body{font:14px system-ui;margin:24px;max-width:720px} .qwjgb{margin-top:14px} .ZmsoW{display:block;font-weight:600;margin-bottom:4px}
   .NuJad{width:100%;padding:8px;box-sizing:border-box;font:inherit} .xu0pG{display:none}
@@ -7,23 +7,43 @@
   .m8kZ3{list-style:none;margin:0;padding:0;background:#fff;max-height:240px;overflow:auto} .m8kZ3:not(:empty){border:1px solid #ccc}
   .hyKlT{padding:6px;cursor:pointer} .hyKlT:hover{background:#eef}
   .LEZzN{display:flex;gap:12px} .LEZzN > .qwjgb{flex:1}
-  .FUCuR{position:relative;border:1px solid #ccc;height:36px;line-height:36px;padding:0 8px} .Ku9oD{position:absolute;inset:0;width:100%;background:transparent;border:0;cursor:pointer}
+  .ykGYX{position:relative} .OhQSF{position:absolute;top:100%;width:100%;z-index:4}
+  .FUCuR{position:relative;border:1px solid #ccc;height:36px;line-height:36px;padding:0 8px} .AvNsP .GfJwj{color:#888} .Ku9oD{position:absolute;inset:0;width:100%;background:transparent;border:0;cursor:pointer}
 </style></head>
 <body>
 <h1>Software Engineer, New Grad</h1>
 <!-- Mirrors careers.duolingo.com/jobs/8888721002 (job-boards.greenhouse.io/duolingo/jobs/8888721002 redirects there;
      markup read 2026-10-19). Duolingo's own form posts to Greenhouse with Greenhouse field ids, built from hashed
      "web-ui" components. The form has no id, action or input names, so it is detected by the gh_jid URL pattern (load
-     this page with ?gh_jid=…). Each picker has a visibility:hidden overlay input that owns the listbox (aria-controls),
-     a visible proxy input that takes focus and filters, a <ul role=listbox>, and a hidden input that receives the
-     option's Greenhouse id. School, degree and discipline sit side by side in one <fieldset>. End date month is a
-     listbox button that shows its choice in a <span> beside it; its list exists only while open. This posting asks
-     for no start date. "Add another" has no type attribute, so it is a submit button. -->
+     this page with ?gh_jid=…).
+     - Pickers (location, school, degree, discipline): a visibility:hidden overlay input that owns the listbox
+       (aria-controls), a visible proxy input that takes focus and filters, a <ul role=listbox>, and a hidden input that
+       receives the choice (the Greenhouse id; for the location the place name, plus #latitude/#longitude). The location
+       list comes from Google Places a moment after typing and is empty until something is typed.
+     - Every question dropdown, the end date month and the demographic questions are listbox buttons:
+       label[for=group id] + div[role=group] > .ykGYX > .FUCuR > <span>Select...</span><button aria-haspopup=listbox
+       aria-controls=…>. The list is created inside .ykGYX on open and removed on close. A pick closes a single list; a
+       multi list ("mark all that apply") stays open, marks options aria-selected (with a checkbox) and the span shows
+       the choices joined by ", " in the order picked. Escape or a second click on the button closes it.
+     School, degree and discipline sit side by side in one <fieldset>. This posting asks for no start date. "Add
+     another" has no type attribute, so it is a submit button. The question blocks are generated below in the live
+     markup from the QUESTIONS and DEMOGRAPHICS tables (option lists as the live form shows them). -->
 <form class="k30Iw">
   <div class="_jDNQ">
     <div class="qwjgb"><label class="ZmsoW" for="first_name" id="first_name--label">First Name<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="first_name" type="text" required></div></div></div>
     <div class="qwjgb"><label class="ZmsoW" for="last_name" id="last_name--label">Last Name<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="last_name" type="text" required></div></div></div>
     <div class="qwjgb"><label class="ZmsoW" for="email" id="email--label">Email<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="email" type="email" required></div></div></div>
+    <div class="qwjgb"><label class="ZmsoW" for="phone" id="phone--label">Phone<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="phone" type="tel" required></div></div></div>
+    <input aria-label="Longitude" id="longitude" required type="hidden" value=""><input aria-label="Latitude" id="latitude" required type="hidden" value="">
+    <div class="qwjgb">
+      <label class="ZmsoW" for="location" id="location--label">Location (city)<span class="Z3JQr">*</span></label>
+      <div class="KqT9e">
+        <div class="GGBZv vBiUr"><div class="B8ekZ"><input aria-controls="web-ui5" aria-haspopup="listbox" tabindex="-1" class="NuJad" id="web-ui6" type="search"><button class="xu0pG" tabindex="-1" type="button"></button></div></div>
+        <div class="HNkOn _tq74 WMJuw HZa0Q"><div class="GGBZv"><div class="B8ekZ eFuJa BEljW sFcHf"><input class="NuJad" id="web-ui7" type="search" value=""><button class="xu0pG" tabindex="-1" type="button"></button></div></div><ul aria-disabled="false" aria-multiselectable="false" class="m8kZ3" id="web-ui5" role="listbox"></ul></div>
+      </div>
+      <input aria-errormessage="location--error" id="location" required type="hidden" value="">
+    </div>
+    <div data-generate="QUESTIONS"></div>
   </div>
   <hr class="XSneO">
   <div class="O090O _jDNQ">
@@ -71,18 +91,85 @@
     </fieldset>
     <button class="_dlaB ZWlRv AGvZF icJgE at2Ig" id="add-another"><span class="Ewd3i">Add another</span></button>
   </div>
+  <hr class="XSneO">
+  <div class="q56u0"><h2>Voluntary Self Identification</h2><p class="a_DqD">We invite U.S. applicants to share their demographic information. Participation is voluntary.</p></div>
+  <div class="O090O _jDNQ"><div data-generate="DEMOGRAPHICS"></div></div>
   <button class="Q5ycz" id="submit-application">Submit application</button>
 </form>
 <script>
 (() => {
-  window.__queries = { school: [], degree: [], discipline: [] };
+  window.__queries = { location: [], school: [], degree: [], discipline: [] };
   window.__clicks = { addAnother: 0, submit: 0, monthOpens: 0 };
+  window.__opens = {};   // listbox button group id -> times its list was opened
   window.__submits = 0;
   document.querySelector("form.k30Iw").addEventListener("submit", (e) => { e.preventDefault(); window.__submits++; });
   document.getElementById("add-another").addEventListener("click", () => window.__clicks.addAnother++);
   document.getElementById("submit-application").addEventListener("click", () => window.__clicks.submit++);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
-  // Option lists as the live form shows them (Greenhouse ids where they were observed; the rest are placeholders).
+  // [group id, question, list id, options, required, multi]; a text question has the list id "text" and no options.
+  const QUESTIONS = [
+    ["question_38795087002", "What is your expected graduation timeline?", "web-ui10", ["Anything before Fall/Winter 2026", "Fall/Winter 2026", "Spring/Summer 2027", "Fall/Winter 2027", "Spring/Summer 2028", "Fall/Winter 2028", "Spring/Summer 2029", "Anything AFTER Spring/Summer 2029"], true],
+    ["question_38795088002", "Are you willing to work from the office location of the job?", "web-ui11", ["Yes", "No"], true],
+    ["question_38795089002", "Which office location are you most interested in?", "web-ui12", ["Pittsburgh, PA", "New York, NY", "Seattle, WA"], true],
+    ["question_38795090002", "Undergraduate GPA", "text", null, true],
+    ["question_38795094002", "Where did you hear about this job?", "web-ui17", ["LinkedIn", "Glassdoor", "Blind", "TikTok", "Twitter / X", "Instagram", "Youtube", "Reddit", "Mastodon", "Discord", "Podcasts", "Duolingo Employee", "Recruiter", "Duolingo Blog", "In the Duolingo app", "Article or press", "Duolingo Careers Page", "Conference", "Other"], true],
+    ["question_38795095002", "What Duolingo sponsored conferences have you attended and/or organizations are you a part of?", "web-ui18", ["Rewriting the Code", "ColorStack"], false, true],
+    ["question_38795096002", "Alternate Email", "text", null, false],
+    ["question_38795097002", "LinkedIn Profile", "text", null, false],
+    ["question_38795098002", "Website", "text", null, false],
+    ["question_38795099002", "Are you authorized to work lawfully in the United States for Duolingo?", "web-ui22", ["Yes", "No"], true],
+    ["question_38795100002", "Will you now, or in the future, require sponsorship (i.e. H-1B visa, etc.) to legally work in the U.S.?", "web-ui23", ["Yes", "No"], true],
+    ["question_38795101002", "If so, are you eligible or currently in a period of Optional Practical Training (OPT)?", "web-ui24", ["Yes", "No", "NA"], true],
+    ["question_38795102002", "After the OPT, are you eligible for a 24-month OPT extension or are currently in a 24-month OPT extension based upon a degree from a qualifying U.S. institution in Science, Technology, Engineering, or Mathematics after the Optional Practical Training (OPT)?", "web-ui25", ["Yes", "No", "NA"], true],
+  ];
+  const ANSWER = ["I don't wish to answer", "I prefer to self-describe"];
+  const DEMOGRAPHICS = [
+    ["demographic_answers.4028533002", "How would you describe your gender identity? (mark all that apply)", "web-ui37", ["Man", "Non-binary", "Woman", ...ANSWER], false, true],
+    ["demographic_answers.4028534002", "How would you describe your racial/ethnic background? (mark all that apply)", "web-ui38", ["Black or of African descent", "East Asian", "Hispanic, Latinx or of Spanish Origin", "Indigenous, American Indian or Alaska Native", "Middle Eastern or North African Native", "Hawaiian or Pacific Islander", "South Asian", "Southeast Asian", "White or European", ...ANSWER], false, true],
+    ["demographic_answers.4028535002", "How would you describe your sexual orientation? (mark all that apply)", "web-ui39", ["Asexual", "Bisexual and/or pansexual", "Gay", "Heterosexual", "Lesbian", "Queer", ...ANSWER], false, true],
+    ["demographic_answers.4028536002", "Do you identify as transgender?", "web-ui40", ["Yes", "No", ...ANSWER], false],
+    ["demographic_answers.4028537002", "Do you have a disability or chronic condition (physical, visual, auditory, cognitive, mental, emotional, other) that substantially limits one or more of your major life activities, including mobility, communication (seeing, hearing, speaking), & learning", "web-ui41", ["Yes", "No", ...ANSWER], false],
+    ["demographic_answers.4028538002", "Are you a veteran or active member of the United States Armed Forces?", "web-ui42", ["I am a veteran or active member", "No, I am not a veteran or active member", ...ANSWER], false],
+  ];
+  const star = (req) => (req ? '<span class="Z3JQr">*</span>' : "");
+  const block = ([id, q, list, options, req, multi]) => list === "text"
+    ? `<div class="qwjgb"><label class="ZmsoW" for="${id}" id="${id}--label">${esc(q)}${star(req)}</label><div class="GGBZv"><div class="B8ekZ"><input aria-errormessage="${id}--error" class="NuJad" id="${id}" type="text" value=""></div></div></div>`
+    : `<div class="qwjgb"><label class="ZmsoW" for="${id}" id="${id}--label">${esc(q)}${star(req)}</label><div aria-errormessage="${id}--error" aria-required="${Boolean(req)}" class="cYvzB" id="${id}" role="group"><div class="ykGYX"><div class="FUCuR sMEN5 AvNsP"><span class="GfJwj">Select...</span><button aria-controls="${list}" aria-haspopup="listbox" class="Ku9oD CCR1m" type="button"></button></div></div></div></div>`;
+  for (const [name, rows] of Object.entries({ QUESTIONS, DEMOGRAPHICS })) document.querySelector(`[data-generate=${name}]`).outerHTML = rows.map(block).join("");
+
+  // Listbox buttons. The live widget puts focus on the list while it is open; this one leaves focus alone.
+  const option = (t, selected, multi) => `<li aria-disabled="false" aria-selected="${selected}" class="hyKlT jwRSZ${multi ? " FitE9" : ""}" role="option" tabindex="-1" title="${esc(t)}"><div class="PTQys"><div class="HmUKu"><div class="bO4rf KtCP_ fRaYd"><strong>${esc(t)}</strong></div></div>${multi ? `<label class="faC4s" tabindex="-1"><input class="A41Hw" type="checkbox"${selected ? " checked" : ""}><div class="QvKB9"></div></label>` : ""}</div></li>`;
+  const listbox = ([id, , list, options, , multi = false]) => {
+    const group = document.getElementById(id), box = group.querySelector(".ykGYX"), face = group.querySelector(".FUCuR"), span = group.querySelector(".GfJwj"), btn = group.querySelector("button");
+    const chosen = [];   // in the order picked, as the live span lists them
+    const show = () => { span.textContent = chosen.length ? chosen.join(", ") : "Select..."; face.classList.toggle("AvNsP", !chosen.length); };
+    const close = () => box.querySelector(".OhQSF")?.remove();
+    const open = () => {
+      window.__opens[id] = (window.__opens[id] || 0) + 1;
+      const wrap = document.createElement("div");
+      wrap.className = "OhQSF _QFY8 unLe1";
+      wrap.innerHTML = `<div class="XvldW LgvvD"><div class="HNkOn WMJuw Gfgx9"><ul aria-disabled="false" aria-multiselectable="${multi}" class="m8kZ3" id="${list}" role="listbox">${options.map((t) => option(t, chosen.includes(t), multi)).join("")}</ul></div></div>`;
+      wrap.addEventListener("click", (e) => {
+        const o = e.target.closest("[role=option]");
+        if (!o) return;
+        e.preventDefault();
+        if (!multi) { chosen.splice(0, chosen.length, o.title); show(); close(); return; }
+        const at = chosen.indexOf(o.title);
+        if (at >= 0) chosen.splice(at, 1); else chosen.push(o.title);
+        o.setAttribute("aria-selected", String(at < 0));
+        o.querySelector("input").checked = at < 0;
+        show();
+      });
+      wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+      box.appendChild(wrap);
+    };
+    btn.addEventListener("click", () => (box.querySelector(".OhQSF") ? close() : open()));
+    btn.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  };
+  [...QUESTIONS, ...DEMOGRAPHICS].filter((row) => row[2] !== "text").forEach(listbox);
+
+  // Option lists for the pickers (Greenhouse ids where they were observed; the rest are placeholders).
   const SCHOOLS = [["4001", "Texas A&M International University"], ["11785542002", "Texas A&M University - College Station"], ["11785542003", "Texas A&M University - Commerce"],
     ["4002", "Texas A&M University - Corpus Christi"], ["4003", "Texas A&M University - Galveston"], ["4004", "Texas A&M University - Kingsville"], ["4005", "Texas A&M University - Texarkana"],
     ["4006", "West Texas A&M University"], ["4007", "Texas Tech University"], ["4008", "Baylor University"]];
@@ -97,34 +184,42 @@
     "Nuclear Technics", "Operations Research & Strategy", "Organizational Theory", "Other", "Philosophy", "Physical Education", "Physical Sciences", "Physics", "Political Science",
     "Psychology", "Public Policy", "Public Service", "Religious Studies", "Russian & Soviet Studies", "Scandinavian Studies", "Science", "Slavic Studies", "Social Science",
     "Social Sciences", "Sociology", "Speech", "Statistics & Decision Theory", "Urban Studies", "Veterinary Medicine"].map((t, i) => [t === "Computer Science" ? "11786740002" : String(11786800002 + i), t]);
+  // Places as Google lists them; the place name is also the stored value.
+  const PLACES = [["Austin, TX, USA", 30.2672, -97.7431], ["Austin, MN, USA", 43.6666, -92.9746], ["Austin, AR, USA", 34.9984, -91.9837], ["Austin, IN, USA", 38.7584, -85.808],
+    ["Houston, TX, USA", 29.7604, -95.3698], ["Dallas, TX, USA", 32.7767, -96.797], ["College Station, TX, USA", 30.628, -96.3344], ["Pittsburgh, PA, USA", 40.4406, -79.9959],
+    ["New York, NY, USA", 40.7128, -74.006], ["Seattle, WA, USA", 47.6061, -122.3328]].map(([t, lat, lng]) => [t, t, { lat, lng }]);
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-  // The live picker wraps the typed part of each label in <strong> (the whole label when nothing is typed).
-  const li = ([id, t], q) => {
+  // The live picker wraps the typed part of each label in <strong> (the whole label when the query is not part of it).
+  const li = ([id, t, data], q) => {
     const at = q ? t.toLowerCase().indexOf(q.toLowerCase()) : -1;
-    const label = !q ? `<strong>${esc(t)}</strong>` : `${esc(t.slice(0, at))}<strong>${esc(t.slice(at, at + q.length))}</strong>${esc(t.slice(at + q.length))}`;
-    return `<li aria-disabled="false" aria-selected="false" class="hyKlT jwRSZ" role="option" tabindex="0" title="${esc(t)}" data-id="${id}"><div class="PTQys"><div class="HmUKu"><div class="rqMDI fRaYd">${label}</div></div></div></li>`;
+    const label = at < 0 ? `<strong>${esc(t)}</strong>` : `${esc(t.slice(0, at))}<strong>${esc(t.slice(at, at + q.length))}</strong>${esc(t.slice(at + q.length))}`;
+    const extra = data ? Object.entries(data).map(([k, v]) => ` data-${k}="${esc(v)}"`).join("") : "";
+    return `<li aria-disabled="false" aria-selected="false" class="hyKlT jwRSZ" role="option" tabindex="0" title="${esc(t)}" data-id="${esc(id)}"${extra}><div class="PTQys"><div class="HmUKu"><div class="rqMDI fRaYd">${label}</div></div></div></li>`;
   };
+  const includes = (t, q) => t.toLowerCase().includes(q.toLowerCase());
+  // Google-like place match: every query word starts a word of the place; state names count as their codes.
+  const STATE = { texas: "tx", minnesota: "mn", arkansas: "ar", indiana: "in", pennsylvania: "pa", washington: "wa" };
+  const placeMatch = (t, q) => { const words = t.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); const qs = q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map((w) => STATE[w] || w); return qs.length > 0 && qs.every((w) => words.some((x) => x.startsWith(w))); };
 
-  // Typing goes into the proxy; changing its text drops the stored id; picking an option fills both and empties the
-  // list. The school list answers after a delay (a server search); degree and discipline filter at once. Each query
-  // is logged once the typing pauses, so a test can tell which box a search typed into.
-  const picker = (name, overlayId, proxyId, hiddenId, items, delay) => {
+  // Typing goes into the proxy; changing its text drops the stored choice; picking an option fills both and empties
+  // the list. The school and location lists answer after a delay (a server search); degree and discipline filter at
+  // once. Each query is logged once the typing pauses, so a test can tell which box a search typed into.
+  const picker = (name, overlayId, proxyId, hiddenId, items, delay, { match = includes, pick = (o, hidden) => { hidden.value = o.dataset.id; }, reset = () => {} } = {}) => {
     const overlay = document.getElementById(overlayId), proxy = document.getElementById(proxyId), hidden = document.getElementById(hiddenId);
     const list = document.getElementById(overlay.getAttribute("aria-controls"));
     let timer = null, pending = null, logTimer = null;
     const logNow = () => { clearTimeout(logTimer); if (pending) window.__queries[name].push(pending); pending = null; };
     const render = () => {
       const q = proxy.value.trim();
-      const show = () => { list.innerHTML = items.filter(([, t]) => t.toLowerCase().includes(q.toLowerCase())).slice(0, 100).map((it) => li(it, q)).join(""); };
+      const show = () => { list.innerHTML = items.filter(([, t]) => match(t, q)).slice(0, 100).map((it) => li(it, q)).join(""); };
       clearTimeout(timer);
       if (delay) timer = setTimeout(show, delay); else show();
     };
     proxy.addEventListener("mousedown", render);
     proxy.addEventListener("focus", render);
     proxy.addEventListener("input", () => {
-      hidden.value = "";
+      hidden.value = ""; reset();
       pending = proxy.value.trim() || null;
       clearTimeout(logTimer); logTimer = setTimeout(logNow, 150);
       render();
@@ -134,9 +229,16 @@
       if (!o) return;
       logNow();
       clearTimeout(timer);
-      proxy.value = o.title; hidden.value = o.dataset.id; list.innerHTML = "";
+      proxy.value = o.title; pick(o, hidden); list.innerHTML = "";
     });
   };
+  const lat = document.getElementById("latitude"), lng = document.getElementById("longitude");
+  picker("location", "web-ui6", "web-ui7", "location", PLACES, 300, {
+    match: placeMatch,
+    // The place name is stored at once; the coordinates arrive with a second request (Places GetPlace).
+    pick: (o, hidden) => { hidden.value = o.title; setTimeout(() => { lat.value = o.dataset.lat; lng.value = o.dataset.lng; }, 100); },
+    reset: () => { lat.value = ""; lng.value = ""; },
+  });
   picker("school", "web-ui27", "web-ui28", "educations[0].school_name_id", SCHOOLS, 250);
   picker("degree", "web-ui30", "web-ui31", "educations[0].degree_id", DEGREES, 0);
   picker("discipline", "web-ui33", "web-ui34", "educations[0].discipline_id", DISCIPLINES, 0);

@@ -110,7 +110,8 @@
       "method": "combobox",
       "path": [
         ".//input[@id='candidate-location']",
-        ".//input[@id='job_application_location']"
+        ".//input[@id='job_application_location']",
+        ".//input[@id='location']"
       ],
       "allowFailure": true,
       "optionsPath": [
@@ -268,6 +269,41 @@
       ]
     },
     {
+      "key": "graduation",
+      "valueKey": "education[0].end_date|term",
+      "method": "combobox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@role='group'][@id = //label[contains(translate(., 'GRADUATION', 'graduation'), 'graduation')]/@for]//button[@aria-haspopup='listbox']"
+      ]
+    },
+    {
+      "key": "opt",
+      "valueKey": "sponsorship",
+      "values": {
+        "false": ["NA", "N/A", "Not applicable"],
+        "true": []
+      },
+      "method": "combobox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@role='group'][@id = //label[contains(., 'Optional Practical Training') and not(contains(., 'extension'))]/@for]//button[@aria-haspopup='listbox']"
+      ]
+    },
+    {
+      "key": "opt_extension",
+      "valueKey": "sponsorship",
+      "values": {
+        "false": ["NA", "N/A", "Not applicable"],
+        "true": []
+      },
+      "method": "combobox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@role='group'][@id = //label[contains(., 'OPT extension')]/@for]//button[@aria-haspopup='listbox']"
+      ]
+    },
+    {
       "key": "gender",
       "values": "gender",
       "method": "combobox",
@@ -277,6 +313,7 @@
         "css:[role=option]"
       ],
       "path": [
+        ".//*[@role='group' and starts-with(@id, 'demographic_answers')][@id = //label[contains(translate(., 'GENDER', 'gender'), 'gender') and not(contains(translate(., 'TRANSGENDER', 'transgender'), 'transgender'))]/@for]//button[@aria-haspopup='listbox']",
         ".//label[contains(translate(., 'GENDER', 'gender'), 'gender')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
       ]
     },

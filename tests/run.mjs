@@ -77,7 +77,16 @@ const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementB
 const readWebui = (page) => page.evaluate(() => { const g = (id) => document.getElementById(id); return {
   schoolId: g("educations[0].school_name_id").value, degreeId: g("educations[0].degree_id").value, disciplineId: g("educations[0].discipline_id").value,
   school: g("web-ui28").value, degree: g("web-ui31").value, discipline: g("web-ui34").value, month: document.querySelector("[id='educations[0].end_date.month'] .GfJwj").textContent,
-  year: g("educations[0].end_date.year").value, q: window.__queries, clicks: { ...window.__clicks }, submits: window.__submits, first: g("first_name").value }; });
+  year: g("educations[0].end_date.year").value, q: window.__queries, clicks: { ...window.__clicks }, submits: window.__submits, first: g("first_name").value,
+  location: g("location").value, locationBox: g("web-ui7").value, lat: g("latitude").value, lng: g("longitude").value,
+  // What each listbox button shows, by group id ("Select..." when unanswered), and how often each list was opened.
+  shown: Object.fromEntries(Array.from(document.querySelectorAll("[role=group][id^='question_'], [role=group][id^='demographic_answers']")).map((n) => [n.id, n.querySelector(".GfJwj").textContent])),
+  opens: { ...window.__opens }, openLists: document.querySelectorAll("[role=group] [role=listbox]").length,
+  gpa: g("question_38795090002").value, altEmail: g("question_38795096002").value, linkedin: g("question_38795097002").value, website: g("question_38795098002").value }; });
+// Duolingo's question and demographic group ids in the webui fixture.
+const DUO = { grad: "question_38795087002", office: "question_38795088002", officeLoc: "question_38795089002", heard: "question_38795094002", conferences: "question_38795095002",
+  auth: "question_38795099002", sponsor: "question_38795100002", opt: "question_38795101002", optExt: "question_38795102002", gender: "demographic_answers.4028533002",
+  race: "demographic_answers.4028534002", orientation: "demographic_answers.4028535002", trans: "demographic_answers.4028536002", disability: "demographic_answers.4028537002", veteran: "demographic_answers.4028538002" };
 const readJobboards = (page) => page.evaluate(() => { const sv = (id) => document.getElementById(id).closest(".select__control").querySelector(".select__single-value")?.textContent || ""; const g = (id) => document.getElementById(id).value; return {
   school: sv("school--0"), degree: sv("degree--0"), discipline: sv("discipline--0"), startMonth: sv("start-month--0"), startYear: g("start-year--0"), endMonth: sv("end-month--0"), endYear: g("end-year--0"),
   q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
@@ -317,10 +326,13 @@ const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s)
       await plain.close();
       await setStorage({ profile: PROFILE });
     }
-    // ---- Greenhouse education: Duolingo's own form with Greenhouse ids (web-ui pickers) ----
+    // ---- Greenhouse: Duolingo's own form with Greenhouse ids (web-ui pickers and listbox buttons) ----
     if (has020) {
       const CS = "Texas A&M University - College Station";
-      await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }] } });
+      // The office questions have no profile key: a saved answer fills them.
+      const OFFICE = { "Are you willing to work from the office location of the job?": "Yes", "Which office location are you most interested in?": "New York, NY" };
+      const duoProfile = { ...PROFILE, gender: "Male", education: [{ ...PROFILE.education[0], school_greenhouse: CS }], answers: { ...PROFILE.answers, ...OFFICE } };
+      await setStorage({ profile: duoProfile });
       const page = await ctx.newPage();
       await page.goto(`${base}/greenhouse-webui.html?gh_jid=8888721002`);
       const summary = await fillAndWait(page);
@@ -333,24 +345,76 @@ const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s)
       check("webui: discipline id", v.disciplineId, "11786740002");
       check("webui: discipline shown", v.discipline, "Computer Science");
       check("webui: discipline went through search", statusOf(summary, "education[0].major"), (t) => /"filled","Computer Science +\(searched/.test(t));
-      // The three pickers share one <fieldset>: each search must type into its own box, never into the school's.
-      check("webui: each search typed into its own box", JSON.stringify(v.q), JSON.stringify({ school: [CS], degree: ["Bachelor's Degree"], discipline: ["Computer Science"] }));
+      // The three education pickers share one <fieldset>: each search must type into its own box, never into the school's.
+      check("webui: each search typed into its own box", JSON.stringify(v.q), JSON.stringify({ location: ["Austin, Texas"], school: [CS], degree: ["Bachelor's Degree"], discipline: ["Computer Science"] }));
       check("webui: end month picked", v.month, "May");
       check("webui: end year", v.year, "2028");
       check("webui: start date reported absent", statusOf(summary, "education[0].start_month") + statusOf(summary, "education[0].start_year"), (t) => (t.match(/"absent"/g) || []).length === 2);
       check("webui: no unknown end-date question left", JSON.stringify(summary.statuses), (t) => !/\? [^"]*end date/.test(t));
       check("webui: other fields still filled", v.first, "Ada");
+      // Location picker: a Google Places list behind the same overlay/proxy picker, resolved by the option search.
+      check("webui: location stored", v.location, "Austin, TX, USA");
+      check("webui: location shown", v.locationBox, "Austin, TX, USA");
+      check("webui: location coordinates set", JSON.stringify([v.lat, v.lng]), JSON.stringify(["30.2672", "-97.7431"]));
+      check("webui: location went through search", statusOf(summary, "location"), (t) => /"filled","Austin, TX, USA +\(searched/.test(t));
+      // Question and demographic dropdowns (listbox buttons): config paths, the heuristic pass, value maps, saved answers.
+      const s = v.shown;
+      check("webui: graduation timeline from the end date", s[DUO.grad], "Spring/Summer 2028");
+      check("webui: work authorization", s[DUO.auth], "Yes");
+      check("webui: sponsorship", s[DUO.sponsor], "No");
+      check("webui: OPT questions NA without sponsorship", JSON.stringify([s[DUO.opt], s[DUO.optExt]]), JSON.stringify(["NA", "NA"]));
+      check("webui: where did you hear", s[DUO.heard], "LinkedIn");
+      check("webui: office questions from saved answers", JSON.stringify([s[DUO.office], s[DUO.officeLoc]]), JSON.stringify(["Yes", "New York, NY"]));
+      check("webui: gender identity (multi list)", s[DUO.gender], "Man");
+      check("webui: race (multi list, decline)", s[DUO.race], "I don't wish to answer");
+      check("webui: disability", s[DUO.disability], "I don't wish to answer");
+      check("webui: veteran (value map)", s[DUO.veteran], "No, I am not a veteran or active member");
+      check("webui: no answer, left alone", JSON.stringify([s[DUO.conferences], s[DUO.orientation], s[DUO.trans]]), JSON.stringify(["Select...", "Select...", "Select..."]));
+      check("webui: unanswered lists never opened", JSON.stringify([DUO.conferences, DUO.orientation, DUO.trans].map((id) => v.opens[id] || 0)), "[0,0,0]");
+      check("webui: every list closed again", v.openLists, 0);
+      check("webui: config fields report the picks", [statusOf(summary, "graduation"), statusOf(summary, "opt"), statusOf(summary, "gender")].join(" "), (t) => /"filled","Spring\/Summer 2028"/.test(t) && /"filled","NA"/.test(t) && /"filled","Man"/.test(t));
+      check("webui: heuristic picks report the option", statusOf(summary, "veteran"), (t) => /"filled","No, I am not a veteran or active member"/.test(t));
+      check("webui: unanswered dropdowns listed as unknown", JSON.stringify((summary.statuses || []).filter((x) => x[1] === "unknown").map((x) => x[0])), (t) => [/sponsored conferences/, /sexual orien/, /transgender/].every((re) => re.test(t)));
+      // "Alternate Email" is a second address, never the profile email.
+      check("webui: Alternate Email left empty", v.altEmail, "");
+      check("webui: Alternate Email listed as unknown", statusOf(summary, "? alternate email"), (t) => /"unknown"/.test(t));
+      check("webui: GPA, LinkedIn and website", JSON.stringify([v.gpa, v.linkedin, v.website]), JSON.stringify([PROFILE.education[0].gpa, PROFILE.linkedin, PROFILE.portfolio]));
       check("webui: Add another (a submit button) and submit untouched", JSON.stringify([v.clicks.addAnother, v.clicks.submit, v.submits]), "[0,0,0]");
-      // Rerun: the pickers show their choice in the proxy box (id stored), the month in its span. Nothing is retyped,
-      // reopened or picked again.
+      // Rerun: the pickers show their choice in the proxy box (choice stored), the listbox buttons in their span.
+      // Nothing is retyped, reopened or picked again; a second click in a multi list would remove the choice.
       const again = await fillAndWait(page);
       const r = await readWebui(page);
       check("webui rerun: no new searches", JSON.stringify(r.q), JSON.stringify(v.q));
       check("webui rerun: month list not reopened", r.clicks.monthOpens, 1);
-      check("webui rerun: values unchanged", JSON.stringify([r.schoolId, r.degreeId, r.disciplineId, r.month, r.year]), JSON.stringify([v.schoolId, v.degreeId, v.disciplineId, v.month, v.year]));
-      check("webui rerun: choices report already selected", keptKeys(again), JSON.stringify(["education[0].school", "education[0].degree", "education[0].major", "education[0].end_month"]));
+      check("webui rerun: no list reopened", JSON.stringify(r.opens), JSON.stringify(v.opens));
+      check("webui rerun: values unchanged", JSON.stringify([r.schoolId, r.degreeId, r.disciplineId, r.month, r.year, r.location, r.shown]), JSON.stringify([v.schoolId, v.degreeId, v.disciplineId, v.month, v.year, v.location, v.shown]));
+      check("webui rerun: choices report already selected", keptKeys(again), JSON.stringify(["location", "education[0].school", "education[0].degree", "education[0].major", "education[0].end_month", "graduation", "opt", "opt_extension", "gender"]));
       check("webui rerun: still nothing submitted", JSON.stringify([r.clicks.addAnother, r.clicks.submit, r.submits]), "[0,0,0]");
       await page.close();
+      // The user's own pick in a multi list stays the only one. With sponsorship needed, the OPT questions are the user's.
+      await setStorage({ profile: { ...duoProfile, sponsorship: true } });
+      const own = await ctx.newPage();
+      await own.goto(`${base}/greenhouse-webui.html?gh_jid=8888721002`);
+      await own.evaluate((id) => { const b = document.getElementById(id).querySelector("button"); b.click(); document.getElementById(id).querySelector("[role=option][title='Woman']").click(); b.click(); }, DUO.gender);
+      // Two other listbox buttons the new writer must leave alone, on questions the heuristic pass would answer: one that
+      // shows its choice as its own text (Workday style) and an icon toggle beside a typeahead input.
+      await own.evaluate(() => {
+        document.querySelector("form").insertAdjacentHTML("beforeend", `<div class="qwjgb"><label for="decoy-a">How did you hear about us?</label><div id="decoy-a" role="group"><button type="button" aria-haspopup="listbox" aria-controls="decoy-a-list">Select One</button></div></div>
+          <div class="qwjgb"><label for="decoy-b">Where did you hear about us?</label><div><input id="decoy-b" type="text"><button type="button" aria-haspopup="listbox" aria-controls="decoy-b-list"></button></div></div>`);
+        window.__decoyClicks = 0;
+        for (const b of document.querySelectorAll("[aria-controls^=decoy]")) b.addEventListener("click", () => window.__decoyClicks++);
+      });
+      const s2 = await fillAndWait(own);
+      const u = await readWebui(own);
+      check("webui decoys: other listbox buttons never clicked", await own.evaluate(() => window.__decoyClicks), 0);
+      check("webui user: own multi choice kept, nothing added", u.shown[DUO.gender], "Woman");
+      check("webui user: status says kept the existing choice", statusOf(s2, "gender"), (t) => /kept the existing choice \\"Woman/.test(t));
+      check("webui sponsorship: sponsorship = Yes", u.shown[DUO.sponsor], "Yes");
+      check("webui sponsorship: OPT questions left alone", JSON.stringify([u.shown[DUO.opt], u.shown[DUO.optExt]]), JSON.stringify(["Select...", "Select..."]));
+      check("webui sponsorship: OPT lists never opened", JSON.stringify([u.opens[DUO.opt] || 0, u.opens[DUO.optExt] || 0]), "[0,0]");
+      check("webui sponsorship: OPT listed as unknown", statusOf(s2, "opt") + statusOf(s2, "opt_extension"), (t) => (t.match(/"unknown","no answer for sponsorship = true"/g) || []).length === 2);
+      check("webui user: every list closed again", u.openLists, 0);
+      await own.close();
       await setStorage({ profile: PROFILE });
     }
     // ---- Greenhouse job-boards education: react-select 5 with no "field" wrapper, start and end dates ----

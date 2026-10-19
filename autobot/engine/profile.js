@@ -49,6 +49,13 @@ AB.format = (value, fmt, ctx) => {
     case "YYYY-MM": return m && y ? `${y}-${two(m)}` : "";
     case "YYYY-MM-DD": return m && y ? `${y}-${two(m)}-01` : "";
     case "MMMM YYYY": return m && y ? `${AB.MONTHS[Number(m) - 1]} ${y}` : "";
+    // Academic term, worded the ways graduation pickers list it; a picker takes the one it has exactly. Duolingo
+    // splits the year into Spring/Summer (January to August) and Fall/Winter.
+    case "term": {
+      if (!m || !y) return "";
+      const n = Number(m);
+      return [`${n <= 8 ? "Spring/Summer" : "Fall/Winter"} ${y}`, `${n <= 5 ? "Spring" : n <= 8 ? "Summer" : "Fall"} ${y}`, `${AB.MONTHS[n - 1]} ${y}`];
+    }
     default: return value;
   }
 };
