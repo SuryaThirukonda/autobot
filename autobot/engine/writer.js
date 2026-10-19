@@ -156,8 +156,13 @@ AB.refresh = (el) => {
 
 AB.collectOptions = (optSel) => AB.queryAny(optSel, document, true).filter((o) => AB.isVisible(o) && AB.textOf(o));
 
-AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = true } = {}) => {
-  const want = AB.arr(value).map(String).filter(Boolean);
+// react-select (Greenhouse job-boards, many others) shows the choice in select__single-value beside its input; the
+// input's own text is only the search query, never a value.
+AB.showsChoiceApart = (input) => Boolean(input?.closest?.("[class*='select__control']"));
+
+// candidates: every mapped form of the value ("Man", "Male"). The first is typed; all of them are matched.
+AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = true, candidates } = {}) => {
+  const want = Array.from(new Set([...AB.arr(value), ...AB.arr(candidates)].map(String).filter(Boolean)));
   if (!want.length) return false;
   el = AB.refresh(el);
   let input = el.matches("input, textarea") ? el : el.querySelector("input") || el;
@@ -168,52 +173,102 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
     "css:[class*='select__option']:not([class*='disabled'])",
     "css:[class*='dropdown'] li, css:[class*='suggestion'], css:[class*='autocomplete'] li",
   ];
+  const apart = AB.showsChoiceApart(input);
+  const canType = typeToSearch && input.matches("input, textarea");
   // Anything already visible before we interact is not a menu option (e.g. radio labels with "option" in their class).
   const before = new Set(AB.collectOptions(optSel));
   input.focus();
   AB.fire(el, ["mousedown", "mouseup", "click"]);
-  if (typeToSearch && input.matches("input, textarea")) {
+  const typeQuery = async (q) => {
     // React-controlled search inputs (react-select, Ashby, Greenhouse) only filter when React's own onChange runs.
     const isReact = Object.keys(input).some((k) => /^__react(Props|Fiber|EventHandlers|InternalInstance)\$/.test(k));
-    if (isReact) { const r = await AB.pageCall("fill", { path: AB.pathTo(input), method: "react", value: want[0], eventOptions: { skipBlur: true } }); if (!r.ok) await AB.writeText(input, want[0], { blur: false }); }
-    else await AB.writeText(input, want[0], { blur: false });
-  }
+    if (isReact) { const r = await AB.pageCall("fill", { path: AB.pathTo(input), method: "react", value: q, eventOptions: { skipBlur: true } }); if (!r.ok) await AB.writeText(input, q, { blur: false }); }
+    else await AB.writeText(input, q, { blur: false });
+    input = AB.refresh(input);
+  };
+  if (canType) await typeQuery(want[0]);
   input = AB.refresh(input);
-  const waitOptions = async (ms) => { const deadline = Date.now() + ms; let options = []; while (Date.now() < deadline) { options = AB.collectOptions(optSel).filter((o) => !before.has(o)); if (options.length) break; await AB.sleep(100); } return options; };
-  let options = await waitOptions(2000);
-  if (!options.length) {
-    // Menu may not have opened: ArrowDown opens react-select/ARIA listboxes.
-    AB.fire(input, "keydown", { key: "ArrowDown", code: "ArrowDown", keyCode: 40 });
-    options = await waitOptions(1200);
+  // react-select's "No options" row, held for half a second, is the answer of a local list (no need to wait 3 s).
+  const noOptionsRow = () => apart && Array.from(document.querySelectorAll("[class*='menu-notice--no-options']")).some((n) => AB.isVisible(n));
+  const waitOptions = async (ms) => {
+    const deadline = Date.now() + ms;
+    let options = [], quiet = 0;
+    while (Date.now() < deadline) {
+      options = AB.collectOptions(optSel).filter((o) => !before.has(o));
+      if (options.length) break;
+      quiet = noOptionsRow() ? quiet + 1 : 0;
+      if (quiet >= 5) break;
+      await AB.sleep(100);
+    }
+    return options;
+  };
+  const listOptions = async () => {
+    let options = await waitOptions(2000);
+    if (!options.length && !noOptionsRow()) {
+      // Menu may not have opened: ArrowDown opens react-select/ARIA listboxes.
+      AB.fire(input, "keydown", { key: "ArrowDown", code: "ArrowDown", keyCode: 40 });
+      options = await waitOptions(1200);
+    }
+    return options;
+  };
+  let options = await listOptions();
+  let labels = options.map((o) => o.innerText || o.textContent);
+  let i = options.length ? AB.bestOption(want, labels, synonyms) : -1;
+  if (i < 0 && options.length && canType) {
+    // The typed search narrowed the list: accept the first option only if it shares a meaningful word with the value.
+    const toks = AB.norm(want[0]).split(" ").filter((t) => t.length >= 3);
+    if (toks.some((t) => AB.hasWords(AB.norm(labels[0]), t))) i = 0;
+  }
+  let typed = canType;
+  if (i < 0 && canType && apart) {
+    // The typed form lists nothing that matches, but a short list (an EEO question) may hold another form: "Man"
+    // lists nothing where the options are Male / Female. Clear the query and match every form against the full list.
+    await typeQuery("");
+    typed = false;
+    options = await listOptions();
+    labels = options.map((o) => o.innerText || o.textContent);
+    i = options.length ? AB.bestOption(want, labels, synonyms) : -1;
   }
   if (!options.length) {
     AB.log("combobox: no options rendered for", want[0], "on", input.id || input.className);
+    // The typed text of a react-select is only a query: nothing was chosen.
+    if (apart) { AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 }); return false; }
     AB.fire(input, "keydown", { key: "Enter", code: "Enter", keyCode: 13 }); // some widgets commit typed text on Enter
     await AB.sleep(150);
     input = AB.refresh(input);
     const got = AB.norm(input.value), head = AB.norm(String(want[0]).split(",")[0]);
     return Boolean(got) && (got === AB.norm(want[0]) || (head.length >= 3 && got.includes(head)));
   }
-  const labels = options.map((o) => o.innerText || o.textContent);
-  let i = AB.bestOption(want, labels, synonyms);
-  if (i < 0 && typeToSearch) {
-    // The typed search narrowed the list: accept the first option only if it shares a meaningful token with the value.
-    const toks = AB.norm(want[0]).split(" ").filter((t) => t.length >= 3);
-    if (toks.some((t) => AB.norm(labels[0]).includes(t))) i = 0;
-  }
   AB.log("combobox options", labels.slice(0, 8), "chose", i);
   if (i < 0) { AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 }); return false; }
   const opt = options[i];
   const menuOpen = () => AB.collectOptions(optSel).filter((o) => !before.has(o)).length > 0;
-  if (i === 0 && typeToSearch) {
+  // A choice shown apart from the input counts only once the control shows the picked label, or a whole-word part of
+  // it: Greenhouse's phone country lists "United States +1" and then shows "+1".
+  const picked = AB.norm(labels[i]);
+  const isPick = (s) => { const n = AB.norm(s); return n === picked || AB.hasWords(picked, n) || AB.hasWords(n, picked); };
+  const shown = async () => {
+    for (let t = 0; t < 6; t++) {
+      if (AB.shownChoices(AB.refresh(input)).some(isPick)) return true;
+      await AB.sleep(100);
+    }
+    AB.log("combobox: pick not shown", labels[i]);
+    return false;
+  };
+  if (i === 0 && typed) {
     // The typed search left our match as the focused first option: Enter commits exactly that one.
     AB.fire(input, "keydown", { key: "Enter", code: "Enter", keyCode: 13 });
     await AB.sleep(150);
-    if (!menuOpen()) return true;
+    if (!menuOpen()) return apart ? shown() : true;
   }
   opt.scrollIntoView({ block: "nearest" });
   AB.fire(opt, ["mousemove", "mouseover", "mousedown", "mouseup", "click"]);
   await AB.sleep(150);
+  if (apart) {
+    const ok = await shown();
+    if (menuOpen()) AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 });
+    return ok;
+  }
   if (menuOpen()) {
     // Never blind-commit: a stray Enter here would pick whatever is focused (observed: "+93" instead of "+1").
     AB.fire(input, "keydown", { key: "Escape", code: "Escape", keyCode: 27 });
@@ -329,13 +384,13 @@ AB.write = async (el, method, value, ctx = {}) => {
       { const r = await AB.trySearch(el, value, ctx); if (r !== null) return r; }
       if (ctx.signal?.aborted) return false;
       { const kept = AB.alreadyShows(el, ctx.candidates?.length ? ctx.candidates : value, synonyms); if (kept) return AB.keepChoice(el, kept); }
-      return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms });
+      return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms, candidates: ctx.candidates });
     }
     case "react": case "jquery": case "reactClick": {
       const r = await AB.pageCall("fill", { path: AB.pathTo(el), method, value, eventOptions: ctx.eventOptions || {} });
       if (r.ok) return true;
       AB.log("page method failed, falling back", method, r.error);
-      return isCombo ? AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms }) : AB.writeText(el, value);
+      return isCombo ? AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms, candidates: ctx.candidates }) : AB.writeText(el, value);
     }
     case "defaultWithoutBlur": return AB.writeText(el, value, { blur: false });
     case "default": default: {
@@ -346,7 +401,7 @@ AB.write = async (el, method, value, ctx = {}) => {
         if (isCombo) {
           const kept = AB.alreadyShows(el, ctx.candidates?.length ? ctx.candidates : value, synonyms);
           if (kept) return AB.keepChoice(el, kept);
-          return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms });
+          return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms, candidates: ctx.candidates });
         }
       }
       // React-controlled inputs reject plain writes unless the native setter + handlers are used; detect and route.

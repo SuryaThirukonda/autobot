@@ -1,7 +1,8 @@
 // autobot unit test for the pure-logic search engine (engine/search.js): scorer, ranking, query plans,
 // step-contract validation, the local resolver, the AB.search.run driver against a fake in-memory adapter,
-// per-ATS names and the rerun checks. No browser, no dependencies: util.js, search.js and search-widgets.js are
-// classic scripts evaluated into this Node context (the widget code only touches the DOM when called).
+// per-ATS names, the rerun checks and util.js's option matcher (AB.bestOption). No browser, no dependencies: util.js,
+// search.js and search-widgets.js are classic scripts evaluated into this Node context (the widget code only touches
+// the DOM when called).
 // Usage: node tests/search-unit.mjs [--ext=legacy/autobot-v2]   (--ext picks the extension folder relative to the
 // repo root, default autobot/)
 import assert from "node:assert/strict";
@@ -547,6 +548,34 @@ const T = S.THRESHOLDS;
     const res2 = await S.run({ el: { id: "school" }, fieldType: "school", answer: "Texas A&M University", adapter: plain });
     check("ats run: without it, nothing committed", [res2.success, res2.failureReason, plain.calls.commit.length, plain.calls.capture], [false, "return-empty", 0, ["Texas A&M University", "Texas A&M"]]);
   });
+
+  // =====================================================================================
+  // 10. AB.bestOption (util.js), the v1 option matcher: prefix, contains and token steps compare whole words
+  // =====================================================================================
+  // Older folders compare substrings ("man" inside "woman"); their matcher is not checked here.
+  if (typeof AB.hasWords !== "function") console.log("section 10 skipped: substring option matcher (before whole-word matching)");
+  else {
+    const pick = (w, labels, syn) => { const i = AB.bestOption(w, labels, syn); return i < 0 ? null : labels[i]; };
+    // Robinhood's job-boards demographic question, typed "Man" (2026-10-19): option 0 was committed.
+    check("bestOption: 'Man' is not inside 'woman'", pick("Man", ["Cisgender woman", "Cisgender man", "Transgender woman", "Transgender man"]), "Cisgender man");
+    check("bestOption: 'Man' among woman options only -> none", pick("Man", ["Cisgender woman", "Transgender woman"]), null);
+    check("bestOption: 'Male' is not inside 'Female'", pick("Male", ["Female", "Gender: Male"]), "Gender: Male");
+    check("bestOption: 'No' does not start 'Not now'", pick("No", ["Not now", "No, thanks"]), "No, thanks");
+    check("bestOption: label 'No' is not inside wanted 'not'", pick("I do not know", ["No", "Unknown"]), null);
+    check("bestOption: 'Art' is not inside 'Martial arts'", pick("Art", ["Martial arts", "Fine Art"]), "Fine Art");
+    check("bestOption: '1' does not start '10+'", pick("1", ["10+", "1-2"]), "1-2");
+    check("bestOption: '+1' is not inside '+213'", pick("+1", ["Algeria (+213)", "United States (+1)"]), "United States (+1)");
+    check("bestOption: an empty label never matches", pick("Maybe", ["", "Yes", "No"]), null);
+    // Unchanged: exact, normalized and synonym steps, and whole-word prefix, contains and token matches.
+    check("bestOption: any wanted value's exact match first", pick(["Man", "Male"], ["Female", "Male", "Decline To Self Identify"]), "Male");
+    check("bestOption: normalized (case, punctuation)", pick("Decline to self-identify", ["Male", "Decline To Self Identify"]), "Decline To Self Identify");
+    check("bestOption: synonym", pick("Decline to self-identify", ["Male", "Female", "I don't wish to answer"], { "decline to self identify": ["Prefer not to say", "I don't wish to answer"] }), "I don't wish to answer");
+    check("bestOption: label starts with the value", pick("Yes", ["No", "Yes, I am authorized to work in the US"]), "Yes, I am authorized to work in the US");
+    check("bestOption: value starts with the label", pick("No, I do not have a disability", ["Yes", "No"]), "No");
+    check("bestOption: apostrophe forms", pick("Bachelor's", ["Associate's Degree", "Bachelor's Degree"]), "Bachelor's Degree");
+    check("bestOption: label contains the value", pick("Computer Science", ["Physics", "B.S. in Computer Science"]), "B.S. in Computer Science");
+    check("bestOption: every value token in the label", pick("Texas University", ["Texas Tech", "University of Texas at Austin"]), "University of Texas at Austin");
+  }
 
   // ---------- report ----------
   const pad = (s, n) => String(s).padEnd(n);
