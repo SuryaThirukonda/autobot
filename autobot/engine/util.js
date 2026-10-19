@@ -81,3 +81,6 @@ AB.bestOption = (wanted, labels, synonyms) => {
 AB.YES = ["yes", "y", "true", "i am", "i do", "authorized", "eligible", "agree", "accept"];
 AB.NO = ["no", "n", "false", "i am not", "i do not", "not authorized", "decline", "do not"];
 AB.boolToYesNo = (v) => (v === true || v === "true" || v === "yes" ? "Yes" : v === false || v === "false" || v === "no" ? "No" : v);
+// A question answered yes or no opens with an auxiliary verb and its subject ("Are you currently enrolled ...?", "Do you
+// have ...?", "Will you require ...?"). Questions that ask for a name open otherwise ("Which school ...?", "School").
+AB.isYesNoQuestion = (label) => /^(?:\d+ )?(?:are|is|am|was|were|do|does|did|have|has|had|will|would|can|could|should|may) (?:you|your|we|it|this|that|there|the|any|a|an|i)\b/.test(AB.norm(label));

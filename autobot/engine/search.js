@@ -477,7 +477,7 @@ AB.search = AB.search || {};
   // Map a profile key / label to a search field type. A profile key decides on its own: the search types follow from
   // it, and every other profile key is "generic" whatever its label says. Airbnb's "Are you legally authorized to work
   // in the country where the job is located?" is a yes/no work_auth_us question, not a city search. Label words
-  // classify only fields without a profile key: saved-answer questions and question ids.
+  // classify only fields without a profile key (saved-answer questions and question ids), and never a yes/no question.
   const KEY_TYPES = [["school", /school|university|college|institution/], ["major", /major|field_of_study|discipline/], ["degree", /degree/], ["location", /^(location|city|city_state)$/], ["company", /company|employer|organization/]];
   const LABEL_TYPES = [["school", /\b(school|university|college|institution)\b/], ["major", /\b(major|field of study|discipline|area of study)\b/], ["degree", /\bdegree\b/], ["location", /\b(location|city|where .* live|located)\b/], ["company", /\b(company|employer|organization)\b/]];
   // Profile keys whose value is never a search type: engine/profile.js (PROFILE_DEFAULT, derived keys, education[] and
@@ -497,6 +497,8 @@ AB.search = AB.search || {};
     const byKey = KEY_TYPES.find(([, re]) => re.test(k));
     if (byKey) return byKey[0];
     if (S.PROFILE_KEYS.has(k)) return "generic";
+    // A yes/no question is never a list search, whatever names it mentions ("... at an accredited business school?").
+    if (AB.isYesNoQuestion?.(label)) return "generic";
     const l = AB.norm ? AB.norm(label) : String(label).toLowerCase();
     return LABEL_TYPES.find(([, re]) => re.test(l))?.[0] || "generic";
   };

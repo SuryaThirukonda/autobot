@@ -1,7 +1,7 @@
 // autobot unit test for the pure-logic search engine (engine/search.js): scorer, ranking, query plans,
 // step-contract validation, the local resolver, the AB.search.run driver against a fake in-memory adapter,
-// per-ATS names and the rerun checks. No browser, no dependencies: util.js, profile.js, heuristics.js, search.js and
-// search-widgets.js are classic scripts evaluated into this Node context (their DOM code only runs when called).
+// per-ATS names and the rerun checks. No browser, no dependencies: util.js, search.js and search-widgets.js are
+// classic scripts evaluated into this Node context (the widget code only touches the DOM when called).
 // Usage: node tests/search-unit.mjs [--ext=legacy/autobot-v2]   (--ext picks the extension folder relative to the
 // repo root, default autobot/)
 import assert from "node:assert/strict";
@@ -18,6 +18,7 @@ const searchFile = path.join(extDir, "engine", "search.js");
 if (!fs.existsSync(searchFile)) { console.error(`no engine/search.js under ${extDir}`); process.exit(2); }
 
 globalThis.AB = {};
+// profile.js and heuristics.js too, for the profile keys and the label rules (their DOM code only runs when called).
 for (const f of ["util.js", "profile.js", "heuristics.js", "search.js", "search-widgets.js"]) {
   const filename = path.join(extDir, "engine", f);
   if (!fs.existsSync(filename)) continue;
@@ -490,6 +491,25 @@ const T = S.THRESHOLDS;
     check("rules: eligible and will not require sponsorship", key("Are you legally eligible to work in the U.S. and will not require sponsorship?"), "work_auth_us");
     check("rules: work authorization that does not require sponsorship", key("Do you have work authorization that does not require sponsorship?"), "work_auth_us");
     check("rules: note about candidates who require sponsorship", key("Do you have US work authorization? Candidates who require sponsorship cannot be considered."), "work_auth_us");
+  }
+  // A yes/no question asked as a dropdown takes no entity key, and label words never make it a list search. Airbnb's MBA
+  // question was keyed most_recent_school ("business school"), so the school name was typed into its Yes/No list and a
+  // saved answer for it was never read.
+  if (typeof AB.isYesNoQuestion === "function") {
+    const MBA = "Are you currently enrolled in a full-time MBA program at an accredited U.S. business school, with an expected graduation date of Spring 2028?";
+    for (const l of [MBA, "Do you have a bachelor's degree?", "Will you now or in the future require sponsorship?", "Have you ever worked for Airbnb in any capacity?",
+      "Is your current employer aware of your application?", "1. Are you located in the United States?", "Can we contact your current company?"])
+      check(`yes/no question: ${l.slice(0, 44)}`, AB.isYesNoQuestion(l), true);
+    for (const l of ["Which school are you attending?", "What university do you attend?", "School", "Current employer", "Where are you located?", "Name of your college", "Do"])
+      check(`not a yes/no question: ${l}`, AB.isYesNoQuestion(l), false);
+    const key = (l, choice) => AB.keyForLabel(AB.norm(l), { choice });
+    check("rules: MBA question as a dropdown takes no key", key(MBA, true), null);
+    check("rules: MBA question as a text box is still the school", key(MBA, false), "most_recent_school");
+    check("rules: 'Which school are you attending?' dropdown", key("Which school are you attending?", true), "most_recent_school");
+    check("rules: yes/no dropdowns take no degree, place or employer", [key("Do you have a bachelor's degree?", true), key("Are you currently located in the US?", true), key("Is your current company a competitor of ours?", true)], [null, null, null]);
+    check("rules: yes/no facts as dropdowns keep their keys", [AUTH, SPONSOR, "Are you at least 18 years of age?", "Are you a protected veteran?", "Are you Hispanic or Latino?"].map((l) => key(l, true)), ["work_auth_us", "sponsorship", "over18", "veteran", "hispanic"]);
+    check("keyType: no key, yes/no question naming a school", S.fieldTypeFor(null, MBA), "generic");
+    check("keyType: no key, yes/no question naming a city", S.fieldTypeFor("", "Are you located in Austin, Texas?"), "generic");
   }
 
   // =====================================================================================

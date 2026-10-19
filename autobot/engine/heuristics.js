@@ -133,6 +133,19 @@ AB.hasKw = (label, kw) => {
   return re.test(label);
 };
 
+// Keys that name a school, field of study, degree, employer, job title or place.
+AB.ENTITY_KEYS = new Set(["most_recent_school", "most_recent_major", "most_recent_degree", "current_company", "current_title", "city", "state", "country", "location"]);
+// Dropdowns and choice groups: native selects, radio and checkbox inputs, listbox comboboxes such as react-select.
+AB.isChoiceControl = (el) => el instanceof HTMLSelectElement || /^(radio|checkbox)$/.test(el?.type) || el?.getAttribute?.("role") === "combobox" || el?.getAttribute?.("aria-haspopup") === "listbox";
+// Profile key of the first rule whose keywords appear in a normalized label and whose exclusions do not, or null. A
+// yes/no question asked as a dropdown or choice group ({ choice: true }) takes no entity key: Airbnb's "Are you currently
+// enrolled in a full-time MBA program at an accredited U.S. business school ...?" is not the school field, and a saved
+// answer can fill it.
+AB.keyForLabel = (label, { choice = false } = {}) => {
+  const yesNo = choice && AB.isYesNoQuestion(label);
+  return AB.RULES.find(([key, incl, excl]) => !(yesNo && AB.ENTITY_KEYS.has(key)) && incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k)))?.[0] ?? null;
+};
+
 AB.classify = (el) => {
   const ac = (el.getAttribute("autocomplete") || "").split(" ").pop();
   if (ac && AB.AUTOCOMPLETE_MAP[ac]) return { key: AB.AUTOCOMPLETE_MAP[ac], via: "autocomplete", label: ac };
@@ -150,14 +163,11 @@ AB.classify = (el) => {
   if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))
     return { key: null, via: "free-text", label: primary, labels };
   for (const label of labels) {
-    const key = AB.keyForLabel(label);
+    const key = AB.keyForLabel(label, { choice: AB.isChoiceControl(el) });
     if (key) return { key, via: "label", label, labels };
   }
   return { key: null, via: null, label: AB.displayLabel(labels), labels };
 };
-
-// Profile key of the first rule whose keywords appear in a normalized label and whose exclusions do not, or null.
-AB.keyForLabel = (label) => AB.RULES.find(([, incl, excl]) => incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k)))?.[0] ?? null;
 
 AB.FREE_TEXT = /(^|\s)(how do you|how would you|why do you|why are you|why would you|what has been|what is your favorite|what are you|describe|tell us|explain|in what ways|anything else|additional information|comments?)(\s|$)/;
 
@@ -180,6 +190,10 @@ AB.enumerateControls = (container) => {
     if (el.disabled || el.readOnly) continue;
     if (el.closest("[data-autobot-panel]")) continue;
     if (!AB.isVisible(el) && el.type !== "file" && el.type !== "radio" && el.type !== "checkbox") continue;
+    // A text input hidden from assistive tech and out of the tab order is nobody's question: react-select puts one
+    // (required, opacity 0) beside each unanswered select, and honeypot fields look the same. A <select> marked that
+    // way is still the real control behind a select2 widget.
+    if (el instanceof HTMLInputElement && el.getAttribute("aria-hidden") === "true" && el.tabIndex < 0 && !/^(file|radio|checkbox)$/.test(el.type)) continue;
     const key = el.type === "radio" && el.name ? `radio:${el.name}` : el;
     if (seen.has(key)) continue;
     seen.add(key);
