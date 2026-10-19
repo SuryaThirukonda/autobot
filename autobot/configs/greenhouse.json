@@ -110,7 +110,8 @@
       "method": "combobox",
       "path": [
         ".//input[@id='candidate-location']",
-        ".//input[@id='job_application_location']"
+        ".//input[@id='job_application_location']",
+        ".//input[@id='location']"
       ],
       "allowFailure": true,
       "optionsPath": [
@@ -152,7 +153,8 @@
       "item": [
         ".//div[@id='education_section']//div[contains(@class,'education') and not(contains(@class,'container')) and not(contains(@class,'section'))]",
         ".//div[contains(@class,'education--form')]",
-        ".//div[contains(@class,'education--container')]"
+        ".//div[contains(@class,'education--container')]",
+        ".//fieldset[.//input[starts-with(@id,'educations[')]]"
       ],
       "fields": [
         {
@@ -173,7 +175,9 @@
           "key": "degree",
           "method": "combobox",
           "values": "degree",
+          "searchType": "degree",
           "path": [
+            ".//input[contains(@id,'degree_id') or contains(@name,'degree_id')]",
             ".//label[contains(translate(., 'DEGREE', 'degree'), 'degree')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
             ".//select[contains(@id,'degree')]"
           ],
@@ -187,6 +191,7 @@
           "key": "major",
           "method": "combobox",
           "path": [
+            ".//input[contains(@id,'discipline_id') or contains(@name,'discipline_id')]",
             ".//label[contains(translate(., 'DISCIPLINE', 'discipline'), 'discipline')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
             ".//select[contains(@id,'discipline')]",
             ".//select[contains(@id,'major')]"
@@ -198,11 +203,25 @@
           ]
         },
         {
+          "key": "start_month",
+          "valueKey": "start_month|M",
+          "values": "month",
+          "method": "combobox",
+          "path": [
+            ".//input[contains(@id,'start-month') and (contains(@class,'select__input') or @role='combobox')]",
+            ".//*[contains(@id,'start_date.month')]//*[@aria-haspopup='listbox']"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
+        },
+        {
           "key": "start_month|MM",
           "valueKey": "start_month|MM",
           "path": [
-            ".//input[contains(@class,'start-date-month')]",
-            ".//input[contains(@id,'start-month')]"
+            ".//input[(contains(@class,'start-date-month') or contains(@id,'start-month')) and not(contains(@class,'select__input')) and not(@role='combobox')]"
           ],
           "allowFailure": true
         },
@@ -210,16 +229,31 @@
           "key": "start_year",
           "path": [
             ".//input[contains(@class,'start-date-year')]",
-            ".//input[contains(@id,'start-year')]"
+            ".//input[contains(@id,'start-year')]",
+            ".//input[contains(@id,'start_date.year')]"
           ],
           "allowFailure": true
+        },
+        {
+          "key": "end_month",
+          "valueKey": "end_month|M",
+          "values": "month",
+          "method": "combobox",
+          "path": [
+            ".//input[contains(@id,'end-month') and (contains(@class,'select__input') or @role='combobox')]",
+            ".//*[contains(@id,'end_date.month')]//*[@aria-haspopup='listbox']"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
         },
         {
           "key": "end_month|MM",
           "valueKey": "end_month|MM",
           "path": [
-            ".//input[contains(@class,'end-date-month')]",
-            ".//input[contains(@id,'end-month')]"
+            ".//input[(contains(@class,'end-date-month') or contains(@id,'end-month')) and not(contains(@class,'select__input')) and not(@role='combobox')]"
           ],
           "allowFailure": true
         },
@@ -227,10 +261,46 @@
           "key": "end_year",
           "path": [
             ".//input[contains(@class,'end-date-year')]",
-            ".//input[contains(@id,'end-year')]"
+            ".//input[contains(@id,'end-year')]",
+            ".//input[contains(@id,'end_date.year')]"
           ],
           "allowFailure": true
         }
+      ]
+    },
+    {
+      "key": "graduation",
+      "valueKey": "education[0].end_date|term",
+      "method": "combobox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@role='group'][@id = //label[contains(translate(., 'GRADUATION', 'graduation'), 'graduation')]/@for]//button[@aria-haspopup='listbox']"
+      ]
+    },
+    {
+      "key": "opt",
+      "valueKey": "sponsorship",
+      "values": {
+        "false": ["NA", "N/A", "Not applicable"],
+        "true": []
+      },
+      "method": "combobox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@role='group'][@id = //label[contains(., 'Optional Practical Training') and not(contains(., 'extension'))]/@for]//button[@aria-haspopup='listbox']"
+      ]
+    },
+    {
+      "key": "opt_extension",
+      "valueKey": "sponsorship",
+      "values": {
+        "false": ["NA", "N/A", "Not applicable"],
+        "true": []
+      },
+      "method": "combobox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@role='group'][@id = //label[contains(., 'OPT extension')]/@for]//button[@aria-haspopup='listbox']"
       ]
     },
     {
@@ -243,7 +313,9 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'GENDER', 'gender'), 'gender')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//*[@role='group' and starts-with(@id, 'demographic_answers')][@id = //label[contains(translate(., 'GENDER', 'gender'), 'gender') and not(contains(translate(., 'TRANSGENDER', 'transgender'), 'transgender'))]/@for]//button[@aria-haspopup='listbox']",
+        ".//input[@id='gender' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[gender]' or @id='job_application_gender']"
       ]
     },
     {
@@ -256,7 +328,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'HISPANIC', 'hispanic'), 'hispanic')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='hispanic_ethnicity' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[hispanic_ethnicity]' or @id='job_application_hispanic_ethnicity']"
       ]
     },
     {
@@ -269,7 +342,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'RACE', 'race'), 'race')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='race' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[race]' or @id='job_application_race']"
       ]
     },
     {
@@ -282,7 +356,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'VETERAN', 'veteran'), 'veteran')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='veteran_status' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[veteran_status]' or @id='job_application_veteran_status']"
       ]
     },
     {
@@ -295,7 +370,8 @@
         "css:[role=option]"
       ],
       "path": [
-        ".//label[contains(translate(., 'DISABILITY', 'disability'), 'disability')]/following::*[self::select or @role='combobox' or contains(@class,'select__input')][1]"
+        ".//input[@id='disability_status' and (@role='combobox' or contains(@class,'select__input'))]",
+        ".//select[@name='job_application[disability_status]' or @id='job_application_disability_status']"
       ]
     }
   ],

@@ -272,6 +272,22 @@ AB.search = AB.search || {};
     return { loading: f.loading && !opts.length && !noResults, noResults, options: opts };
   };
   const ownerControl = (el) => el.closest("[role=combobox], [class*='select__control'], [class*='select__container']") || el;
+  // Where the widget shows its choice. react-select 5 puts role=combobox on the <input> itself, and the chosen
+  // select__single-value is the input's sibling inside select__control, so read choices from the whole control.
+  const widgetRoot = (el) => el.closest("[class*='select__control'], [class*='select__container']") || ownerControl(el);
+  // This one field's part of the page: climb from the control while no other widget (listbox trigger, combobox,
+  // select, listbox) comes into view. A <fieldset> with several pickers side by side (Duolingo's Greenhouse education
+  // form: school, degree, discipline) is never used as one field.
+  const WIDGET_SEL = "[aria-haspopup], [role=combobox], [role=listbox], select";
+  const ownScope = (input, lb) => {
+    const body = (input.ownerDocument || document).body;
+    let scope = input.parentElement || input;
+    for (let n = scope.parentElement; n && n !== body; n = n.parentElement) {
+      if (Array.from(n.querySelectorAll(WIDGET_SEL)).some((w) => w !== input && w !== lb && !w.contains(input) && !lb?.contains(w))) break;
+      scope = n;
+    }
+    return scope;
+  };
   // Where widgets show a committed choice: react-select single/multi values, Workday pills, select2 rendering.
   const SELECTED_SEL = "[class*='singleValue'], [class*='single-value'], [class*='multi-value__label'], [data-automation-id='selectedItem'], .select2-selection__rendered";
   const FIELD_BOX_SEL = "[data-automation-id='multiSelectContainer'], [data-automation-id*='formField'], [class*='field'], fieldset, [class*='question'], [class*='form-group']";
@@ -303,7 +319,7 @@ AB.search = AB.search || {};
       if (v && Array.from(dl?.options || []).some((o) => clean(o.value) === v || clean(o.label) === v)) add(v);
       return out;
     }
-    const own = ownerControl(input);
+    const own = widgetRoot(input);
     const scopes = [];
     const multi = input.closest("[data-automation-id='multiSelectContainer']");
     if (multi) scopes.push(multi);
@@ -317,6 +333,13 @@ AB.search = AB.search || {};
       if (!visible(n)) continue;
       const t = clean(n.getAttribute("title") || n.textContent);
       if (t && t.toLowerCase() !== ph) add(t);
+    }
+    // A hidden-overlay picker (Duolingo's Greenhouse form) shows its choice as the text of the visible proxy box in
+    // the same field and keeps the option id in a hidden input there. Proxy text with no stored id is only a query.
+    if (!out.length && !visible(input)) {
+      const scope = ownScope(input, S.findListbox(input));
+      const proxies = Array.from(scope.querySelectorAll("input:not([type=hidden]), textarea")).filter((n) => n !== input && visible(n));
+      if (proxies.length === 1 && Array.from(scope.querySelectorAll("input[type=hidden]")).some((n) => clean(n.value))) add(proxies[0].value);
     }
     return out;
   };
@@ -473,10 +496,10 @@ AB.search = AB.search || {};
         return { status: gen.candidates.length ? "ready" : "no-results", generation: gen };
       }
       const open = async () => {
+        const scope = ownScope(input, S.findListbox(input));
         if (!visible(input)) {
           // Open the overlay through the visible proxy control in the same field, then wait for the real input.
-          const field = input.closest("fieldset, [class*='field'], [class*='question']") || input.parentElement?.parentElement?.parentElement || input.parentElement;
-          const opener = Array.from(field?.querySelectorAll("input:not([type=hidden]), [role=button], button") || []).find((n) => n !== input && visible(n) && !(n.tagName === "BUTTON" && /clear|remove/i.test(n.getAttribute("aria-label") || "")));
+          const opener = Array.from(scope.querySelectorAll("input:not([type=hidden]), [role=button], button")).find((n) => n !== input && visible(n) && !(n.tagName === "BUTTON" && /clear|remove/i.test(n.getAttribute("aria-label") || "")));
           if (opener) { mouse(opener, ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]); opener.focus?.(); }
           const until = Date.now() + S.TIMING.openWait;
           while (Date.now() <= until && !visible(input)) await sleep(S.TIMING.poll, signal);
@@ -491,7 +514,7 @@ AB.search = AB.search || {};
         const act0 = doc.activeElement;
         const isText = (n) => n && n.matches?.("input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea") && visible(n) && !n.disabled;
         let target = null;
-        if (act0 && act0 !== input && isText(act0) && (lb?.parentElement?.contains(act0) || input.closest("fieldset, [class*='field']")?.contains(act0))) target = act0;
+        if (act0 && act0 !== input && isText(act0) && (lb?.parentElement?.contains(act0) || scope.contains(act0))) target = act0;
         if (!target && !visible(input) && lb) target = Array.from(lb.parentElement?.querySelectorAll("input, textarea") || []).find(isText) || null;
         gen.typeTarget = target || input;
         // User input on the listbox, popup or popup search box also cancels this search.
@@ -542,7 +565,7 @@ AB.search = AB.search || {};
         }
         if (match.length !== 1) return false;
         const optEl = match[0].el;
-        const own = ownerControl(input);
+        const own = widgetRoot(input);
         const want = AB.search.exactNorm(cand.text);
         const fieldBox = fieldBoxOf(input);
         const selectedTexts = () => rawSelected(own, fieldBox);

@@ -19,6 +19,8 @@ const extDir = path.resolve(root, extArg ? extArg.slice(6) : process.env.AUTOBOT
 const hasSearch = fs.existsSync(path.join(extDir, "engine", "search.js"));
 // Per-ATS names and the rerun checks arrived in 0.2.0; older folders (legacy/) skip those blocks.
 const has020 = hasSearch && /S\.atsAlternates\s*=/.test(fs.readFileSync(path.join(extDir, "engine", "search.js"), "utf8"));
+// Whole-word option matching and checked react-select picks came with the EEO fix; older folders skip that block.
+const hasWholeWords = /AB\.hasWords\s*=/.test(fs.readFileSync(path.join(extDir, "engine", "util.js"), "utf8"));
 const headed = process.argv.includes("--headed");
 
 const PROFILE = {
@@ -36,6 +38,7 @@ const PROFILE = {
   answers: { "Why do you want to work here?": "Because the mission matches my experience building reliable systems." },
 };
 const RESUME = { name: "ada-resume.pdf", type: "application/pdf", dataBase64: Buffer.from("%PDF-1.4\n% autobot test resume\n").toString("base64") };
+const SETTINGS = { testHooks: true, showPanel: true, heuristics: true, debug: true };
 
 const serve = () => new Promise((resolve) => {
   const dir = path.join(here, "fixtures");
@@ -72,8 +75,46 @@ const fillAndWait = async (page) => {
 };
 // Status lines for one key, without the transient "filling" entries.
 const statusOf = (summary, key) => JSON.stringify((summary.statuses || []).filter((s) => s[0] === key && s[1] !== "filling"));
+// [filled lines, other lines] reported for a key.
+const writesOf = (summary, key) => { const s = (summary.statuses || []).filter((x) => x[0] === key && x[1] !== "filling"); return [s.filter((x) => x[1] === "filled").length, s.filter((x) => x[1] !== "filled").length]; };
 const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementById("school-hidden").value, shown: document.querySelector(".select__single-value").textContent,
   box: document.getElementById("school-input").value, q: window.__queries.slice(), first: document.getElementById("first_name").value }));
+const readWebui = (page) => page.evaluate(() => { const g = (id) => document.getElementById(id); return {
+  schoolId: g("educations[0].school_name_id").value, degreeId: g("educations[0].degree_id").value, disciplineId: g("educations[0].discipline_id").value,
+  school: g("web-ui28").value, degree: g("web-ui31").value, discipline: g("web-ui34").value, month: document.querySelector("[id='educations[0].end_date.month'] .GfJwj").textContent,
+  year: g("educations[0].end_date.year").value, q: window.__queries, clicks: { ...window.__clicks }, submits: window.__submits, first: g("first_name").value,
+  location: g("location").value, locationBox: g("web-ui7").value, lat: g("latitude").value, lng: g("longitude").value,
+  // What each listbox button shows, by group id ("Select..." when unanswered), and how often each list was opened.
+  shown: Object.fromEntries(Array.from(document.querySelectorAll("[role=group][id^='question_'], [role=group][id^='demographic_answers']")).map((n) => [n.id, n.querySelector(".GfJwj").textContent])),
+  opens: { ...window.__opens }, openLists: document.querySelectorAll("[role=group] [role=listbox]").length,
+  gpa: g("question_38795090002").value, altEmail: g("question_38795096002").value, linkedin: g("question_38795097002").value, website: g("question_38795098002").value }; });
+// Duolingo's question and demographic group ids in the webui fixture.
+const DUO = { grad: "question_38795087002", office: "question_38795088002", officeLoc: "question_38795089002", heard: "question_38795094002", conferences: "question_38795095002",
+  auth: "question_38795099002", sponsor: "question_38795100002", opt: "question_38795101002", optExt: "question_38795102002", gender: "demographic_answers.4028533002",
+  race: "demographic_answers.4028534002", orientation: "demographic_answers.4028535002", trans: "demographic_answers.4028536002", disability: "demographic_answers.4028537002", veteran: "demographic_answers.4028538002" };
+const readJobboards = (page) => page.evaluate(() => { const sv = (id) => document.getElementById(id).closest(".select__control").querySelector(".select__single-value")?.textContent || ""; const g = (id) => document.getElementById(id).value; return {
+  school: sv("school--0"), degree: sv("degree--0"), discipline: sv("discipline--0"), startMonth: sv("start-month--0"), startYear: g("start-year--0"), endMonth: sv("end-month--0"), endYear: g("end-year--0"),
+  q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
+// Airbnb's Yes/No react-selects in the job-boards fixture (MBA enrollment, work authorization, sponsorship): what each
+// shows and every value typed into it.
+const MBA_Q = "Are you currently enrolled in a full-time MBA program at an accredited U.S. business school, with an expected graduation date of Spring 2028?";
+const AUTH_YES = "Yes, I am currently legally authorized to work in the country where the job is located.";
+const SPONSOR_NO = "No, I do not and will not require immigration sponsorship to legally work in the country where the job is located.";
+const readQuestions = (page) => page.evaluate(() => { const ids = { mba: "question_69899953", auth: "question_69899963", sponsor: "question_69899964" };
+  const sv = (id) => document.getElementById(id).closest(".select__control").querySelector(".select__single-value")?.textContent || "";
+  return { ...Object.fromEntries(Object.entries(ids).map(([k, id]) => [k, sv(id)])), typed: Object.fromEntries(Object.entries(ids).map(([k, id]) => [k, window.__typed[id] || []])) }; });
+// Status lines whose key starts with some text: a question no rule names is listed as "? " plus its label.
+const statusesStarting = (summary, prefix) => JSON.stringify((summary.statuses || []).filter((s) => s[0].startsWith(prefix) && s[1] !== "filling"));
+// Statuses that report a choice the control already showed, as "key" strings.
+const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s) => s[1] === "filled" && /already selected/.test(s[2])).map((s) => s[0]));
+// greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits, the
+// values of react-select's hidden "required" inputs (never written) and every text typed into each react-select.
+const readEeo = (page) => page.evaluate(() => ({
+  shown: Object.fromEntries(Array.from(document.querySelectorAll("input[role=combobox]")).map((i) => [i.id, i.closest(".select__control").querySelector(".select__single-value")?.textContent || ""])),
+  picks: Object.keys(window.__picks).sort().map((k) => `${k}=${window.__picks[k].join("|")}`), boxes: Array.from(document.querySelectorAll("input[type=checkbox]")).map((c) => c.checked), submits: window.__submits,
+  required: Array.from(document.querySelectorAll("input[aria-hidden=true][tabindex='-1']")).map((i) => i.value), typed: window.__typed }));
+// Status lines made from react-select's hidden "required" input, whose label is the placeholder or the live region.
+const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map((s) => s[0]).filter((k) => /^\? (select\b|option\b.*\bselected|\d+ results? available)/.test(k)));
 
 (async () => {
   const { srv, base } = await serve();
@@ -101,7 +142,7 @@ const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementB
       } finally { await opt.close(); }
     };
     // Seed profile + resume + test hooks.
-    await setStorage({ profile: PROFILE, resume: RESUME, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } });
+    await setStorage({ profile: PROFILE, resume: RESUME, settings: SETTINGS });
 
     // ---- Greenhouse-like ----
     {
@@ -306,6 +347,232 @@ const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementB
       check("campus+ats: plain list falls back to profile name", await plain.evaluate(() => document.getElementById("school-hidden").value), "Texas A&M University");
       check("campus+ats: status shows the per-ATS search first", statusOf(s2, "education[0].school"), (t) => t.includes("College Station") && t.includes("filled"));
       await plain.close();
+      await setStorage({ profile: PROFILE });
+    }
+    // ---- Greenhouse: Duolingo's own form with Greenhouse ids (web-ui pickers and listbox buttons) ----
+    if (has020) {
+      const CS = "Texas A&M University - College Station";
+      // The office questions have no profile key: a saved answer fills them.
+      const OFFICE = { "Are you willing to work from the office location of the job?": "Yes", "Which office location are you most interested in?": "New York, NY" };
+      const duoProfile = { ...PROFILE, gender: "Male", education: [{ ...PROFILE.education[0], school_greenhouse: CS }], answers: { ...PROFILE.answers, ...OFFICE } };
+      await setStorage({ profile: duoProfile });
+      const page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-webui.html?gh_jid=8888721002`);
+      const summary = await fillAndWait(page);
+      const v = await readWebui(page);
+      check("webui: detected as greenhouse by gh_jid", summary.ats, "greenhouse");
+      check("webui: school id (College Station)", v.schoolId, "11785542002");
+      check("webui: degree id", v.degreeId, "11786718002");
+      check("webui: degree shown", v.degree, "Bachelor's Degree");
+      check("webui: degree went through search", statusOf(summary, "education[0].degree"), (t) => /"filled","Bachelor's Degree +\(searched/.test(t));
+      check("webui: discipline id", v.disciplineId, "11786740002");
+      check("webui: discipline shown", v.discipline, "Computer Science");
+      check("webui: discipline went through search", statusOf(summary, "education[0].major"), (t) => /"filled","Computer Science +\(searched/.test(t));
+      // The three education pickers share one <fieldset>: each search must type into its own box, never into the school's.
+      check("webui: each search typed into its own box", JSON.stringify(v.q), JSON.stringify({ location: ["Austin, Texas"], school: [CS], degree: ["Bachelor's Degree"], discipline: ["Computer Science"] }));
+      check("webui: end month picked", v.month, "May");
+      check("webui: end year", v.year, "2028");
+      check("webui: start date reported absent", statusOf(summary, "education[0].start_month") + statusOf(summary, "education[0].start_year"), (t) => (t.match(/"absent"/g) || []).length === 2);
+      check("webui: no unknown end-date question left", JSON.stringify(summary.statuses), (t) => !/\? [^"]*end date/.test(t));
+      check("webui: other fields still filled", v.first, "Ada");
+      // Location picker: a Google Places list behind the same overlay/proxy picker, resolved by the option search.
+      check("webui: location stored", v.location, "Austin, TX, USA");
+      check("webui: location shown", v.locationBox, "Austin, TX, USA");
+      check("webui: location coordinates set", JSON.stringify([v.lat, v.lng]), JSON.stringify(["30.2672", "-97.7431"]));
+      check("webui: location went through search", statusOf(summary, "location"), (t) => /"filled","Austin, TX, USA +\(searched/.test(t));
+      // Question and demographic dropdowns (listbox buttons): config paths, the heuristic pass, value maps, saved answers.
+      const s = v.shown;
+      check("webui: graduation timeline from the end date", s[DUO.grad], "Spring/Summer 2028");
+      check("webui: work authorization", s[DUO.auth], "Yes");
+      check("webui: sponsorship", s[DUO.sponsor], "No");
+      check("webui: OPT questions NA without sponsorship", JSON.stringify([s[DUO.opt], s[DUO.optExt]]), JSON.stringify(["NA", "NA"]));
+      check("webui: where did you hear", s[DUO.heard], "LinkedIn");
+      check("webui: office questions from saved answers", JSON.stringify([s[DUO.office], s[DUO.officeLoc]]), JSON.stringify(["Yes", "New York, NY"]));
+      check("webui: gender identity (multi list)", s[DUO.gender], "Man");
+      check("webui: race (multi list, decline)", s[DUO.race], "I don't wish to answer");
+      check("webui: disability", s[DUO.disability], "I don't wish to answer");
+      check("webui: veteran (value map)", s[DUO.veteran], "No, I am not a veteran or active member");
+      check("webui: no answer, left alone", JSON.stringify([s[DUO.conferences], s[DUO.orientation], s[DUO.trans]]), JSON.stringify(["Select...", "Select...", "Select..."]));
+      check("webui: unanswered lists never opened", JSON.stringify([DUO.conferences, DUO.orientation, DUO.trans].map((id) => v.opens[id] || 0)), "[0,0,0]");
+      check("webui: every list closed again", v.openLists, 0);
+      check("webui: config fields report the picks", [statusOf(summary, "graduation"), statusOf(summary, "opt"), statusOf(summary, "gender")].join(" "), (t) => /"filled","Spring\/Summer 2028"/.test(t) && /"filled","NA"/.test(t) && /"filled","Man"/.test(t));
+      check("webui: heuristic picks report the option", statusOf(summary, "veteran"), (t) => /"filled","No, I am not a veteran or active member"/.test(t));
+      check("webui: unanswered dropdowns listed as unknown", JSON.stringify((summary.statuses || []).filter((x) => x[1] === "unknown").map((x) => x[0])), (t) => [/sponsored conferences/, /sexual orien/, /transgender/].every((re) => re.test(t)));
+      // "Alternate Email" is a second address, never the profile email.
+      check("webui: Alternate Email left empty", v.altEmail, "");
+      check("webui: Alternate Email listed as unknown", statusOf(summary, "? alternate email"), (t) => /"unknown"/.test(t));
+      check("webui: GPA, LinkedIn and website", JSON.stringify([v.gpa, v.linkedin, v.website]), JSON.stringify([PROFILE.education[0].gpa, PROFILE.linkedin, PROFILE.portfolio]));
+      check("webui: Add another (a submit button) and submit untouched", JSON.stringify([v.clicks.addAnother, v.clicks.submit, v.submits]), "[0,0,0]");
+      // Rerun: the pickers show their choice in the proxy box (choice stored), the listbox buttons in their span.
+      // Nothing is retyped, reopened or picked again; a second click in a multi list would remove the choice.
+      const again = await fillAndWait(page);
+      const r = await readWebui(page);
+      check("webui rerun: no new searches", JSON.stringify(r.q), JSON.stringify(v.q));
+      check("webui rerun: month list not reopened", r.clicks.monthOpens, 1);
+      check("webui rerun: no list reopened", JSON.stringify(r.opens), JSON.stringify(v.opens));
+      check("webui rerun: values unchanged", JSON.stringify([r.schoolId, r.degreeId, r.disciplineId, r.month, r.year, r.location, r.shown]), JSON.stringify([v.schoolId, v.degreeId, v.disciplineId, v.month, v.year, v.location, v.shown]));
+      check("webui rerun: choices report already selected", keptKeys(again), JSON.stringify(["location", "education[0].school", "education[0].degree", "education[0].major", "education[0].end_month", "graduation", "opt", "opt_extension", "gender"]));
+      check("webui rerun: still nothing submitted", JSON.stringify([r.clicks.addAnother, r.clicks.submit, r.submits]), "[0,0,0]");
+      await page.close();
+      // The user's own pick in a multi list stays the only one. With sponsorship needed, the OPT questions are the user's.
+      await setStorage({ profile: { ...duoProfile, sponsorship: true } });
+      const own = await ctx.newPage();
+      await own.goto(`${base}/greenhouse-webui.html?gh_jid=8888721002`);
+      await own.evaluate((id) => { const b = document.getElementById(id).querySelector("button"); b.click(); document.getElementById(id).querySelector("[role=option][title='Woman']").click(); b.click(); }, DUO.gender);
+      // Two other listbox buttons the new writer must leave alone, on questions the heuristic pass would answer: one that
+      // shows its choice as its own text (Workday style) and an icon toggle beside a typeahead input.
+      await own.evaluate(() => {
+        document.querySelector("form").insertAdjacentHTML("beforeend", `<div class="qwjgb"><label for="decoy-a">How did you hear about us?</label><div id="decoy-a" role="group"><button type="button" aria-haspopup="listbox" aria-controls="decoy-a-list">Select One</button></div></div>
+          <div class="qwjgb"><label for="decoy-b">Where did you hear about us?</label><div><input id="decoy-b" type="text"><button type="button" aria-haspopup="listbox" aria-controls="decoy-b-list"></button></div></div>`);
+        window.__decoyClicks = 0;
+        for (const b of document.querySelectorAll("[aria-controls^=decoy]")) b.addEventListener("click", () => window.__decoyClicks++);
+      });
+      const s2 = await fillAndWait(own);
+      const u = await readWebui(own);
+      check("webui decoys: other listbox buttons never clicked", await own.evaluate(() => window.__decoyClicks), 0);
+      check("webui user: own multi choice kept, nothing added", u.shown[DUO.gender], "Woman");
+      check("webui user: status says kept the existing choice", statusOf(s2, "gender"), (t) => /kept the existing choice \\"Woman/.test(t));
+      check("webui sponsorship: sponsorship = Yes", u.shown[DUO.sponsor], "Yes");
+      check("webui sponsorship: OPT questions left alone", JSON.stringify([u.shown[DUO.opt], u.shown[DUO.optExt]]), JSON.stringify(["Select...", "Select..."]));
+      check("webui sponsorship: OPT lists never opened", JSON.stringify([u.opens[DUO.opt] || 0, u.opens[DUO.optExt] || 0]), "[0,0]");
+      check("webui sponsorship: OPT listed as unknown", statusOf(s2, "opt") + statusOf(s2, "opt_extension"), (t) => (t.match(/"unknown","no answer for sponsorship = true"/g) || []).length === 2);
+      check("webui user: every list closed again", u.openLists, 0);
+      await own.close();
+      await setStorage({ profile: PROFILE });
+    }
+    // ---- Greenhouse job-boards education: react-select 5 with no "field" wrapper, start and end dates ----
+    if (has020) {
+      const CS = "Texas A&M University - College Station";
+      await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }] } });
+      const page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-jobboards.html`);
+      const summary = await fillAndWait(page);
+      const v = await readJobboards(page);
+      check("jobboards: detected as greenhouse", summary.ats, "greenhouse");
+      check("jobboards: school committed", v.school, CS);
+      check("jobboards: school status filled", statusOf(summary, "education[0].school"), (t) => /"filled"/.test(t));
+      check("jobboards: degree (list has Bachelors too)", v.degree, "Bachelor's Degree");
+      check("jobboards: degree went through search", statusOf(summary, "education[0].degree"), (t) => /"filled","Bachelor's Degree +\(searched/.test(t));
+      check("jobboards: discipline", v.discipline, "Computer Science");
+      check("jobboards: start month", v.startMonth, "August");
+      check("jobboards: start year", v.startYear, "2024");
+      check("jobboards: end month", v.endMonth, "May");
+      check("jobboards: end year", v.endYear, "2028");
+      check("jobboards: MM text fields leave the month selects alone", statusOf(summary, "education[0].start_month|MM") + statusOf(summary, "education[0].end_month|MM"), (t) => (t.match(/"absent"/g) || []).length === 2);
+      check("jobboards: school searched once", JSON.stringify(v.q), JSON.stringify([CS]));
+      check("jobboards: no status from react-select's hidden required inputs", hiddenInputKeys(summary), "[]");
+      // The config answers both questions. Its paths land on the input's wrapper (select__input-container), and the
+      // heuristic pass used to take the input inside for a fresh question: work_auth_us both times, searched as a
+      // location because the labels say "located", with the profile city typed into the Yes/No lists.
+      const qs = await readQuestions(page);
+      check("jobboards: work authorization answered", qs.auth, AUTH_YES);
+      check("jobboards: sponsorship answered", qs.sponsor, SPONSOR_NO);
+      check("jobboards: questions written once, by the config", JSON.stringify([writesOf(summary, "work_auth_us"), writesOf(summary, "sponsorship")]), "[[1,0],[1,0]]");
+      check("jobboards: no city typed into the Yes/No lists", JSON.stringify([qs.typed.auth, qs.typed.sponsor]), (t) => !/Austin/.test(t));
+      // The MBA question names a "business school" but is a Yes/No dropdown: no school key, nothing typed into it, and
+      // with no saved answer it is left for you. react-select's hidden required inputs are no questions at all.
+      check("jobboards: Yes/No question naming a school is no school field", statusOf(summary, "most_recent_school"), "[]");
+      check("jobboards: MBA question left for you", statusesStarting(summary, "? are you currently enrolled"), (t) => /"unknown","no rule"/.test(t));
+      check("jobboards: nothing typed into the MBA question", JSON.stringify(qs.typed.mba), "[]");
+      check("jobboards: no rows for hidden required inputs", statusesStarting(summary, "? select"), "[]");
+      const again = await fillAndWait(page);
+      const r = await readJobboards(page);
+      const rq = await readQuestions(page);
+      check("jobboards rerun: questions unchanged", JSON.stringify([rq.auth, rq.sponsor]), JSON.stringify([AUTH_YES, SPONSOR_NO]));
+      check("jobboards rerun: no new search", JSON.stringify(r.q), JSON.stringify([CS]));
+      check("jobboards rerun: values unchanged", JSON.stringify(r), JSON.stringify(v));
+      check("jobboards rerun: selects report already selected", keptKeys(again), JSON.stringify(["education[0].school", "education[0].degree", "education[0].major", "education[0].start_month", "education[0].end_month"]));
+      check("jobboards: never submitted", r.submits, 0);
+      await page.close();
+      // The same questions when only the heuristic pass sees them (a board whose labels the config's paths miss): the
+      // profile key, not the label's "located", decides the dropdown; the sponsorship question gets the sponsorship fact
+      // although its label also says "work authorization"; a saved answer fills the MBA question, with no search.
+      {
+        const gh = JSON.parse(fs.readFileSync(path.join(extDir, "configs", "greenhouse.json"), "utf8"));
+        const fields = gh.fields.filter((f) => !["work_auth_us", "sponsorship"].includes(f.key));
+        await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }], answers: { ...PROFILE.answers, [MBA_Q]: "Yes" } }, settings: { ...SETTINGS, configOverrides: { greenhouse: { fields } } } });
+        const page = await ctx.newPage();
+        await page.goto(`${base}/greenhouse-jobboards.html`);
+        const summary = await fillAndWait(page);
+        const qs = await readQuestions(page);
+        check("heuristic questions: work authorization", qs.auth, AUTH_YES);
+        check("heuristic questions: sponsorship", qs.sponsor, SPONSOR_NO);
+        check("heuristic questions: keyed work_auth_us and sponsorship", JSON.stringify([writesOf(summary, "work_auth_us"), writesOf(summary, "sponsorship")]), "[[1,0],[1,0]]");
+        check("heuristic questions: no city typed into them", JSON.stringify([qs.typed.auth, qs.typed.sponsor]), (t) => !/Austin/.test(t));
+        check("heuristic questions: saved answer fills the MBA question", qs.mba, "Yes");
+        check("heuristic questions: MBA answer typed as is, no school search", JSON.stringify(qs.typed.mba), JSON.stringify(["Yes"]));
+        await page.close();
+        await setStorage({ settings: SETTINGS });
+      }
+      await setStorage({ profile: PROFILE });
+    }
+    // ---- Greenhouse job-boards EEO: the EEOC block, demographic surveys and a company's own questions ----
+    // The EEO paths read only Greenhouse's EEOC questions. Everything else is left to the heuristic pass, which reads
+    // each control by its own label and never answers "gender identity". A react-select pick counts only once shown.
+    if (hasWholeWords) {
+      const MALE = { ...PROFILE, gender: "Male" };
+      // Robinhood (demographic survey only): the gender path used to land on "What is your gender identity?", type
+      // "Man" and commit "Cisgender woman" while the status said "filled gender Man".
+      await setStorage({ profile: MALE });
+      let page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html?form=robinhood`);
+      let summary = await fillAndWait(page);
+      let v = await readEeo(page);
+      check("eeo robinhood: gender identity left alone", JSON.stringify([v.shown["1255"], v.picks.filter((p) => p.startsWith("1255="))]), JSON.stringify(["", []]));
+      check("eeo robinhood: no gender status says filled", statusOf(summary, "gender"), (t) => t !== "[]" && !/"filled"/.test(t));
+      check("eeo robinhood: gender identity needs you", statusOf(summary, "? what is your gender identity"), (t) => /"unknown"/.test(t));
+      check("eeo robinhood: race picks the decline option", v.shown["1258"], "I don't wish to answer");
+      check("eeo robinhood: status names the option shown", statusOf(summary, "ethnicity"), (t) => /"filled","I don't wish to answer"/.test(t));
+      // "I am not a protected veteran" lists nothing; the full list is matched next (a "No options" row is no option).
+      check("eeo robinhood: military status searched, then the full list", JSON.stringify(v.typed["1259"]), JSON.stringify(["I am not a protected veteran", ""]));
+      check("eeo robinhood: military status not answered", JSON.stringify([v.shown["1259"], /"filled"/.test(statusOf(summary, "veteran"))]), JSON.stringify(["", false]));
+      check("eeo robinhood: disability decline", v.shown["1261"], "I don't wish to answer");
+      check("eeo robinhood: consent box untouched", JSON.stringify(v.boxes), "[false]");
+      // Unanswered required questions keep react-select's hidden required input; it is no question of its own.
+      check("eeo robinhood: no status from react-select's hidden inputs", hiddenInputKeys(summary), "[]");
+      check("eeo robinhood: hidden required inputs left empty", JSON.stringify(v.required), JSON.stringify(["", ""]));
+      await page.close();
+      // Airbnb (its own Gender / Race / Veteran questions): "Man" was typed into Gender (Male / Female / Other /
+      // Decline), nothing was chosen, and the status said filled.
+      page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html?form=airbnb`);
+      summary = await fillAndWait(page);
+      v = await readEeo(page);
+      check("eeo airbnb: Gender shows Male", v.shown.question_69899960, "Male");
+      check("eeo airbnb: gender status says Male", statusOf(summary, "gender"), (t) => /"filled","Male"/.test(t) && !/"Man"/.test(t));
+      check("eeo airbnb: race and veteran", JSON.stringify([v.shown.question_69899961, v.shown.question_69899962]), JSON.stringify(["Decline to Self Identify", "I am not a protected veteran"]));
+      check("eeo airbnb: decline-to-answer box untouched", JSON.stringify(v.boxes), "[false]");
+      // The phone country lists "United States +1" and shows "+1": still a pick of that option.
+      check("eeo airbnb: phone country shows its code", v.shown.country, "+1");
+      check("eeo airbnb: phone country status filled", statusOf(summary, "country"), (t) => /"filled","\+1"/.test(t));
+      await page.close();
+      // A demographic survey ahead of the EEOC block (Discord): the config answers the EEOC questions, the heuristic
+      // pass the survey's own Gender question. Hispanic "No" reveals the race question.
+      await setStorage({ profile: { ...MALE, hispanic: "No", ethnicity: "Asian" } });
+      page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html`);
+      summary = await fillAndWait(page);
+      v = await readEeo(page);
+      check("eeo both: EEOC answers", JSON.stringify([v.shown.gender, v.shown.hispanic_ethnicity, v.shown.race, v.shown.veteran_status]), JSON.stringify(["Male", "No", "Asian", "I am not a protected veteran"]));
+      check("eeo both: survey Gender Male, gender identity alone", JSON.stringify([v.shown["4033064002"], v.shown["4033068002"]]), JSON.stringify(["Male", ""]));
+      check("eeo both: one pick per answered control", JSON.stringify(v.picks), JSON.stringify(["4033064002=Male", "gender=Male", "hispanic_ethnicity=No", "race=Asian", "veteran_status=I am not a protected veteran"]));
+      const again = await fillAndWait(page);
+      const r = await readEeo(page);
+      check("eeo both rerun: no new picks", JSON.stringify(r.picks), JSON.stringify(v.picks));
+      check("eeo both rerun: EEOC choices already selected", keptKeys(again), (t) => ["gender", "hispanic", "ethnicity", "veteran"].every((k) => t.includes(`"${k}"`)));
+      check("eeo both: never submitted", r.submits, 0);
+      await page.close();
+      // No option for the profile's value: nothing is chosen and no gender status says filled.
+      await setStorage({ profile: { ...PROFILE, gender: "Non-binary" } });
+      page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-eeo.html`);
+      summary = await fillAndWait(page);
+      v = await readEeo(page);
+      check("eeo no match: gender questions left empty", JSON.stringify([v.shown.gender, v.shown["4033064002"], v.picks.filter((p) => /^(gender|4033064002)=/.test(p))]), JSON.stringify(["", "", []]));
+      check("eeo no match: no gender status says filled", statusOf(summary, "gender"), (t) => t !== "[]" && !/"filled"/.test(t));
+      check("eeo no match: no status from react-select's hidden inputs", hiddenInputKeys(summary), "[]");
+      check("eeo no match: hidden required inputs left empty", JSON.stringify(v.required), JSON.stringify(["", ""]));
+      await page.close();
       await setStorage({ profile: PROFILE });
     }
   } finally {

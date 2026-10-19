@@ -1,7 +1,8 @@
 // autobot unit test for the pure-logic search engine (engine/search.js): scorer, ranking, query plans,
 // step-contract validation, the local resolver, the AB.search.run driver against a fake in-memory adapter,
-// per-ATS names and the rerun checks. No browser, no dependencies: util.js, search.js and search-widgets.js are
-// classic scripts evaluated into this Node context (the widget code only touches the DOM when called).
+// per-ATS names, the rerun checks and util.js's option matcher (AB.bestOption). No browser, no dependencies: util.js,
+// search.js and search-widgets.js are classic scripts evaluated into this Node context (the widget code only touches
+// the DOM when called).
 // Usage: node tests/search-unit.mjs [--ext=legacy/autobot-v2]   (--ext picks the extension folder relative to the
 // repo root, default autobot/)
 import assert from "node:assert/strict";
@@ -18,7 +19,8 @@ const searchFile = path.join(extDir, "engine", "search.js");
 if (!fs.existsSync(searchFile)) { console.error(`no engine/search.js under ${extDir}`); process.exit(2); }
 
 globalThis.AB = {};
-for (const f of ["util.js", "search.js", "search-widgets.js"]) {
+// profile.js and heuristics.js too, for the profile keys and the label rules (their DOM code only runs when called).
+for (const f of ["util.js", "profile.js", "heuristics.js", "search.js", "search-widgets.js"]) {
   const filename = path.join(extDir, "engine", f);
   if (!fs.existsSync(filename)) continue;
   vm.runInThisContext(fs.readFileSync(filename, "utf8"), { filename });
@@ -444,6 +446,73 @@ const T = S.THRESHOLDS;
   check("fieldType: label 'What university...?'", S.fieldTypeFor("q7", "What university did you attend?*"), "school");
   check("fieldType: label 'Current City (required)'", S.fieldTypeFor("q4", "Current City (required)"), "location");
 
+  // 7b. A profile key decides over label words. Airbnb's job-boards embed (2026-10-19) asks both questions below as
+  // react-selects; the labels' "located" made them location searches that typed the profile city into Yes/No lists.
+  const AUTH = "Are you legally authorized to work in the country where the job is located?";
+  const SPONSOR = "Will you now or in the future require company sponsorship to retain or extend your work authorization in the country where the job is located?";
+  if (!(S.PROFILE_KEYS instanceof Set)) console.log("section 7b skipped: label words still override profile keys in this extension");
+  else {
+    check("keyType: work_auth_us + 'job is located' label", S.fieldTypeFor("work_auth_us", AUTH), "generic");
+    check("keyType: sponsorship + 'job is located' label", S.fieldTypeFor("sponsorship", SPONSOR), "generic");
+    for (const [k, l] of [["over18", "Are you at least 18 years old in the city where you live?"], ["gender", "Gender (for roles located in the US)"],
+      ["ethnicity", "Race or ethnicity, as reported to your school"], ["veteran", "Veteran status (US company policy)"], ["disability", "Disability status at your current location"],
+      ["hispanic", "Hispanic or Latino (where do you live?)"], ["how_heard", "How did you hear about our company?"], ["current_title", "Your title at your current employer"],
+      ["referred_by", "Who at the company referred you?"], ["state", "State where you are located"], ["country", "Country where you live"]])
+      check(`keyType: ${k} ignores the label's search words`, S.fieldTypeFor(k, l), "generic");
+    // Search-type keys decide too, even when the label names another type (key and label used to be checked per type).
+    check("keyType: most_recent_school + 'city' label", S.fieldTypeFor("most_recent_school", "University in the city where you live"), "school");
+    check("keyType: city + 'university' label", S.fieldTypeFor("city", "City of your university"), "location");
+    check("keyType: current_company + 'school' label", S.fieldTypeFor("current_company", "Company or school"), "company");
+    check("keyType: education[0].major|upper", S.fieldTypeFor("education[0].major|upper", "Major"), "major");
+    check("keyType: education[0].end_month|MM + 'university' label", S.fieldTypeFor("education[0].end_month|MM", "Graduation month at your university"), "generic");
+    // Without a profile key the label still classifies (saved-answer questions, question ids).
+    check("keyType: no key, 'Current City' label", S.fieldTypeFor(null, "Current City (required)"), "location");
+    check("keyType: no key, 'Which university' label", S.fieldTypeFor("", "Which university do you attend?"), "school");
+    check("keyType: question id, 'employer' label", S.fieldTypeFor("question_123", "Name of your employer"), "company");
+    // Every heuristic rule key, profile key, derived key and entry field classifies the same whatever its label says.
+    // A failure names a key to add to S.PROFILE_KEYS (or to a search type) in engine/search.js.
+    const loud = ["What university did you attend?", "Major / field of study", "Highest degree", "Where are you located?", "Current company"];
+    const derived = ["full_name", "phone_digits", "location", "city_state", "start_date", "end_date", "grad_date", "current_company", "current_title", "most_recent_school", "most_recent_degree", "most_recent_major", "most_recent_gpa", "skills_text", "today"];
+    const entry = ["school", "degree", "major", "gpa", "start_month", "start_year", "end_month", "end_year", "graduated"].map((f) => `education[0].${f}`)
+      .concat(["company", "title", "location", "start_month", "start_year", "end_month", "end_year", "current", "description"].map((f) => `experience[0].${f}`));
+    const known = [...new Set([...AB.arr(AB.RULES).map((r) => r[0]), ...Object.keys(AB.PROFILE_DEFAULT || {}).filter((k) => typeof AB.PROFILE_DEFAULT[k] !== "object"), ...derived, ...entry])];
+    check("keyType: heuristics.js and profile.js loaded", [AB.arr(AB.RULES).length > 30, typeof AB.PROFILE_DEFAULT], [true, "object"]);
+    check("keyType: no rule or profile key follows label words", known.filter((k) => loud.some((l) => S.fieldTypeFor(k, l) !== S.fieldTypeFor(k, ""))), []);
+  }
+  // The rule that names each question (engine/heuristics.js). A sponsorship question that mentions work authorization
+  // used to get work_auth_us, so its Yes/No answer came from the wrong profile fact.
+  if (typeof AB.keyForLabel === "function") {
+    const key = (l) => AB.keyForLabel(AB.norm(l));
+    check("rules: Airbnb work authorization", key(AUTH), "work_auth_us");
+    check("rules: Airbnb sponsorship names work authorization", key(SPONSOR), "sponsorship");
+    check("rules: sponsorship to obtain or maintain work authorization", key("Do you now, or will you in the future, require visa sponsorship to obtain or maintain work authorization?"), "sponsorship");
+    check("rules: plain sponsorship question", key("Will you now or in the future require sponsorship for employment visa status (e.g., H-1B)?"), "sponsorship");
+    check("rules: plain work authorization question", key("Are you legally authorized to work in the United States?"), "work_auth_us");
+    check("rules: authorized without sponsorship", key("Are you authorized to work in the US without sponsorship?"), "work_auth_us");
+    check("rules: eligible and will not require sponsorship", key("Are you legally eligible to work in the U.S. and will not require sponsorship?"), "work_auth_us");
+    check("rules: work authorization that does not require sponsorship", key("Do you have work authorization that does not require sponsorship?"), "work_auth_us");
+    check("rules: note about candidates who require sponsorship", key("Do you have US work authorization? Candidates who require sponsorship cannot be considered."), "work_auth_us");
+  }
+  // A yes/no question asked as a dropdown takes no entity key, and label words never make it a list search. Airbnb's MBA
+  // question was keyed most_recent_school ("business school"), so the school name was typed into its Yes/No list and a
+  // saved answer for it was never read.
+  if (typeof AB.isYesNoQuestion === "function") {
+    const MBA = "Are you currently enrolled in a full-time MBA program at an accredited U.S. business school, with an expected graduation date of Spring 2028?";
+    for (const l of [MBA, "Do you have a bachelor's degree?", "Will you now or in the future require sponsorship?", "Have you ever worked for Airbnb in any capacity?",
+      "Is your current employer aware of your application?", "1. Are you located in the United States?", "Can we contact your current company?"])
+      check(`yes/no question: ${l.slice(0, 44)}`, AB.isYesNoQuestion(l), true);
+    for (const l of ["Which school are you attending?", "What university do you attend?", "School", "Current employer", "Where are you located?", "Name of your college", "Do"])
+      check(`not a yes/no question: ${l}`, AB.isYesNoQuestion(l), false);
+    const key = (l, choice) => AB.keyForLabel(AB.norm(l), { choice });
+    check("rules: MBA question as a dropdown takes no key", key(MBA, true), null);
+    check("rules: MBA question as a text box is still the school", key(MBA, false), "most_recent_school");
+    check("rules: 'Which school are you attending?' dropdown", key("Which school are you attending?", true), "most_recent_school");
+    check("rules: yes/no dropdowns take no degree, place or employer", [key("Do you have a bachelor's degree?", true), key("Are you currently located in the US?", true), key("Is your current company a competitor of ours?", true)], [null, null, null]);
+    check("rules: yes/no facts as dropdowns keep their keys", [AUTH, SPONSOR, "Are you at least 18 years of age?", "Are you a protected veteran?", "Are you Hispanic or Latino?"].map((l) => key(l, true)), ["work_auth_us", "sponsorship", "over18", "veteran", "hispanic"]);
+    check("keyType: no key, yes/no question naming a school", S.fieldTypeFor(null, MBA), "generic");
+    check("keyType: no key, yes/no question naming a city", S.fieldTypeFor("", "Are you located in Austin, Texas?"), "generic");
+  }
+
   // =====================================================================================
   // 8. Review regressions (wrong-fill safety findings, 2026-10-18 review)
   // =====================================================================================
@@ -547,6 +616,34 @@ const T = S.THRESHOLDS;
     const res2 = await S.run({ el: { id: "school" }, fieldType: "school", answer: "Texas A&M University", adapter: plain });
     check("ats run: without it, nothing committed", [res2.success, res2.failureReason, plain.calls.commit.length, plain.calls.capture], [false, "return-empty", 0, ["Texas A&M University", "Texas A&M"]]);
   });
+
+  // =====================================================================================
+  // 10. AB.bestOption (util.js), the v1 option matcher: prefix, contains and token steps compare whole words
+  // =====================================================================================
+  // Older folders compare substrings ("man" inside "woman"); their matcher is not checked here.
+  if (typeof AB.hasWords !== "function") console.log("section 10 skipped: substring option matcher (before whole-word matching)");
+  else {
+    const pick = (w, labels, syn) => { const i = AB.bestOption(w, labels, syn); return i < 0 ? null : labels[i]; };
+    // Robinhood's job-boards demographic question, typed "Man" (2026-10-19): option 0 was committed.
+    check("bestOption: 'Man' is not inside 'woman'", pick("Man", ["Cisgender woman", "Cisgender man", "Transgender woman", "Transgender man"]), "Cisgender man");
+    check("bestOption: 'Man' among woman options only -> none", pick("Man", ["Cisgender woman", "Transgender woman"]), null);
+    check("bestOption: 'Male' is not inside 'Female'", pick("Male", ["Female", "Gender: Male"]), "Gender: Male");
+    check("bestOption: 'No' does not start 'Not now'", pick("No", ["Not now", "No, thanks"]), "No, thanks");
+    check("bestOption: label 'No' is not inside wanted 'not'", pick("I do not know", ["No", "Unknown"]), null);
+    check("bestOption: 'Art' is not inside 'Martial arts'", pick("Art", ["Martial arts", "Fine Art"]), "Fine Art");
+    check("bestOption: '1' does not start '10+'", pick("1", ["10+", "1-2"]), "1-2");
+    check("bestOption: '+1' is not inside '+213'", pick("+1", ["Algeria (+213)", "United States (+1)"]), "United States (+1)");
+    check("bestOption: an empty label never matches", pick("Maybe", ["", "Yes", "No"]), null);
+    // Unchanged: exact, normalized and synonym steps, and whole-word prefix, contains and token matches.
+    check("bestOption: any wanted value's exact match first", pick(["Man", "Male"], ["Female", "Male", "Decline To Self Identify"]), "Male");
+    check("bestOption: normalized (case, punctuation)", pick("Decline to self-identify", ["Male", "Decline To Self Identify"]), "Decline To Self Identify");
+    check("bestOption: synonym", pick("Decline to self-identify", ["Male", "Female", "I don't wish to answer"], { "decline to self identify": ["Prefer not to say", "I don't wish to answer"] }), "I don't wish to answer");
+    check("bestOption: label starts with the value", pick("Yes", ["No", "Yes, I am authorized to work in the US"]), "Yes, I am authorized to work in the US");
+    check("bestOption: value starts with the label", pick("No, I do not have a disability", ["Yes", "No"]), "No");
+    check("bestOption: apostrophe forms", pick("Bachelor's", ["Associate's Degree", "Bachelor's Degree"]), "Bachelor's Degree");
+    check("bestOption: label contains the value", pick("Computer Science", ["Physics", "B.S. in Computer Science"]), "B.S. in Computer Science");
+    check("bestOption: every value token in the label", pick("Texas University", ["Texas Tech", "University of Texas at Austin"]), "University of Texas at Austin");
+  }
 
   // ---------- report ----------
   const pad = (s, n) => String(s).padEnd(n);

@@ -9,8 +9,13 @@ AB.RULES = [
   ["preferred_name", ["preferred name", "preferred first", "nickname", "name you go by"], []],
   ["full_name", ["full name", "legal name", "your name", "candidate name", "name"], ["company", "school", "user", "first", "last", "preferred", "file", "contact", "referr", "emergency", "manager", "pronounce", "pronunciation", "call you", "nickname", "middle", "maiden"]],
   ["pronouns", ["pronoun"], []],
-  ["email", ["email", "e mail"], ["confirm", "verify", "re enter", "manager", "referr", "recruiter"]],
+  ["email", ["email", "e mail"], ["confirm", "verify", "re enter", "manager", "referr", "recruiter", "alternate", "alternative", "secondary", "backup", "additional"]],
   ["email", ["confirm email", "verify email", "re enter email", "email confirmation"], []],
+  // A sponsorship question may name work authorization as what sponsorship keeps ("require company sponsorship to
+  // retain or extend your work authorization", Airbnb); work_auth_us below would claim it. Status questions that
+  // mention sponsorship ("authorized to work ... without sponsorship", "... and will not require sponsorship") skip this.
+  ["sponsorship", ["require sponsorship", "require company sponsorship", "require visa sponsorship", "require immigration sponsorship", "require employer sponsorship", "require employment sponsorship", "need sponsorship", "need visa sponsorship"],
+    ["without", "not", "who require", "who need", "legally authorized", "authorized to work", "authorised to work", "eligible to work", "legally eligible", "right to work"]],
   ["work_auth_us", ["legally authorized", "authorized to work", "eligible to work", "work authorization", "right to work", "authorised to work", "legally eligible", "authorized to work lawfully"], []],
   ["sponsorship", ["sponsorship", "sponsor", "visa"], []],
   ["over18", ["18 years", "over 18", "at least 18", "age of 18"], []],
@@ -58,7 +63,12 @@ AB.groupLabelFor = (el) => {
   const fs = el.closest("fieldset");
   if (fs) { const lg = fs.querySelector("legend"); if (lg) push(lg.textContent); if (fs.getAttribute("aria-label")) push(fs.getAttribute("aria-label")); }
   const grp = el.closest("[role=radiogroup], [role=group]");
-  if (grp) { if (grp.getAttribute("aria-label")) push(grp.getAttribute("aria-label")); const lb = grp.getAttribute("aria-labelledby"); if (lb) lb.split(/\s+/).forEach((id) => { const n = document.getElementById(id); if (n) push(n.textContent); }); }
+  if (grp) {
+    if (grp.getAttribute("aria-label")) push(grp.getAttribute("aria-label"));
+    const lb = grp.getAttribute("aria-labelledby"); if (lb) lb.split(/\s+/).forEach((id) => { const n = document.getElementById(id); if (n) push(n.textContent); });
+    // label[for] may name the group itself (Duolingo's listbox buttons: <label for=question_…> + div#question_…[role=group]).
+    if (grp.id) { try { grp.getRootNode().querySelectorAll(`label[for="${CSS.escape(grp.id)}"]`).forEach((l) => push(l.textContent)); } catch {} }
+  }
   // Walk up a few containers looking for a label/heading that is not the option's own label.
   let box = (own || el).parentElement;
   for (let depth = 0; box && depth < 5 && !texts.length; depth++, box = box.parentElement) {
@@ -97,9 +107,9 @@ AB.labelFor = (el, { group = true } = {}) => {
   }
   // Question text held by a sibling of the control's wrapper (e.g. Lever: <div class="application-label">…</div><div class="application-field"><textarea>)
   if (!isChoice) AB.groupLabelFor(el).forEach(push);
-  // preceding sibling text (for bare inputs)
+  // preceding sibling text (for bare inputs); an empty-state "Select..." beside a listbox button names nothing
   let p = el.previousElementSibling;
-  for (let i = 0; p && i < 2; i++, p = p.previousElementSibling) if (/^(LABEL|SPAN|P|DIV|STRONG|B)$/.test(p.tagName) && p.textContent.trim().length < 160) push(p.textContent);
+  for (let i = 0; p && i < 2; i++, p = p.previousElementSibling) if (/^(LABEL|SPAN|P|DIV|STRONG|B)$/.test(p.tagName) && p.textContent.trim().length < 160 && !AB.search?.isPlaceholder?.(p.textContent)) push(p.textContent);
   if (el.placeholder) push(el.placeholder);
   if (el.name) push(el.name.replace(/[\[\]_\-.]/g, " "));
   if (el.id) push(el.id.replace(/[\[\]_\-.]/g, " "));
@@ -128,11 +138,24 @@ AB.hasKw = (label, kw) => {
   return re.test(label);
 };
 
+// Keys that name a school, field of study, degree, employer, job title or place.
+AB.ENTITY_KEYS = new Set(["most_recent_school", "most_recent_major", "most_recent_degree", "current_company", "current_title", "city", "state", "country", "location"]);
+// Dropdowns and choice groups: native selects, radio and checkbox inputs, listbox comboboxes such as react-select.
+AB.isChoiceControl = (el) => el instanceof HTMLSelectElement || /^(radio|checkbox)$/.test(el?.type) || el?.getAttribute?.("role") === "combobox" || el?.getAttribute?.("aria-haspopup") === "listbox";
+// Profile key of the first rule whose keywords appear in a normalized label and whose exclusions do not, or null. A
+// yes/no question asked as a dropdown or choice group ({ choice: true }) takes no entity key: Airbnb's "Are you currently
+// enrolled in a full-time MBA program at an accredited U.S. business school ...?" is not the school field, and a saved
+// answer can fill it.
+AB.keyForLabel = (label, { choice = false } = {}) => {
+  const yesNo = choice && AB.isYesNoQuestion(label);
+  return AB.RULES.find(([key, incl, excl]) => !(yesNo && AB.ENTITY_KEYS.has(key)) && incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k)))?.[0] ?? null;
+};
+
 AB.classify = (el) => {
   const ac = (el.getAttribute("autocomplete") || "").split(" ").pop();
   if (ac && AB.AUTOCOMPLETE_MAP[ac]) return { key: AB.AUTOCOMPLETE_MAP[ac], via: "autocomplete", label: ac };
   const type = (el.getAttribute("type") || el.tagName).toLowerCase();
-  if (type === "email") return { key: "email", via: "type", label: "email" };
+  if (type === "email" && !AB.labelFor(el).some((l) => AB.OTHER_EMAIL.some((k) => AB.hasKw(l, k)))) return { key: "email", via: "type", label: "email" };
   if (type === "tel") return { key: "phone", via: "type", label: "phone" };
   const labels = AB.labelFor(el);
   // Search boxes inside widgets (intl-tel-input country list, typeahead filters) are never identity fields.
@@ -140,39 +163,54 @@ AB.classify = (el) => {
   const comboLike = el.getAttribute("aria-haspopup") === "listbox" || el.getAttribute("role") === "combobox" || el.hasAttribute("aria-autocomplete");
   const widgetInner = el.matches(".iti__search-input, .iti input, .select2-search__field, .chosen-search input, [class*='search-input'], [class*='searchInput']") || el.closest(".select2-dropdown, .chosen-drop, [role=listbox]") || (el.closest("[role=dialog]") && el.matches("[class*='search'], [role=searchbox]"));
   if (widgetInner || (type === "search" && !comboLike)) return { key: null, via: "search-box", label: AB.displayLabel(labels), labels: [] };
-  // Open-ended questions are never profile fields; only a saved answer may fill them.
+  // Open-ended questions are never profile fields; only a saved answer may fill them. A choice widget is never free
+  // text, however its question is worded ("How would you describe your racial/ethnic background?").
   const primary = AB.displayLabel(labels);
-  if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))
-    return { key: null, via: "free-text", label: primary, labels };
+  const choice = el instanceof HTMLSelectElement || AB.isListboxButton?.(el) || (el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type));
+  if (AB.FREE_TEXT.test(primary) && !choice) return { key: null, via: "free-text", label: primary, labels };
   for (const label of labels) {
-    for (const [key, incl, excl] of AB.RULES) {
-      if (incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k))) return { key, via: "label", label, labels };
-    }
+    const key = AB.keyForLabel(label, { choice: AB.isChoiceControl(el) });
+    if (key) return { key, via: "label", label, labels };
   }
   return { key: null, via: null, label: AB.displayLabel(labels), labels };
 };
+
+// An email box with one of these words is a second address, not the profile email ("Alternate Email").
+AB.OTHER_EMAIL = ["alternate", "alternative", "secondary", "backup", "additional"];
 
 AB.FREE_TEXT = /(^|\s)(how do you|how would you|why do you|why are you|why would you|what has been|what is your favorite|what are you|describe|tell us|explain|in what ways|anything else|additional information|comments?)(\s|$)/;
 
 // Pick the most question-like label for display and saved-answer lookup: skip placeholders/markers, prefer the longest.
 AB.GENERIC_LABELS = /^(type your response|start typing|pick date|select|search|choose|choose one|yes|no|✱|\*|required|optional|enter .*|your answer)$/;
 AB.displayLabel = (labels) => {
-  const good = labels.filter((l) => l && !AB.GENERIC_LABELS.test(l) && !/^[0-9a-f]{8}( [0-9a-f]{4}){3} [0-9a-f]{12}/.test(l) && !/^cards? [0-9a-f]{8}/.test(l));
+  const good = labels.filter((l) => l && !AB.GENERIC_LABELS.test(l) && !/^[0-9a-f]{8}( [0-9a-f]{4}){3} [0-9a-f]{12}/.test(l) && !/^cards? [0-9a-f]{8}/.test(l) && !/^question \d+$/.test(l));
   return (good.sort((a, b) => b.length - a.length)[0]) || labels[0] || "";
 };
 
-// Enumerate fillable controls under a container, deduplicating radio groups and hidden widgets.
+// A control taken out of the page's tab order and hidden from assistive tech is never a question a person answers:
+// react-select's empty "required" input (opacity 0 under a required question until something is picked; its label
+// would be the placeholder or the live region, "? select", "? 7 results available …"), or a honeypot. Checkboxes,
+// radios, file inputs and selects stay: widgets drive those from a visible button, and some read changes on them.
+AB.isHiddenFromPeople = (el) =>
+  el.getAttribute("aria-hidden") === "true" && el.getAttribute("tabindex") === "-1" &&
+  !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(checkbox|radio|file)$/.test(el.type));
+
+// Enumerate fillable controls under a container, deduplicating radio groups and hidden widgets. Listbox buttons count
+// in the shape AB.writeListboxButton handles (AB.isListboxButton: names its list, shows its choice beside it).
 AB.enumerateControls = (container) => {
-  const sel = 'input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]), textarea, select, [role=combobox], [role=textbox], [contenteditable=true]';
+  const base = 'input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]), textarea, select, [role=combobox], [role=textbox], [contenteditable=true]';
+  const sel = `${base}, ${AB.LISTBOX_BUTTON}`;
   const nodes = Array.from((container || document).querySelectorAll(sel));
   // include open shadow roots one level deep
   (container || document).querySelectorAll("*").forEach((h) => { if (h.shadowRoot) nodes.push(...h.shadowRoot.querySelectorAll(sel)); });
   const seen = new Set();
   const out = [];
   for (const el of nodes) {
+    if (!el.matches(base) && !AB.isListboxButton(el)) continue;
     if (el.disabled || el.readOnly) continue;
     if (el.closest("[data-autobot-panel]")) continue;
     if (!AB.isVisible(el) && el.type !== "file" && el.type !== "radio" && el.type !== "checkbox") continue;
+    if (AB.isHiddenFromPeople(el)) continue;
     const key = el.type === "radio" && el.name ? `radio:${el.name}` : el;
     if (seen.has(key)) continue;
     seen.add(key);
