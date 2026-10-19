@@ -11,6 +11,11 @@ AB.RULES = [
   ["pronouns", ["pronoun"], []],
   ["email", ["email", "e mail"], ["confirm", "verify", "re enter", "manager", "referr", "recruiter"]],
   ["email", ["confirm email", "verify email", "re enter email", "email confirmation"], []],
+  // A sponsorship question may name work authorization as what sponsorship keeps ("require company sponsorship to
+  // retain or extend your work authorization", Airbnb); work_auth_us below would claim it. Status questions that
+  // mention sponsorship ("authorized to work ... without sponsorship", "... and will not require sponsorship") skip this.
+  ["sponsorship", ["require sponsorship", "require company sponsorship", "require visa sponsorship", "require immigration sponsorship", "require employer sponsorship", "require employment sponsorship", "need sponsorship", "need visa sponsorship"],
+    ["without", "not", "who require", "who need", "legally authorized", "authorized to work", "authorised to work", "eligible to work", "legally eligible", "right to work"]],
   ["work_auth_us", ["legally authorized", "authorized to work", "eligible to work", "work authorization", "right to work", "authorised to work", "legally eligible", "authorized to work lawfully"], []],
   ["sponsorship", ["sponsorship", "sponsor", "visa"], []],
   ["over18", ["18 years", "over 18", "at least 18", "age of 18"], []],
@@ -128,6 +133,19 @@ AB.hasKw = (label, kw) => {
   return re.test(label);
 };
 
+// Keys that name a school, field of study, degree, employer, job title or place.
+AB.ENTITY_KEYS = new Set(["most_recent_school", "most_recent_major", "most_recent_degree", "current_company", "current_title", "city", "state", "country", "location"]);
+// Dropdowns and choice groups: native selects, radio and checkbox inputs, listbox comboboxes such as react-select.
+AB.isChoiceControl = (el) => el instanceof HTMLSelectElement || /^(radio|checkbox)$/.test(el?.type) || el?.getAttribute?.("role") === "combobox" || el?.getAttribute?.("aria-haspopup") === "listbox";
+// Profile key of the first rule whose keywords appear in a normalized label and whose exclusions do not, or null. A
+// yes/no question asked as a dropdown or choice group ({ choice: true }) takes no entity key: Airbnb's "Are you currently
+// enrolled in a full-time MBA program at an accredited U.S. business school ...?" is not the school field, and a saved
+// answer can fill it.
+AB.keyForLabel = (label, { choice = false } = {}) => {
+  const yesNo = choice && AB.isYesNoQuestion(label);
+  return AB.RULES.find(([key, incl, excl]) => !(yesNo && AB.ENTITY_KEYS.has(key)) && incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k)))?.[0] ?? null;
+};
+
 AB.classify = (el) => {
   const ac = (el.getAttribute("autocomplete") || "").split(" ").pop();
   if (ac && AB.AUTOCOMPLETE_MAP[ac]) return { key: AB.AUTOCOMPLETE_MAP[ac], via: "autocomplete", label: ac };
@@ -145,9 +163,8 @@ AB.classify = (el) => {
   if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))
     return { key: null, via: "free-text", label: primary, labels };
   for (const label of labels) {
-    for (const [key, incl, excl] of AB.RULES) {
-      if (incl.some((k) => AB.hasKw(label, k)) && !excl.some((k) => AB.hasKw(label, k))) return { key, via: "label", label, labels };
-    }
+    const key = AB.keyForLabel(label, { choice: AB.isChoiceControl(el) });
+    if (key) return { key, via: "label", label, labels };
   }
   return { key: null, via: null, label: AB.displayLabel(labels), labels };
 };

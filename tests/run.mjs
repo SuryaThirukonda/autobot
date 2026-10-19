@@ -38,6 +38,7 @@ const PROFILE = {
   answers: { "Why do you want to work here?": "Because the mission matches my experience building reliable systems." },
 };
 const RESUME = { name: "ada-resume.pdf", type: "application/pdf", dataBase64: Buffer.from("%PDF-1.4\n% autobot test resume\n").toString("base64") };
+const SETTINGS = { testHooks: true, showPanel: true, heuristics: true, debug: true };
 
 const serve = () => new Promise((resolve) => {
   const dir = path.join(here, "fixtures");
@@ -74,6 +75,8 @@ const fillAndWait = async (page) => {
 };
 // Status lines for one key, without the transient "filling" entries.
 const statusOf = (summary, key) => JSON.stringify((summary.statuses || []).filter((s) => s[0] === key && s[1] !== "filling"));
+// [filled lines, other lines] reported for a key.
+const writesOf = (summary, key) => { const s = (summary.statuses || []).filter((x) => x[0] === key && x[1] !== "filling"); return [s.filter((x) => x[1] === "filled").length, s.filter((x) => x[1] !== "filled").length]; };
 const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementById("school-hidden").value, shown: document.querySelector(".select__single-value").textContent,
   box: document.getElementById("school-input").value, q: window.__queries.slice(), first: document.getElementById("first_name").value }));
 const readWebui = (page) => page.evaluate(() => { const g = (id) => document.getElementById(id); return {
@@ -83,6 +86,16 @@ const readWebui = (page) => page.evaluate(() => { const g = (id) => document.get
 const readJobboards = (page) => page.evaluate(() => { const sv = (id) => document.getElementById(id).closest(".select__control").querySelector(".select__single-value")?.textContent || ""; const g = (id) => document.getElementById(id).value; return {
   school: sv("school--0"), degree: sv("degree--0"), discipline: sv("discipline--0"), startMonth: sv("start-month--0"), startYear: g("start-year--0"), endMonth: sv("end-month--0"), endYear: g("end-year--0"),
   q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
+// Airbnb's Yes/No react-selects in the job-boards fixture (MBA enrollment, work authorization, sponsorship): what each
+// shows and every value typed into it.
+const MBA_Q = "Are you currently enrolled in a full-time MBA program at an accredited U.S. business school, with an expected graduation date of Spring 2028?";
+const AUTH_YES = "Yes, I am currently legally authorized to work in the country where the job is located.";
+const SPONSOR_NO = "No, I do not and will not require immigration sponsorship to legally work in the country where the job is located.";
+const readQuestions = (page) => page.evaluate(() => { const ids = { mba: "question_69899953", auth: "question_69899963", sponsor: "question_69899964" };
+  const sv = (id) => document.getElementById(id).closest(".select__control").querySelector(".select__single-value")?.textContent || "";
+  return { ...Object.fromEntries(Object.entries(ids).map(([k, id]) => [k, sv(id)])), typed: Object.fromEntries(Object.entries(ids).map(([k, id]) => [k, window.__typed[id] || []])) }; });
+// Status lines whose key starts with some text: a question no rule names is listed as "? " plus its label.
+const statusesStarting = (summary, prefix) => JSON.stringify((summary.statuses || []).filter((s) => s[0].startsWith(prefix) && s[1] !== "filling"));
 // Statuses that report a choice the control already showed, as "key" strings.
 const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s) => s[1] === "filled" && /already selected/.test(s[2])).map((s) => s[0]));
 // greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits, the
@@ -120,7 +133,7 @@ const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map
       } finally { await opt.close(); }
     };
     // Seed profile + resume + test hooks.
-    await setStorage({ profile: PROFILE, resume: RESUME, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } });
+    await setStorage({ profile: PROFILE, resume: RESUME, settings: SETTINGS });
 
     // ---- Greenhouse-like ----
     {
@@ -384,13 +397,49 @@ const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map
       check("jobboards: MM text fields leave the month selects alone", statusOf(summary, "education[0].start_month|MM") + statusOf(summary, "education[0].end_month|MM"), (t) => (t.match(/"absent"/g) || []).length === 2);
       check("jobboards: school searched once", JSON.stringify(v.q), JSON.stringify([CS]));
       check("jobboards: no status from react-select's hidden required inputs", hiddenInputKeys(summary), "[]");
+      // The config answers both questions. Its paths land on the input's wrapper (select__input-container), and the
+      // heuristic pass used to take the input inside for a fresh question: work_auth_us both times, searched as a
+      // location because the labels say "located", with the profile city typed into the Yes/No lists.
+      const qs = await readQuestions(page);
+      check("jobboards: work authorization answered", qs.auth, AUTH_YES);
+      check("jobboards: sponsorship answered", qs.sponsor, SPONSOR_NO);
+      check("jobboards: questions written once, by the config", JSON.stringify([writesOf(summary, "work_auth_us"), writesOf(summary, "sponsorship")]), "[[1,0],[1,0]]");
+      check("jobboards: no city typed into the Yes/No lists", JSON.stringify([qs.typed.auth, qs.typed.sponsor]), (t) => !/Austin/.test(t));
+      // The MBA question names a "business school" but is a Yes/No dropdown: no school key, nothing typed into it, and
+      // with no saved answer it is left for you. react-select's hidden required inputs are no questions at all.
+      check("jobboards: Yes/No question naming a school is no school field", statusOf(summary, "most_recent_school"), "[]");
+      check("jobboards: MBA question left for you", statusesStarting(summary, "? are you currently enrolled"), (t) => /"unknown","no rule"/.test(t));
+      check("jobboards: nothing typed into the MBA question", JSON.stringify(qs.typed.mba), "[]");
+      check("jobboards: no rows for hidden required inputs", statusesStarting(summary, "? select"), "[]");
       const again = await fillAndWait(page);
       const r = await readJobboards(page);
+      const rq = await readQuestions(page);
+      check("jobboards rerun: questions unchanged", JSON.stringify([rq.auth, rq.sponsor]), JSON.stringify([AUTH_YES, SPONSOR_NO]));
       check("jobboards rerun: no new search", JSON.stringify(r.q), JSON.stringify([CS]));
       check("jobboards rerun: values unchanged", JSON.stringify(r), JSON.stringify(v));
       check("jobboards rerun: selects report already selected", keptKeys(again), JSON.stringify(["education[0].school", "education[0].degree", "education[0].major", "education[0].start_month", "education[0].end_month"]));
       check("jobboards: never submitted", r.submits, 0);
       await page.close();
+      // The same questions when only the heuristic pass sees them (a board whose labels the config's paths miss): the
+      // profile key, not the label's "located", decides the dropdown; the sponsorship question gets the sponsorship fact
+      // although its label also says "work authorization"; a saved answer fills the MBA question, with no search.
+      {
+        const gh = JSON.parse(fs.readFileSync(path.join(extDir, "configs", "greenhouse.json"), "utf8"));
+        const fields = gh.fields.filter((f) => !["work_auth_us", "sponsorship"].includes(f.key));
+        await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }], answers: { ...PROFILE.answers, [MBA_Q]: "Yes" } }, settings: { ...SETTINGS, configOverrides: { greenhouse: { fields } } } });
+        const page = await ctx.newPage();
+        await page.goto(`${base}/greenhouse-jobboards.html`);
+        const summary = await fillAndWait(page);
+        const qs = await readQuestions(page);
+        check("heuristic questions: work authorization", qs.auth, AUTH_YES);
+        check("heuristic questions: sponsorship", qs.sponsor, SPONSOR_NO);
+        check("heuristic questions: keyed work_auth_us and sponsorship", JSON.stringify([writesOf(summary, "work_auth_us"), writesOf(summary, "sponsorship")]), "[[1,0],[1,0]]");
+        check("heuristic questions: no city typed into them", JSON.stringify([qs.typed.auth, qs.typed.sponsor]), (t) => !/Austin/.test(t));
+        check("heuristic questions: saved answer fills the MBA question", qs.mba, "Yes");
+        check("heuristic questions: MBA answer typed as is, no school search", JSON.stringify(qs.typed.mba), JSON.stringify(["Yes"]));
+        await page.close();
+        await setStorage({ settings: SETTINGS });
+      }
       await setStorage({ profile: PROFILE });
     }
     // ---- Greenhouse job-boards EEO: the EEOC block, demographic surveys and a company's own questions ----

@@ -474,16 +474,33 @@ AB.search = AB.search || {};
     return done("step-limit");
   };
 
-  // Map a profile key / label to a search field type.
+  // Map a profile key / label to a search field type. A profile key decides on its own: the search types follow from
+  // it, and every other profile key is "generic" whatever its label says. Airbnb's "Are you legally authorized to work
+  // in the country where the job is located?" is a yes/no work_auth_us question, not a city search. Label words
+  // classify only fields without a profile key (saved-answer questions and question ids), and never a yes/no question.
+  const KEY_TYPES = [["school", /school|university|college|institution/], ["major", /major|field_of_study|discipline/], ["degree", /degree/], ["location", /^(location|city|city_state)$/], ["company", /company|employer|organization/]];
+  const LABEL_TYPES = [["school", /\b(school|university|college|institution)\b/], ["major", /\b(major|field of study|discipline|area of study)\b/], ["degree", /\bdegree\b/], ["location", /\b(location|city|where .* live|located)\b/], ["company", /\b(company|employer|organization)\b/]];
+  // Profile keys whose value is never a search type: engine/profile.js (PROFILE_DEFAULT, derived keys, education[] and
+  // experience[] entry fields) and the heuristic rules in engine/heuristics.js. tests/search-unit.mjs checks that every
+  // rule key and profile key classifies the same whatever its label.
+  S.PROFILE_KEYS = new Set([
+    "first_name", "last_name", "preferred_name", "full_name", "pronouns", "email", "phone", "phone_digits", "phone_country",
+    "address", "address_2", "state", "postal_code", "country", "linkedin", "github", "portfolio", "website", "twitter",
+    "work_auth_us", "sponsorship", "over18", "gender", "ethnicity", "hispanic", "veteran", "disability",
+    "current_title", "title", "years_experience", "salary", "notice_period", "how_heard", "referred_by", "description", "current",
+    "start_date", "end_date", "grad_date", "start_month", "start_year", "end_month", "end_year", "graduated", "today",
+    "gpa", "most_recent_gpa", "skills", "skills_text", "languages", "cover_letter_text",
+  ]);
   S.fieldTypeFor = (key = "", label = "") => {
-    // Use the last key segment so nested keys ("experience[0].location") classify like top-level ones.
-    const k = String(key || "").toLowerCase().split(".").pop().replace(/\[\d+\]$/, ""), l = AB.norm ? AB.norm(label) : String(label).toLowerCase();
-    if (/school|university|college|institution/.test(k) || /\b(school|university|college|institution)\b/.test(l)) return "school";
-    if (/major|field_of_study|discipline/.test(k) || /\b(major|field of study|discipline|area of study)\b/.test(l)) return "major";
-    if (/degree/.test(k) || /\bdegree\b/.test(l)) return "degree";
-    if (/^(location|city|city_state)$/.test(k) || /\b(location|city|where .* live|located)\b/.test(l)) return "location";
-    if (/company|employer|organization/.test(k) || /\b(company|employer|organization)\b/.test(l)) return "company";
-    return "generic";
+    // Use the last key segment so nested keys ("experience[0].location") classify like top-level ones; drop a "|fmt".
+    const k = String(key || "").toLowerCase().split("|")[0].split(".").pop().replace(/\[\d+\]$/, "");
+    const byKey = KEY_TYPES.find(([, re]) => re.test(k));
+    if (byKey) return byKey[0];
+    if (S.PROFILE_KEYS.has(k)) return "generic";
+    // A yes/no question is never a list search, whatever names it mentions ("... at an accredited business school?").
+    if (AB.isYesNoQuestion?.(label)) return "generic";
+    const l = AB.norm ? AB.norm(label) : String(label).toLowerCase();
+    return LABEL_TYPES.find(([, re]) => re.test(l))?.[0] || "generic";
   };
 
   // Per-ATS canonical names stored on a profile education entry. Simplify keeps one name per ATS for the same

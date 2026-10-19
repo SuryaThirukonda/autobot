@@ -16,7 +16,10 @@
      the <input> itself and the chosen value shows as a sibling select__single-value inside select__control. No ancestor
      has a "field" class. The menu renders inside select-shell only while open. The school list answers after a delay
      (a server search). The degree list is Robinhood's custom one, which has both "Bachelors" and "Bachelor's Degree".
-     Airbnb's posting asks for start and end dates: months are react-selects, years are number inputs. -->
+     Airbnb's posting asks for start and end dates: months are react-selects, years are number inputs. Its work
+     authorization and sponsorship questions are react-selects too, with sentence options; both labels say "the
+     country where the job is located", and the sponsorship one also says "work authorization". Its Yes/No MBA question
+     names a "business school". An unanswered react-select keeps its hidden required input beside it. -->
 <form id="application-form" class="application--form" onsubmit="window.__submits++; return false">
   <div class="text-input-wrapper"><div class="input-wrapper"><label id="first_name-label" for="first_name" class="label">First Name<span aria-hidden="true">*</span></label><input id="first_name" class="input input__single-line" aria-label="First Name" aria-required="true" type="text" value=""></div></div>
   <div class="text-input-wrapper"><div class="input-wrapper"><label id="last_name-label" for="last_name" class="label">Last Name<span aria-hidden="true">*</span></label><input id="last_name" class="input input__single-line" aria-label="Last Name" aria-required="true" type="text" value=""></div></div>
@@ -39,11 +42,15 @@
     </div>
     <button class="add-another-button" type="button">Add another</button>
   </div>
+  <div class="rs" data-id="question_69899953" data-label="Are you currently enrolled in a full-time MBA program at an accredited U.S. business school, with an expected graduation date of Spring 2028?"></div>
+  <div class="rs" data-id="question_69899963" data-label="Are you legally authorized to work in the country where the job is located?"></div>
+  <div class="rs" data-id="question_69899964" data-label="Will you now or in the future require company sponsorship to retain or extend your work authorization in the country where the job is located?"></div>
   <button type="submit" class="btn btn--pill">Submit application</button>
 </form>
 <script>
 (() => {
   window.__queries = { "school--0": [] };
+  window.__typed = {};   // id -> every value its input held while typing, for the question dropdowns
   window.__submits = 0;
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const SCHOOLS = ["Texas A&M International University", "Texas A&M University - College Station", "Texas A&M University - Commerce", "Texas A&M University - Corpus Christi",
@@ -108,7 +115,7 @@
       close();
     };
     control.addEventListener("mousedown", (e) => { if (e.target !== input) e.preventDefault(); input.focus(); if (!menu) render(); });
-    input.addEventListener("input", render);
+    input.addEventListener("input", () => { (window.__typed[id] ||= []).push(input.value); render(); });
     input.addEventListener("keydown", (e) => {
       if (e.key === "ArrowDown" && !menu) render();
       else if (e.key === "Enter" && menu && shown.length) { e.preventDefault(); pick(shown[0]); }
@@ -121,6 +128,10 @@
   rs("discipline--0", DISCIPLINES);
   rs("start-month--0", MONTHS);
   rs("end-month--0", MONTHS);
+  rs("question_69899953", ["Yes", "No"]);
+  const WHERE = "legally work in the country where the job is located.";
+  rs("question_69899963", ["Yes, I am currently legally authorized to work in the country where the job is located.", "No, I am not currently legally authorized to work in the country where the job is located."]);
+  rs("question_69899964", [`Yes, I will require immigration sponsorship now to ${WHERE}`, `Yes, I will require immigration sponsorship in the future to ${WHERE}`, `No, I do not and will not require immigration sponsorship to ${WHERE}`]);
 })();
 </script>
 </body></html>

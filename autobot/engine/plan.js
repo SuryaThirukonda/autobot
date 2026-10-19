@@ -38,6 +38,10 @@ AB.synonymsFrom = (values) => {
   return syn;
 };
 
+// Mark an element a config field resolved, and the controls inside it, so the heuristic pass skips them. Greenhouse's
+// react-select paths resolve to the input's wrapper (select__input-container); the input inside is the same question.
+AB.touch = (touched, el) => { touched?.add(el); for (const c of el?.querySelectorAll?.("input, select, textarea") || []) touched?.add(c); };
+
 // Execute one field (or nested array section). Reports via onStatus(key, status, detail).
 AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
   const { container, profile, resume, signal, onStatus } = state;
@@ -114,7 +118,7 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
       }
       lastEl = el;
       anyFound = true;
-      state.touched?.add(el);
+      AB.touch(state.touched, el);
     } else if (lastEl) el = lastEl;
     if (!el) continue;
     onStatus(fullKey, "filling", "");
@@ -220,7 +224,7 @@ AB.fill = async ({ config, profile, resume, settings, onStatus = () => {}, signa
     const ok = await AB.runField(field, state);
     if (ok) filled++;
     // mark elements we touched so heuristics skip them
-    AB.arr(field.path).forEach((p) => { if (!AB.hasValueTemplate(p)) AB.query(p, container, true).forEach((el) => touched.add(el)); });
+    AB.arr(field.path).forEach((p) => { if (!AB.hasValueTemplate(p)) AB.query(p, container, true).forEach((el) => AB.touch(touched, el)); });
   }
   if (config.heuristics !== false && settings?.heuristics !== false) filled += await AB.runHeuristics(state, touched);
   return { filled };
