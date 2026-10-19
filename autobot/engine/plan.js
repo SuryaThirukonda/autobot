@@ -7,9 +7,9 @@ AB.VALUE_MAPS = {
   workAuth: { true: ["Yes", "I am authorized", "Authorized"], false: ["No", "Not authorized"] },
   sponsorship: { true: ["Yes", "Will require sponsorship"], false: ["No", "Do not require sponsorship", "No, I will not"] },
   gender: { "Decline to self-identify": ["Decline To Self Identify", "Prefer not to say", "I don't wish to answer", "Decline to self identify", "I prefer not to answer"], Male: ["Man"], Female: ["Woman"] },
-  ethnicity: { "Decline to self-identify": ["Decline To Self Identify", "Prefer not to say", "I don't wish to answer", "Decline to self identify"], White: ["White (Not Hispanic or Latino)", "Caucasian"], Asian: ["Asian (Not Hispanic or Latino)"], "Black or African American": ["Black"], "Hispanic or Latino": ["Hispanic/Latino", "Hispanic/Latinx"], "Two or More Races": ["Two or more races", "Multiracial"] },
+  ethnicity: { "Decline to self-identify": ["Decline To Self Identify", "Prefer not to say", "I don't wish to answer", "Decline to self identify"], White: ["White (Not Hispanic or Latino)", "Caucasian", "White or European"], Asian: ["Asian (Not Hispanic or Latino)"], "Black or African American": ["Black", "Black or of African descent"], "Hispanic or Latino": ["Hispanic/Latino", "Hispanic/Latinx", "Hispanic, Latinx or of Spanish Origin"], "Two or More Races": ["Two or more races", "Multiracial"] },
   hispanic: { "Decline to self-identify": ["Decline To Self Identify", "Prefer not to say", "I don't wish to answer"], yes: ["Yes"], no: ["No"], true: ["Yes"], false: ["No"] },
-  veteran: { "I am not a protected veteran": ["I am not a protected veteran", "No", "I am not a veteran", "Not a Protected Veteran"], "I identify as one or more of the classifications of a protected veteran": ["I identify as one or more of the classifications of a protected veteran", "Yes", "Protected Veteran"], "I don't wish to answer": ["I don't wish to answer", "Decline to self identify", "Prefer not to say"] },
+  veteran: { "I am not a protected veteran": ["I am not a protected veteran", "No", "I am not a veteran", "Not a Protected Veteran", "No, I am not a veteran or active member"], "I identify as one or more of the classifications of a protected veteran": ["I identify as one or more of the classifications of a protected veteran", "Yes", "Protected Veteran", "I am a veteran or active member"], "I don't wish to answer": ["I don't wish to answer", "Decline to self identify", "Prefer not to say"] },
   disability: { "I do not want to answer": ["I do not want to answer", "I don't wish to answer", "Decline to self identify", "Prefer not to say"], "Yes, I have a disability, or have had one in the past": ["Yes", "Yes, I have a disability (or previously had a disability)"], "No, I do not have a disability and have not had one in the past": ["No", "No, I don't have a disability"] },
   degree: { "Bachelor's": ["Bachelor's Degree", "Bachelors", "Bachelor of Science (BS)", "Bachelor of Arts (BA)", "BS", "BA", "B.S.", "Bachelor"], "Master's": ["Master's Degree", "Masters", "MS", "MA", "M.S.", "Master"], "PhD": ["Doctor of Philosophy (Ph.D.)", "Doctorate", "Ph.D.", "Doctoral"], "High School": ["High School Diploma", "High School or equivalent"], "Associate's": ["Associate's Degree", "Associates", "AA", "AS"], "MBA": ["Master of Business Administration (M.B.A.)"] },
   month: Object.fromEntries(["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => [String(i + 1), [m, m.slice(0, 3), String(i + 1).padStart(2, "0"), String(i + 1)]])),
@@ -23,6 +23,7 @@ AB.mapValue = (value, values) => {
   for (const v of AB.arr(value)) {
     const k = String(v);
     const alts = map[k] ?? map[k.toLowerCase()] ?? map[AB.norm(k)];
+    if (Array.isArray(alts) && !alts.length) continue;   // [] in a map: this profile value has no answer on the question
     if (alts) out.push(...AB.arr(alts));
     out.push(v);
   }
@@ -88,6 +89,12 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
   if (field.method === "upload" && !resume?.dataBase64) { onStatus(fullKey, "skipped", "no resume stored"); return true; }
 
   const candidates = AB.mapValue(value, field.values);
+  if (field.values && value !== undefined && value !== "" && !candidates.length) {
+    // The value map gives this profile value no answer here (e.g. OPT questions when sponsorship is needed).
+    const here = AB.queryAny(AB.arr(field.path).filter((p) => !AB.hasValueTemplate(p)), container);
+    onStatus(fullKey, here ? "unknown" : "absent", here ? `no answer for ${field.valueKey || key} = ${value}` : "no matching element on this page");
+    return false;
+  }
   const synonyms = AB.synonymsFrom(field.values);
   const steps = field.actions?.length ? field.actions : [{ path: field.path, method: field.method, time: field.time, allowFailure: field.allowFailure, condition: field.condition, event: field.event }];
   let anyWrite = false, lastEl = null, anyFound = false;
@@ -193,7 +200,9 @@ AB.runHeuristics = async (state, touched) => {
     } catch (e) { AB.log("heuristic write failed", e); }
     touched.add(el);
     const sr = AB.searchResults?.get(el);
-    onStatus(key || `? ${label.slice(0, 40)}`, ok ? "filled" : sr?.decided ? "unknown" : "error", sr?.decided ? AB.search.describe(sr).slice(0, 120) : ok ? String(AB.shownChoices(AB.refresh(el))[0] || candidates[0]).slice(0, 60) : "write failed");
+    // The option the control shows (every choice of a listbox button, a react-select's label), not the profile's wording.
+    const shown = !ok ? "" : AB.isListboxButton(el) ? AB.readBack(el) : AB.shownChoices(AB.refresh(el))[0];
+    onStatus(key || `? ${label.slice(0, 40)}`, ok ? "filled" : sr?.decided ? "unknown" : "error", sr?.decided ? AB.search.describe(sr).slice(0, 120) : ok ? String(shown || candidates[0]).slice(0, 60) : "write failed");
     if (ok) n++;
     await AB.sleep(50);
   }

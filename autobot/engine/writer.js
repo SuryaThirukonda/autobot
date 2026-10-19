@@ -339,7 +339,8 @@ AB.searchResults = new WeakMap();
 AB.shownChoices = (el) => {
   if (!el) return [];
   if (el.matches?.("button, [role=button]")) {
-    const text = (n) => String(n?.innerText || n?.textContent || "").replace(/\s+/g, " ").trim();
+    // Rendered text, but in the page's own casing when CSS only changed the case (Duolingo upper-cases the choice).
+    const text = (n) => { const clean = (s) => String(s || "").replace(/\s+/g, " ").trim(), shown = clean(n?.innerText), raw = clean(n?.textContent); return shown && shown.toLowerCase() === raw.toLowerCase() ? raw : shown || raw; };
     let t = text(el);
     // An empty listbox button may show its choice beside it (Duolingo's month picker: <span>May</span><button>).
     if (!t && el.getAttribute("aria-haspopup") === "listbox" && el.parentElement?.querySelectorAll("button, [role=button], input, select, textarea").length === 1) t = text(el.parentElement);
@@ -358,6 +359,67 @@ AB.alreadyShows = (el, value, synonyms) => {
 AB.keepChoice = (el, text) => {
   AB.searchResults.set(el, { decided: true, success: true, alreadySelected: true, selected: { text }, adapter: "dropdown", rounds: [], actions: [] });
   return true;
+};
+
+// ---------- listbox buttons ----------
+// A button that opens a fixed list it names with aria-controls. Duolingo's Greenhouse form draws every question
+// dropdown this way: role=group > <span>choice</span><button aria-haspopup=listbox aria-controls=…>, with the
+// question in label[for=group id]. The list exists only while open. Picking closes a single-choice list; a
+// multi-choice list (aria-multiselectable) stays open, marks options aria-selected, and the span shows the choices
+// joined by ", ". Only an empty button alone in its wrapper counts. One that shows its choice as its own text
+// (Workday's "Select One") keeps the combobox writer, and an icon button beside a typeahead input is part of that input.
+AB.LISTBOX_BUTTON = "button[aria-haspopup=listbox][aria-controls], [role=button][aria-haspopup=listbox][aria-controls]";
+AB.isListboxButton = (el) => Boolean(el?.matches?.(AB.LISTBOX_BUTTON) && !el.textContent.trim() && el.parentElement?.querySelectorAll("button, [role=button], input, select, textarea").length === 1);
+
+// Index of the first label equal to a wanted value (in order), then to one of its synonyms, after AB.norm; -1 if none.
+// No prefix or substring tiers: in a short fixed list they pick look-alikes ("Man" inside "Cisgender woman").
+AB.exactOption = (wanted, labels, synonyms) => {
+  const nl = labels.map(AB.norm);
+  const wants = AB.arr(wanted).map(String).filter((w) => AB.norm(w));
+  for (const w of wants) { const i = nl.indexOf(AB.norm(w)); if (i >= 0) return i; }
+  for (const w of wants) for (const a of AB.arr(synonyms?.[AB.norm(w)])) { const i = nl.indexOf(AB.norm(a)); if (AB.norm(a) && i >= 0) return i; }
+  return -1;
+};
+
+// Open the list, pick the option equal to a wanted label, close the list and confirm the button shows the choice.
+// An option that is already selected is never clicked (in a multi list that click removes it), and a multi list that
+// already holds another choice keeps it. On failure the reason goes to AB.searchResults for the status line.
+AB.writeListboxButton = async (btn, wanted, { synonyms, signal } = {}) => {
+  const doc = btn.ownerDocument || document;
+  const clean = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
+  const list = () => { const lb = doc.getElementById(clean(btn.getAttribute("aria-controls")).split(" ")[0]); return lb?.isConnected && lb.querySelector("[role=option]") ? lb : null; };
+  const options = () => Array.from(list()?.querySelectorAll("[role=option]") || []).filter((o) => o.getAttribute("aria-disabled") !== "true");
+  const textOf = (o) => clean(o.getAttribute("title") || o.innerText || o.textContent);
+  const isSelected = (o) => o?.getAttribute("aria-selected") === "true";
+  const until = async (pred, ms) => { const end = Date.now() + ms; let v = pred(); while (!v && Date.now() < end && !signal?.aborted) { await AB.sleep(40); v = pred(); } return v; };
+  const toggle = () => AB.fire(btn, ["mousedown", "mouseup", "click"]);
+  const close = async () => {
+    if (!list()) return;
+    const act = doc.activeElement;
+    AB.fire(list()?.contains(act) ? act : btn, "keydown", { key: "Escape", code: "Escape", keyCode: 27 });
+    if (!(await until(() => !list(), 400))) { toggle(); await until(() => !list(), 400); }
+  };
+  const fail = (failureReason, extra = {}) => { AB.searchResults.set(btn, { decided: true, success: false, failureReason, adapter: "listbox", rounds: [], actions: [], ...extra }); return false; };
+  if (!list()) { btn.scrollIntoView?.({ block: "center" }); toggle(); }
+  const lb = await until(list, 1500);
+  if (!lb) return fail("list-did-not-open");
+  const multi = lb.getAttribute("aria-multiselectable") === "true";
+  const labels = options().map(textOf);
+  const i = AB.exactOption(wanted, labels, synonyms);
+  if (i < 0) { await close(); return fail(`no option equals "${clean(AB.arr(wanted)[0])}"`); }
+  const label = labels[i];
+  const option = () => options().find((o) => textOf(o) === label);
+  if (isSelected(option())) { await close(); return AB.keepChoice(btn, label); }
+  const others = options().filter(isSelected).map(textOf);
+  if (multi && others.length) { await close(); return fail("other-selection-present", { existing: others.join(", ") }); }
+  if (signal?.aborted) { await close(); return false; }
+  option().scrollIntoView?.({ block: "nearest" });
+  AB.fire(option(), ["mouseover", "mousedown", "mouseup", "click"]);
+  await until(() => !list() || isSelected(option()), 1000);
+  await close();
+  // A multi list shows "A, B": compare whole ", "-separated runs, so a single "No, I am not a veteran" is not "No".
+  const shows = () => AB.shownChoices(btn).some((t) => AB.norm(t) === AB.norm(label) || (multi && `, ${clean(t)}, `.toLowerCase().includes(`, ${label}, `.toLowerCase())));
+  return (await until(shows, 600)) ? true : fail(`picked "${label}" but the button does not show it`);
 };
 
 AB.write = async (el, method, value, ctx = {}) => {
@@ -379,6 +441,12 @@ AB.write = async (el, method, value, ctx = {}) => {
     return AB.setChecked(el, want);
   }
   if (el instanceof HTMLInputElement && el.type === "file") return AB.writeFile(el, ctx.file);
+  // A listbox button opens a fixed list: no typing and no option search, only an exact pick.
+  if (AB.isListboxButton(el) && ["default", "defaultWithoutBlur", "combobox", "select"].includes(method)) {
+    const wants = ctx.candidates?.length ? ctx.candidates : AB.arr(value);
+    const kept = AB.alreadyShows(el, wants, synonyms);
+    return kept ? AB.keepChoice(el, kept) : AB.writeListboxButton(el, wants, { synonyms, signal: ctx.signal });
+  }
   const isCombo = el.getAttribute("role") === "combobox" || el.getAttribute("aria-haspopup") === "listbox" || el.matches("[class*='select__input'], [class*='select__control'], [class*='select__container']");
   switch (method) {
     case "click": el.scrollIntoView({ block: "center" }); AB.fire(el, ["mousedown", "mouseup", "click"]); return true;
@@ -426,6 +494,7 @@ AB.readBack = (el) => {
   if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) return el.checked ? "checked" : "";
   if (el instanceof HTMLInputElement && el.type === "file") return el.files?.[0]?.name || "";
   if (el instanceof HTMLSelectElement) return el.selectedOptions[0]?.text?.trim() || el.value || "";
+  if (AB.isListboxButton(el)) return AB.shownChoices(el).join(", ");
   if ("value" in el) return el.value ?? "";
   return el.textContent?.trim() || "";
 };
