@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Autobot — profile &amp; settings</title>
+<title>autobot — profile &amp; settings</title>
 <style>
   body { max-width: 980px; margin: 24px auto; padding: 0 16px; font: 14px/1.5 system-ui, sans-serif; color: #111827; }
   h1 { font-size: 22px; } h2 { font-size: 16px; margin: 24px 0 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
@@ -20,8 +20,8 @@
 </style>
 </head>
 <body>
-  <h1>Autobot <span class="muted">profile &amp; settings</span></h1>
-  <p class="muted">Everything stays in this browser's extension storage. Nothing is sent anywhere. Fill the fields you want Autobot to type for you; leave the rest blank and they will be skipped.</p>
+  <h1>autobot <span class="muted">profile &amp; settings</span></h1>
+  <p class="muted">Everything stays in this browser's extension storage. Nothing is sent anywhere. Fill the fields you want autobot to type for you; leave the rest blank and they will be skipped.</p>
 
   <h2>Identity</h2>
   <div class="grid" id="identity"></div>
@@ -40,7 +40,7 @@
     <label>education<textarea id="education" spellcheck="false"></textarea></label>
     <label>experience<textarea id="experience" spellcheck="false"></textarea></label>
   </div>
-  <p class="muted">education item: {"school","degree","major","gpa","start_month","start_year","end_month","end_year","graduated"} &nbsp; experience item: {"company","title","location","start_month","start_year","end_month","end_year","current","description"}</p>
+  <p class="muted">education item: {"school","degree","major","gpa","start_month","start_year","end_month","end_year","graduated"}, plus optional per-ATS names a site's list uses, e.g. "school_greenhouse", "school_lever", "major_greenhouse" (the Simplify importer fills these) &nbsp; experience item: {"company","title","location","start_month","start_year","end_month","end_year","current","description"}</p>
 
   <h2>Saved answers <span class="muted">(question text → answer; matched deterministically by normalized label)</span></h2>
   <table id="answers"></table>
@@ -51,8 +51,12 @@
     <label class="check"><input type="checkbox" id="showPanel" /> Show panel on detected ATS pages</label>
     <label class="check"><input type="checkbox" id="autoFill" /> Fill automatically when a known ATS is detected</label>
     <label class="check"><input type="checkbox" id="heuristics" /> Use heuristic matching for fields no config covers</label>
+    <label class="check"><input type="checkbox" id="search" /> Multi-round search for typeahead and searchable dropdown fields (school, major, location, company)</label>
+    <label class="check"><input type="checkbox" id="searchOtherFallback" /> When a school is not in the list, choose "Other" and type the school into the "please specify" box</label>
+    <label for="searchAliases">Search aliases (JSON: your value → the exact option text a site uses)</label>
+    <textarea id="searchAliases" rows="4" placeholder='{ "Texas A&amp;M University": "Texas A&amp;M University - College Station" }'></textarea>
     <label class="check"><input type="checkbox" id="debug" /> Debug logging</label>
-    <label class="check"><input type="checkbox" id="testHooks" /> Enable test hooks (window.postMessage commands; for automated tests only)</label>
+    <label class="check"><input type="checkbox" id="testHooks" /> Enable test hooks (window.postMessage commands; honoured only on localhost, 127.0.0.1 and file:// pages, for automated tests)</label>
   </div>
   <h2>Config overrides <span class="muted">(JSON object: configId → partial config, merged over bundled configs)</span></h2>
   <textarea id="configOverrides" spellcheck="false" style="width:100%"></textarea>

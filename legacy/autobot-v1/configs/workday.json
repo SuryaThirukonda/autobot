@@ -1,0 +1,476 @@
+{
+  "id": "workday",
+  "name": "Workday",
+  "urls": [
+    "*://*.myworkdayjobs.com/*",
+    "*://*.myworkdaysite.com/*"
+  ],
+  "probes": [
+    [
+      "//*[starts-with(@data-automation-id, 'formField-')]"
+    ],
+    [
+      "//*[@data-automation-id='legalNameSection_firstName']"
+    ]
+  ],
+  "container": [
+    "//html"
+  ],
+  "defaultMethod": "react",
+  "fillInterval": 120,
+  "fields": [
+    {
+      "key": "first_name",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='legalNameSection_firstName']",
+        ".//*[@data-automation-id='legalName']//input[@data-automation-id='firstName']",
+        ".//*[@data-automation-id='formField-firstName']//input"
+      ]
+    },
+    {
+      "key": "last_name",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='legalNameSection_lastName']",
+        ".//*[@data-automation-id='legalName']//input[@data-automation-id='lastName']",
+        ".//*[@data-automation-id='formField-lastName']//input"
+      ]
+    },
+    {
+      "key": "email",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='email']",
+        ".//*[@data-automation-id='formField-email']//input"
+      ]
+    },
+    {
+      "key": "address",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='addressSection_addressLine1']",
+        ".//*[@data-automation-id='formField-addressLine1']//input",
+        ".//*[@data-automation-id='formField-address']//input[1]"
+      ]
+    },
+    {
+      "key": "city",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='addressSection_city']",
+        ".//*[@data-automation-id='formField-addressSection_city']//input",
+        ".//*[@data-automation-id='formField-city']//input"
+      ]
+    },
+    {
+      "key": "postal_code",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='addressSection_postalCode']",
+        ".//*[@data-automation-id='formField-postalCode']//input"
+      ]
+    },
+    {
+      "key": "state",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//button[@data-automation-id='addressSection_countryRegion']",
+        ".//*[@data-automation-id='formField-countryRegion']//button",
+        ".//*[@data-automation-id='formField-addressSection_countryRegion']//button"
+      ]
+    },
+    {
+      "key": "phone_device",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//button[@data-automation-id='phone-device-type']",
+        ".//*[@data-automation-id='formField-phone-device-type']//button",
+        ".//*[@data-automation-id='formField-phoneType']//button"
+      ],
+      "value": "Mobile"
+    },
+    {
+      "key": "phone_country_code",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//*[@data-automation-id='formField-countryPhoneCode']//input[not(@type='hidden')]",
+        ".//*[@data-automation-id='formField-countryPhoneCode']//button"
+      ],
+      "value": "United States of America"
+    },
+    {
+      "key": "phone",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='phone-number']",
+        ".//*[@data-automation-id='formField-phone-number']//input",
+        ".//*[@data-automation-id='formField-phoneNumber']//input",
+        ".//*[@data-automation-id='formField-phone']//input[@type='tel' or @type='text']"
+      ],
+      "valueKey": "phone_digits"
+    },
+    {
+      "key": "resume",
+      "method": "upload",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='file-upload-input-ref']",
+        ".//*[@data-automation-id='resumeUpload']//input[@type='file']",
+        ".//button[@data-automation-id='select-files']",
+        ".//*[@data-automation-id='quickApplyUpload']//input[@type='file']",
+        ".//input[@type='file']"
+      ]
+    },
+    {
+      "key": "how_heard",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//*[@data-automation-id='sourceSection']//input[not(@type='hidden')]",
+        ".//*[@data-automation-id='formField-source']//input[not(@type='hidden')]",
+        ".//*[@data-automation-id='formField-sourceSection']//input[not(@type='hidden')]"
+      ]
+    },
+    {
+      "key": "previously_worked",
+      "value": "No",
+      "method": "radio",
+      "allowFailure": true,
+      "path": [
+        ".//*[@data-automation-id='formField-candidateIsPreviousWorker']//input[@type='radio']",
+        ".//*[@data-automation-id='previousWorker']//input[@type='radio']"
+      ]
+    },
+    {
+      "key": "experience",
+      "array": true,
+      "limit": 3,
+      "add": [
+        ".//*[@data-automation-id='workExperienceSection']//button[@data-automation-id='add-button']",
+        ".//*[@data-automation-id='workExperienceSection']//button[contains(., 'Add')]"
+      ],
+      "item": [
+        ".//*[starts-with(@data-automation-id, 'workExperience-')]"
+      ],
+      "fields": [
+        {
+          "key": "title",
+          "allowFailure": true,
+          "path": [
+            ".//input[@data-automation-id='jobTitle']",
+            ".//*[@data-automation-id='formField-jobTitle']//input"
+          ]
+        },
+        {
+          "key": "company",
+          "allowFailure": true,
+          "path": [
+            ".//input[@data-automation-id='company']",
+            ".//*[@data-automation-id='formField-company']//input"
+          ]
+        },
+        {
+          "key": "location",
+          "allowFailure": true,
+          "path": [
+            ".//input[@data-automation-id='location']",
+            ".//*[@data-automation-id='formField-location']//input"
+          ]
+        },
+        {
+          "key": "current",
+          "method": "checkbox",
+          "allowFailure": true,
+          "path": [
+            ".//input[@data-automation-id='currentlyWorkHere']",
+            ".//*[@data-automation-id='formField-currentlyWorkHere']//input[@type='checkbox']"
+          ]
+        },
+        {
+          "key": "start_month|MM",
+          "allowFailure": true,
+          "path": [
+            ".//*[@data-automation-id='formField-startDate']//input[@data-automation-id='dateSectionMonth-input']"
+          ],
+          "valueKey": "start_month|MM"
+        },
+        {
+          "key": "start_year",
+          "allowFailure": true,
+          "path": [
+            ".//*[@data-automation-id='formField-startDate']//input[@data-automation-id='dateSectionYear-input']"
+          ]
+        },
+        {
+          "key": "end_month|MM",
+          "allowFailure": true,
+          "path": [
+            ".//*[@data-automation-id='formField-endDate']//input[@data-automation-id='dateSectionMonth-input']"
+          ],
+          "valueKey": "end_month|MM"
+        },
+        {
+          "key": "end_year",
+          "allowFailure": true,
+          "path": [
+            ".//*[@data-automation-id='formField-endDate']//input[@data-automation-id='dateSectionYear-input']"
+          ]
+        },
+        {
+          "key": "description",
+          "allowFailure": true,
+          "path": [
+            ".//textarea[@data-automation-id='description']",
+            ".//*[@data-automation-id='formField-description']//textarea",
+            ".//*[@data-automation-id='formField-roleDescription']//textarea"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "education",
+      "array": true,
+      "limit": 2,
+      "add": [
+        ".//*[@data-automation-id='educationSection']//button[@data-automation-id='add-button']",
+        ".//*[@data-automation-id='educationSection']//button[contains(., 'Add')]"
+      ],
+      "item": [
+        ".//*[starts-with(@data-automation-id, 'education-')]"
+      ],
+      "fields": [
+        {
+          "key": "school",
+          "method": "combobox",
+          "allowFailure": true,
+          "optionsPath": [
+            "css:[data-automation-id='promptOption']",
+            "css:[data-automation-id='promptLeafNode']",
+            "css:[data-automation-id='menuItem']",
+            "css:[role=option]"
+          ],
+          "path": [
+            ".//*[@data-automation-id='formField-school']//input[not(@type='hidden')]",
+            ".//input[@data-automation-id='school']"
+          ]
+        },
+        {
+          "key": "degree",
+          "method": "combobox",
+          "allowFailure": true,
+          "optionsPath": [
+            "css:[data-automation-id='promptOption']",
+            "css:[data-automation-id='promptLeafNode']",
+            "css:[data-automation-id='menuItem']",
+            "css:[role=option]"
+          ],
+          "path": [
+            ".//button[@data-automation-id='degree']",
+            ".//*[@data-automation-id='formField-degree']//button"
+          ],
+          "values": "degree"
+        },
+        {
+          "key": "major",
+          "method": "combobox",
+          "allowFailure": true,
+          "optionsPath": [
+            "css:[data-automation-id='promptOption']",
+            "css:[data-automation-id='promptLeafNode']",
+            "css:[data-automation-id='menuItem']",
+            "css:[role=option]"
+          ],
+          "path": [
+            ".//*[@data-automation-id='formField-fieldOfStudy']//input[not(@type='hidden')]",
+            ".//*[@data-automation-id='formField-field-of-study']//input[not(@type='hidden')]"
+          ]
+        },
+        {
+          "key": "gpa",
+          "allowFailure": true,
+          "path": [
+            ".//input[@data-automation-id='gpa']",
+            ".//*[@data-automation-id='formField-gpa']//input"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "skills_text",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//*[@data-automation-id='formField-skills']//input[not(@type='hidden')]",
+        ".//*[@data-automation-id='skillsSection']//input[not(@type='hidden')]"
+      ],
+      "valueKey": "skills[0]"
+    },
+    {
+      "key": "linkedin",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='linkedinQuestion']",
+        ".//*[@data-automation-id='formField-linkedinQuestion']//input",
+        ".//*[contains(translate(., 'LINKEDIN', 'linkedin'), 'linkedin') and starts-with(@data-automation-id, 'formField-')]//input"
+      ]
+    },
+    {
+      "key": "website",
+      "allowFailure": true,
+      "path": [
+        ".//input[@data-automation-id='website']",
+        ".//*[starts-with(@data-automation-id, 'websitePanelSet-')]//input"
+      ],
+      "valueKey": "portfolio"
+    },
+    {
+      "key": "gender",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//button[@data-automation-id='gender']",
+        ".//*[@data-automation-id='formField-gender']//button"
+      ],
+      "values": "gender"
+    },
+    {
+      "key": "ethnicity",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//button[@data-automation-id='ethnicityDropdown']",
+        ".//*[@data-automation-id='formField-ethnicities']//button",
+        ".//*[@data-automation-id='formField-ethnicities']//input[not(@type='hidden')]"
+      ],
+      "values": "ethnicity"
+    },
+    {
+      "key": "hispanic",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//button[@data-automation-id='hispanicOrLatino']",
+        ".//*[@data-automation-id='formField-hispanicOrLatino']//button"
+      ],
+      "values": "hispanic"
+    },
+    {
+      "key": "veteran",
+      "method": "combobox",
+      "allowFailure": true,
+      "optionsPath": [
+        "css:[data-automation-id='promptOption']",
+        "css:[data-automation-id='promptLeafNode']",
+        "css:[data-automation-id='menuItem']",
+        "css:[role=option]"
+      ],
+      "path": [
+        ".//button[@data-automation-id='veteranStatus']",
+        ".//*[@data-automation-id='formField-veteranStatus']//button"
+      ],
+      "values": "veteran"
+    },
+    {
+      "key": "disability",
+      "values": "disability",
+      "method": "checkbox",
+      "allowFailure": true,
+      "path": [
+        ".//*[@data-automation-id='formField-disability' or @data-automation-id='formField-disabilities']//*[contains(translate(., 'I DO NOT WANT TO ANSWER', 'i do not want to answer'), 'i do not want to answer')]/preceding::input[@type='checkbox'][1]"
+      ]
+    },
+    {
+      "key": "current_date_MM",
+      "allowFailure": true,
+      "path": [
+        ".//*[@data-automation-id='formField-todaysDate' or @data-automation-id='formField-dateSignedOn' or @data-automation-id='formField-currentDate']//input[@data-automation-id='dateSectionMonth-input']"
+      ],
+      "valueKey": "today|MM"
+    },
+    {
+      "key": "current_date_DD",
+      "allowFailure": true,
+      "path": [
+        ".//*[@data-automation-id='formField-todaysDate' or @data-automation-id='formField-dateSignedOn' or @data-automation-id='formField-currentDate']//input[@data-automation-id='dateSectionDay-input']"
+      ],
+      "valueKey": "today|DD"
+    },
+    {
+      "key": "current_date_YYYY",
+      "allowFailure": true,
+      "path": [
+        ".//*[@data-automation-id='formField-todaysDate' or @data-automation-id='formField-dateSignedOn' or @data-automation-id='formField-currentDate']//input[@data-automation-id='dateSectionYear-input']"
+      ],
+      "valueKey": "today|YYYY"
+    },
+    {
+      "key": "full_name",
+      "allowFailure": true,
+      "path": [
+        ".//*[@data-automation-id='formField-name']//input[not(@type='hidden')]"
+      ]
+    }
+  ],
+  "continue": [
+    ".//button[(@data-automation-id='bottom-navigation-next-button' or @data-automation-id='pageFooterNextButton') and not(contains(., 'Submit')) and not(contains(., 'Send'))]"
+  ],
+  "submit": [
+    ".//button[(@data-automation-id='bottom-navigation-next-button' or @data-automation-id='pageFooterNextButton') and (contains(., 'Submit') or contains(., 'Send'))]",
+    "//*[@data-automation-id='applyFlowReviewPage' or @data-automation-id='reviewJobApplicationPage']"
+  ],
+  "success": [
+    ".//*[self::h1 or self::h2 or self::h3][contains(translate(., 'APPLICATION SUBMITTED', 'application submitted'), 'application submitted') or contains(translate(., 'THANK YOU FOR APPLYING', 'thank you for applying'), 'thank you for applying')]"
+  ]
+}

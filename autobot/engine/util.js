@@ -2,7 +2,7 @@
 // All engine files share one global object `AB`.
 var AB = globalThis.AB || (globalThis.AB = {});
 
-AB.VERSION = "0.1.0";
+AB.VERSION = "0.2.0";
 AB.log = (...a) => { if (AB.debug) console.debug("[autobot]", ...a); };
 AB.sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 AB.arr = (v) => (Array.isArray(v) ? v : v === undefined || v === null ? [] : [v]);

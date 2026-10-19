@@ -13,19 +13,13 @@ analysis/pretty/
 analysis/jobright/pretty/
 dist/
 
-# Personal profile data (never commit)
-autobot/configs/profile.default.json
-tests/profile.local.json
+# REA evidence, carved third-party modules and throwaway browser profiles (local only)
 analysis/rea2/*.json
 analysis/rea2/*.err
-.brave-test-profile/
-analysis/jobright/carved/
 analysis/**/carved/
-
-# Any bundled personal profile, anywhere
-**/configs/profile.default.json
-# Parallel work by another session; not published from here
-v2/
-v2/configs/profile.default.json
-analysis/jobright/carved/
 analysis/jobright/rea3/
+.brave-test-profile/
+
+# Personal profile data (never commit), wherever an extension copy lives
+**/configs/profile.default.json
+tests/profile.local.json

@@ -1,0 +1,52 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Greenhouse school list with campus-suffixed names</title>
+<style>
+  body{font:14px system-ui;margin:24px;max-width:720px} label{display:block;margin-top:14px;font-weight:600} input{width:100%;padding:6px;margin-top:4px;box-sizing:border-box}
+  .select__container{position:relative} .select__control{border:1px solid #ccc;padding:4px} .select__menu{position:absolute;left:0;right:0;background:#fff;border:1px solid #ccc;z-index:5}
+  .select__option{padding:6px;cursor:pointer} .select__option:hover{background:#eef} .select__menu-notice--loading,.select__menu-notice--no-options{padding:6px;color:#666}
+</style></head>
+<body>
+<h1>Software Engineer, New Grad</h1>
+<!-- Detected as Greenhouse (form#application-form with first_name). The school list only has campus-suffixed
+     Texas A&M names, like Greenhouse's real list: a plain "Texas A&M University" must not be committed to either. -->
+<form id="application-form" action="https://job-boards.greenhouse.io/x/jobs/2" onsubmit="return false">
+  <div class="field"><label for="first_name">First Name *</label><input id="first_name" name="job_application[first_name]" type="text" /></div>
+  <div class="field"><label for="last_name">Last Name *</label><input id="last_name" name="job_application[last_name]" type="text" /></div>
+  <div class="field"><label for="email">Email *</label><input id="email" name="job_application[email]" type="email" /></div>
+
+  <div class="field select__container"><label for="school-input">School *</label>
+    <div class="select__control"><div class="select__value-container"><div class="select__single-value"></div><input id="school-input" class="select__input" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="school-menu" autocomplete="off" /></div></div>
+    <div class="select__menu" id="school-menu" role="listbox" hidden></div>
+    <input type="hidden" id="school-hidden" name="job_application[educations][][school_name_id]" />
+  </div>
+  <input type="submit" value="Submit Application" data-trackingid="job-application-submit" />
+</form>
+<script>
+(() => {
+  // Async react-select-like search: "Loading..." while a (simulated) request runs, then results or "No options".
+  window.__queries = [];
+  const SCHOOLS = [["11785542002", "Texas A&M University - College Station"], ["11785542003", "Texas A&M University - Commerce"], ["2001", "Texas Tech University"], ["2002", "Baylor University"]];
+  const input = document.getElementById("school-input"), menu = document.getElementById("school-menu");
+  const single = document.querySelector(".select__single-value"), hidden = document.getElementById("school-hidden");
+  let timer = null;
+  const show = (html) => { menu.innerHTML = html; menu.hidden = false; input.setAttribute("aria-expanded", "true"); };
+  const close = () => { clearTimeout(timer); menu.hidden = true; menu.innerHTML = ""; input.setAttribute("aria-expanded", "false"); };
+  const render = (q) => {
+    clearTimeout(timer);
+    show('<div class="select__menu-notice--loading">Loading...</div>');
+    timer = setTimeout(() => {
+      if (q) window.__queries.push(q);
+      const items = SCHOOLS.filter(([, t]) => t.toLowerCase().includes(q.toLowerCase()));
+      show(items.length ? items.map(([v, t]) => `<div class="select__option" role="option" data-value="${v}">${t}</div>`).join("") : '<div class="select__menu-notice--no-options">No options</div>');
+    }, 200);
+  };
+  input.addEventListener("focus", () => render(input.value));
+  input.addEventListener("input", () => render(input.value));
+  input.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  menu.addEventListener("click", (e) => {
+    const o = e.target.closest(".select__option"); if (!o) return;
+    single.textContent = o.textContent; hidden.value = o.dataset.value; input.value = ""; close();
+  });
+})();
+</script>
+</body></html>

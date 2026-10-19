@@ -109,27 +109,19 @@ AB.lookupAnswer = (profile, label) => {
   return undefined;
 };
 
-// Optional bundled default profile (configs/profile.default.json, git-ignored, personal). Seeds storage once when empty.
-AB.seedDefaultProfile = async () => {
-  try {
-    const r = await fetch(chrome.runtime.getURL("configs/profile.default.json"));
-    if (!r.ok) return null;
-    const p = await r.json();
-    if (!p || typeof p !== "object" || !(p.first_name || p.email)) return null;
-    await new Promise((res) => chrome.storage.local.set({ profile: p, profileSeededFrom: "configs/profile.default.json" }, res));
-    return p;
-  } catch { return null; }
-};
-
 // Standalone mode (no extension): a host such as a Playwright script sets AB._standalone = { profile, resume, settings }
 // and AB._configs = [...] before calling AB.fill; nothing below touches chrome.* then.
+// In the extension the profile lives in chrome.storage.local. When it is empty, the service worker seeds it from the
+// optional, git-ignored configs/profile.default.json (it reads its own file; pages never can).
 AB.loadProfile = () =>
   AB._standalone
     ? Promise.resolve({ profile: { ...AB.PROFILE_DEFAULT, ...(AB._standalone.profile || {}) }, resume: AB._standalone.resume || null, settings: AB._standalone.settings || {} })
     : new Promise((resolve) =>
     chrome.storage.local.get(["profile", "resume", "settings"], async (r) => {
       let profile = r.profile;
-      if (!profile || (!profile.first_name && !profile.email)) profile = (await AB.seedDefaultProfile()) || profile || {};
-      resolve({ profile: { ...AB.PROFILE_DEFAULT, ...profile }, resume: r.resume || null, settings: r.settings || {} });
+      if (!profile || (!profile.first_name && !profile.email)) {
+        try { if (await chrome.runtime.sendMessage({ type: "bg:seedProfile" })) profile = (await chrome.storage.local.get("profile")).profile; } catch {}
+      }
+      resolve({ profile: { ...AB.PROFILE_DEFAULT, ...(profile || {}) }, resume: r.resume || null, settings: r.settings || {} });
     })
   );

@@ -61,6 +61,9 @@ function collect(existing) {
   $("#showPanel").checked = settings.showPanel !== false;
   $("#autoFill").checked = Boolean(settings.autoFill);
   $("#heuristics").checked = settings.heuristics !== false;
+  $("#search").checked = settings.search !== false;
+  $("#searchOtherFallback").checked = settings.searchOtherFallback !== false;
+  $("#searchAliases").value = Object.keys(settings.searchAliases || {}).length ? JSON.stringify(settings.searchAliases, null, 2) : "";
   $("#debug").checked = Boolean(settings.debug);
   $("#testHooks").checked = Boolean(settings.testHooks);
   $("#configOverrides").value = JSON.stringify(settings.configOverrides || {}, null, 2);
@@ -68,7 +71,8 @@ function collect(existing) {
   $("#save").onclick = async () => {
     let newProfile; try { newProfile = collect(profile); } catch { return; }
     let configOverrides; try { configOverrides = JSON.parse($("#configOverrides").value || "{}"); } catch { return alert("Config overrides is not valid JSON"); }
-    const newSettings = { ...settings, showPanel: $("#showPanel").checked, autoFill: $("#autoFill").checked, heuristics: $("#heuristics").checked, debug: $("#debug").checked, testHooks: $("#testHooks").checked, configOverrides };
+    let searchAliases; try { searchAliases = JSON.parse($("#searchAliases").value.trim() || "{}"); if (!searchAliases || typeof searchAliases !== "object" || Array.isArray(searchAliases)) throw 0; } catch { return alert("Search aliases must be a JSON object"); }
+    const newSettings = { ...settings, showPanel: $("#showPanel").checked, autoFill: $("#autoFill").checked, heuristics: $("#heuristics").checked, search: $("#search").checked, searchOtherFallback: $("#searchOtherFallback").checked, searchAliases, debug: $("#debug").checked, testHooks: $("#testHooks").checked, configOverrides };
     await chrome.storage.local.set({ profile: newProfile, settings: newSettings });
     $("#saved").textContent = "Saved."; setTimeout(() => ($("#saved").textContent = ""), 1500);
   };

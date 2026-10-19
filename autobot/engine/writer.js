@@ -225,11 +225,90 @@ AB.writeCombobox = async (el, value, { optionsPath, synonyms, typeToSearch = tru
 
 // ---------- dispatcher ----------
 // method: default | defaultWithoutBlur | react | click | select | checkbox | radio | combobox | upload | jquery | setValueOnly | clear | keypress(Enter)
+// Multi-round search (engine/search.js + search-widgets.js). Returns true/false when search decided the field,
+// or null only when search never really started (no adapter, or the widget never showed a list) so the v1 writer
+// may try. Once real candidates were seen, a commit was attempted, the user interacted or Stop was pressed, the
+// result is final: the v1 prefix matcher must not get a second, less careful guess.
+AB.SEARCH_FIELD_TYPES = new Set(["school", "major", "location", "company"]);
+AB.trySearch = async (el, value, ctx = {}, { selectOnly = false } = {}) => {
+  if (!AB.search?.fill || ctx.settings?.search === false) { AB.log("search skipped: disabled", ctx.key); return null; }
+  if (ctx.signal?.aborted) return false;
+  const fieldType = ctx.fieldType || AB.search.fieldTypeFor(ctx.key, ctx.label);
+  // Only the four search field types run search unless a config field asks for it explicitly (searchType).
+  if (!ctx.fieldType && !AB.SEARCH_FIELD_TYPES.has(fieldType)) return null;
+  if (selectOnly && !AB.SEARCH_FIELD_TYPES.has(fieldType) && !ctx.fieldType) return null;
+  const orig = el;
+  el = AB.search.resolveControl ? AB.search.resolveControl(el) : el;
+  if (!AB.search.adapterFor(el)) { AB.log("search skipped: no adapter for", ctx.key, el?.tagName, el?.id || el?.className); return null; }
+  // User-defined aliases (options page): { "Texas A&M University": "Texas A&M University - College Station" }.
+  const base = AB.arr(ctx.candidates?.length ? ctx.candidates : value).map(String);
+  const aliasMap = ctx.settings?.searchAliases || {};
+  const aliasFor = (v) => AB.arr(aliasMap[v] ?? Object.entries(aliasMap).find(([k]) => AB.norm(k) === AB.norm(v))?.[1]);
+  const aliases = base.flatMap(aliasFor).map(String).filter(Boolean);
+  // Per-ATS canonical name on the profile entry (imported from Simplify): the exact text this ATS's list uses.
+  const atsAlts = AB.search.atsAlternates ? AB.search.atsAlternates(ctx.profile, ctx.key, ctx.ats) : [];
+  // City pickers often list "City, ST, Country": add the profile's city/state forms as alternates.
+  const extra = [];
+  if (fieldType === "location" && ctx.profile && AB.getProfileValue) {
+    const p = ctx.profile, cs = AB.getProfileValue(p, "city_state");
+    if (cs) extra.push(cs);
+    if (p.city && p.state && p.country) extra.push(`${p.city}, ${p.state}, ${p.country}`);
+  }
+  // Order: the user's alias (their exact wording for this list), the per-ATS name, then the profile value and forms.
+  const values = Array.from(new Set([...aliases, ...atsAlts, ...base, ...extra]));
+  const res = await AB.search.fill(el, values, { fieldType, key: ctx.key, label: ctx.label, signal: ctx.signal, optionsPath: ctx.optionsPath, otherFallback: ctx.settings?.searchOtherFallback, fallbackAnswer: base[0],
+    onTrace: AB.debug ? (m, d) => AB.log("search", m, JSON.stringify(d)?.slice(0, 400)) : undefined });
+  if (AB.debug) AB.log("search result", ctx.key || ctx.label, AB.search.describe(res));
+  const decide = (v) => { if (v !== null) { res.decided = true; AB.searchResults.set(el, res); if (orig !== el) AB.searchResults.set(orig, res); } return v; };
+  if (res.success) return decide(true);
+  // Final without a commit: Stop, the user's own input, a list that changed but never settled (a real search widget
+  // whose results never came; the v1 prefix matcher could commit a look-alike such as "… - Commerce"), or a
+  // multi-choice widget that already holds someone else's choice.
+  if (ctx.signal?.aborted || ["aborted", "trusted-invalidation", "candidate-capture-timeout", "other-selection-present"].includes(res.failureReason)) return decide(false);
+  // Free-text box with datalist suggestions: typing the profile value is still a valid answer.
+  if (res.datalist) return null;
+  if (res.actions?.includes("SELECT_OPTIONS")) return decide(false);
+  if (res.rounds?.length) return decide(false);
+  return null;   // the widget never produced a list: not a search widget after all
+};
+AB.searchResults = new WeakMap();
+
+// Rerun safety on the v1 dropdown path (Workday prompt buttons and pills, react-select single values, used when
+// search does not handle the field): when the control already shows one of the candidate labels, leave it alone.
+// A trailing note without letters, like Workday's "(+1)", is ignored; a lettered one like "(College Station)" is not.
+AB.shownChoices = (el) => {
+  if (!el) return [];
+  if (el.matches?.("button, [role=button]")) {
+    const t = String(el.innerText || el.textContent || "").replace(/\s+/g, " ").trim();
+    return t && !AB.search?.isPlaceholder?.(t) ? [t] : [];
+  }
+  return AB.search?.selectedTexts ? AB.search.selectedTexts(el) : [];
+};
+AB.alreadyShows = (el, value, synonyms) => {
+  const shown = AB.shownChoices(el);
+  if (!shown.length) return null;
+  const strip = (s) => AB.norm(String(s).replace(/\s*\([^)a-z]*\)\s*$/i, ""));
+  const wants = AB.arr(value).map(String).filter(Boolean);
+  const all = [...wants, ...wants.flatMap((w) => AB.arr(synonyms?.[AB.norm(w)]))];
+  return shown.find((t) => all.some((w) => AB.norm(w) === AB.norm(t) || (strip(w) && strip(w) === strip(t)))) || null;
+};
+AB.keepChoice = (el, text) => {
+  AB.searchResults.set(el, { decided: true, success: true, alreadySelected: true, selected: { text }, adapter: "dropdown", rounds: [], actions: [] });
+  return true;
+};
+
 AB.write = async (el, method, value, ctx = {}) => {
   method = method || "default";
   if (!el) return false;
+  if (ctx.signal?.aborted) return false;
   const synonyms = ctx.synonyms;
-  if (el instanceof HTMLSelectElement && !["click", "jquery", "react"].includes(method)) return AB.writeSelect(el, value, synonyms);
+  if (el instanceof HTMLSelectElement && !["click", "jquery", "react"].includes(method)) {
+    // Long institution/location lists: the token scorer avoids prefix traps like "X University - Commerce".
+    const r = await AB.trySearch(el, value, ctx, { selectOnly: true });
+    if (r !== null) return r;
+    if (ctx.signal?.aborted) return false;
+    return AB.writeSelect(el, value, synonyms);
+  }
   if (el instanceof HTMLInputElement && el.type === "radio" && method !== "click") return AB.writeRadio(el, AB.boolToYesNo(value), synonyms);
   if (el instanceof HTMLInputElement && el.type === "checkbox" && method !== "click") {
     const v = Array.isArray(value) ? value[0] : value;
@@ -243,7 +322,12 @@ AB.write = async (el, method, value, ctx = {}) => {
     case "clear": return AB.writeText(el, "");
     case "setValueOnly": AB.nativeSet(el, value); return true;
     case "keypress": AB.fire(el, "keydown", { key: value || "Enter", code: value || "Enter", keyCode: 13 }); return true;
-    case "combobox": return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms });
+    case "combobox": {
+      { const r = await AB.trySearch(el, value, ctx); if (r !== null) return r; }
+      if (ctx.signal?.aborted) return false;
+      { const kept = AB.alreadyShows(el, ctx.candidates?.length ? ctx.candidates : value, synonyms); if (kept) return AB.keepChoice(el, kept); }
+      return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms });
+    }
     case "react": case "jquery": case "reactClick": {
       const r = await AB.pageCall("fill", { path: AB.pathTo(el), method, value, eventOptions: ctx.eventOptions || {} });
       if (r.ok) return true;
@@ -252,7 +336,16 @@ AB.write = async (el, method, value, ctx = {}) => {
     }
     case "defaultWithoutBlur": return AB.writeText(el, value, { blur: false });
     case "default": default: {
-      if (isCombo) return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms });
+      if (isCombo || (AB.SEARCH_FIELD_TYPES.has(ctx.fieldType || AB.search?.fieldTypeFor?.(ctx.key, ctx.label)) && AB.search?.isSearchable?.(el))) {
+        const r = await AB.trySearch(el, value, ctx);
+        if (r !== null) return r;
+        if (ctx.signal?.aborted) return false;
+        if (isCombo) {
+          const kept = AB.alreadyShows(el, ctx.candidates?.length ? ctx.candidates : value, synonyms);
+          if (kept) return AB.keepChoice(el, kept);
+          return AB.writeCombobox(el, value, { optionsPath: ctx.optionsPath, synonyms });
+        }
+      }
       // React-controlled inputs reject plain writes unless the native setter + handlers are used; detect and route.
       const react = Object.keys(el).some((k) => k.startsWith("__reactProps$") || k.startsWith("__reactFiber$") || k.startsWith("__reactEventHandlers$"));
       if (react) {

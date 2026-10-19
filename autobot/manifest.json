@@ -1,29 +1,51 @@
 {
   "manifest_version": 3,
-  "name": "Autobot",
-  "short_name": "Autobot",
-  "version": "0.1.0",
+  "name": "autobot",
+  "short_name": "autobot",
+  "version": "0.2.0",
   "description": "Deterministic job-application autofill. Local profile, config-driven ATS plans, heuristic fallback. No AI, no server.",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "activeTab", "scripting", "unlimitedStorage"],
-  "host_permissions": ["<all_urls>"],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": {
-    "default_title": "Autobot",
-    "default_popup": "popup.html",
-    "default_icon": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
   },
-  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "action": {
+    "default_title": "autobot",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
   "options_page": "options.html",
   "commands": {
     "trigger-autofill": {
       "description": "Autofill the current application page",
-      "suggested_key": { "default": "Alt+Shift+A" }
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      }
     }
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "all_frames": true,
       "run_at": "document_idle",
       "js": [
@@ -33,6 +55,8 @@
         "engine/detect.js",
         "engine/heuristics.js",
         "engine/writer.js",
+        "engine/search.js",
+        "engine/search-widgets.js",
         "engine/plan.js",
         "engine/panel.js",
         "content.js"
@@ -40,6 +64,18 @@
     }
   ],
   "web_accessible_resources": [
-    { "resources": ["page.js", "configs/*.json"], "matches": ["<all_urls>"] }
+    {
+      "resources": [
+        "page.js",
+        "configs/greenhouse.json",
+        "configs/lever.json",
+        "configs/ashby.json",
+        "configs/workday.json",
+        "configs/generic.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ]
 }

@@ -1,0 +1,8 @@
+{
+  "id": "generic",
+  "name": "Generic form (heuristics)",
+  "container": ["//form[.//input[@type='email'] or .//input[contains(translate(@name,'EMAIL','email'),'email')] or .//input[@type='file']][1]", "//main", "//body"],
+  "defaultMethod": "default",
+  "fields": [],
+  "heuristics": true
+}

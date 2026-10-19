@@ -1,6 +1,6 @@
 {
   "name": "autobot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Deterministic job-application autofill Chrome extension, reconstructed from Simplify Copilot and Jobright analysis.",
   "license": "MIT",
@@ -8,8 +8,10 @@
   "scripts": {
     "test": "node tests/run.mjs",
     "test:headed": "node tests/run.mjs --headed",
+    "test:search": "node tests/search-unit.mjs",
+    "test:all": "node tests/search-unit.mjs && node tests/run.mjs",
     "icons": "python3 tools/make_icons.py",
-    "pack": "mkdir -p dist && rm -f dist/autobot-$npm_package_version.zip && (cd autobot && zip -qr ../dist/autobot-$npm_package_version.zip . -x '*.DS_Store') && ls -la dist"
+    "pack": "mkdir -p dist && rm -f dist/autobot-$npm_package_version.zip && (cd autobot && zip -qr ../dist/autobot-$npm_package_version.zip . -x '*.DS_Store' -x 'configs/profile.default.json') && ls -la dist"
   },
   "devDependencies": {
     "playwright-core": "^1.58.2"

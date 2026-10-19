@@ -123,16 +123,17 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
     try {
       if (method === "upload") ok = await AB.writeFile(el, resume);
       else if (method === "select" || method === "radio" || method === "checkbox" || el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox")))
-        ok = await AB.write(el, method, el instanceof HTMLInputElement && el.type === "checkbox" ? value : candidates, { synonyms });
-      else ok = await AB.write(el, method, usedValue, { synonyms, optionsPath: field.optionsPath, eventOptions: step.eventOptions });
+        ok = await AB.write(el, method, el instanceof HTMLInputElement && el.type === "checkbox" ? value : candidates, { synonyms, key: fullKey, candidates, signal, settings: state.settings, fieldType: field.searchType, profile, ats: state.config?.id });
+      else ok = await AB.write(el, method, usedValue, { synonyms, optionsPath: field.optionsPath, eventOptions: step.eventOptions, key: fullKey, candidates, signal, settings: state.settings, fieldType: field.searchType, profile, ats: state.config?.id });
     } catch (e) { AB.log("write error", fullKey, e); ok = false; }
-    if (!ok && !(step.allowFailure || field.allowFailure)) { onStatus(fullKey, "error", `${method} failed`); return false; }
+    if (!ok && !(step.allowFailure || field.allowFailure)) { const sr = AB.searchResults?.get(el); onStatus(fullKey, sr?.decided ? "unknown" : "error", sr ? `search: ${AB.search.describe(sr)}`.slice(0, 120) : `${method} failed`); return false; }
     anyWrite = anyWrite || ok;
     if (step.time && step.method === "click") await AB.sleep(Math.min(step.time, 1500));
     else await AB.sleep(state.config.fillInterval ?? 60);
   }
   if (!anyFound) { onStatus(fullKey, "absent", "no matching element on this page"); return false; }
-  onStatus(fullKey, anyWrite ? "filled" : "skipped", anyWrite ? String(AB.readBack(AB.refresh(lastEl)) || candidates[0] || "").slice(0, 60) : "write failed or nothing to write");
+  const sr = lastEl && AB.searchResults?.get(lastEl);
+  onStatus(fullKey, anyWrite ? "filled" : "skipped", sr?.decided ? AB.search.describe(sr).slice(0, 120) : anyWrite ? String(AB.readBack(AB.refresh(lastEl)) || candidates[0] || "").slice(0, 60) : "write failed or nothing to write");
   return anyWrite;
 };
 
@@ -177,11 +178,13 @@ AB.runHeuristics = async (state, touched) => {
     let ok = false;
     try {
       el = AB.refresh(el);
-      if (el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox"))) ok = await AB.write(el, "default", candidates, { synonyms });
-      else ok = await AB.write(el, "default", candidates[0], { synonyms });
+      const wctx = { synonyms, key, label, candidates, signal, settings: state.settings, profile, ats: state.config?.id };
+      if (el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox"))) ok = await AB.write(el, "default", candidates, wctx);
+      else ok = await AB.write(el, "default", candidates[0], wctx);
     } catch (e) { AB.log("heuristic write failed", e); }
     touched.add(el);
-    onStatus(key || `? ${label.slice(0, 40)}`, ok ? "filled" : "error", ok ? String(candidates[0]).slice(0, 60) : "write failed");
+    const sr = AB.searchResults?.get(el);
+    onStatus(key || `? ${label.slice(0, 40)}`, ok ? "filled" : sr?.decided ? "unknown" : "error", sr?.decided ? AB.search.describe(sr).slice(0, 120) : ok ? String(candidates[0]).slice(0, 60) : "write failed");
     if (ok) n++;
     await AB.sleep(50);
   }
@@ -190,6 +193,7 @@ AB.runHeuristics = async (state, touched) => {
 
 // Top-level fill. Returns summary.
 AB.fill = async ({ config, profile, resume, settings, onStatus = () => {}, signal } = {}) => {
+  AB.searchResults = new WeakMap();   // search outcomes belong to this run only
   const container = AB.findContainer(config);
   const touched = new Set();
   const state = { config, container, profile, resume, settings, onStatus, signal, touched };

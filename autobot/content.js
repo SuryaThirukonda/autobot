@@ -60,7 +60,11 @@
 
   // Test hooks (opt-in via settings.testHooks): window.postMessage({__autobot:"cmd", type:"fill"}) triggers a fill,
   // and the result is published on <html data-autobot-done="{json}">. Detection is published on data-autobot-detected.
+  // Both exist only on local test pages: ordinary sites can neither drive a fill through postMessage (and read the
+  // profile back out of a hidden form) nor see that autobot is installed.
+  const TEST_PAGE = location.protocol === "file:" || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const installTestHooks = async () => {
+    if (!TEST_PAGE) return;
     const { settings } = await AB.loadProfile();
     if (!settings.testHooks) return;
     window.addEventListener("message", async (ev) => {
@@ -77,7 +81,7 @@
   // Passive detection on load (top frame only shows the panel hint when a known ATS is present).
   const boot = async () => {
     const d = await detect();
-    document.documentElement.dataset.autobotDetected = d ? d.config.id : "";
+    if (TEST_PAGE) document.documentElement.dataset.autobotDetected = d ? d.config.id : "";
     await installTestHooks();
     if (d && d.matchedBy !== "heuristic" && window === window.top) {
       const { profile, resume, settings } = await AB.loadProfile();

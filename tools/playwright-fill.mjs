@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-// Use Autobot's fill engine from Playwright WITHOUT the extension.
+// Use autobot's fill engine from Playwright WITHOUT the extension.
 //
 //   import { autobotFill } from "./tools/playwright-fill.mjs";
 //   const result = await autobotFill(page, { profile, resume });   // page: a Playwright Page already on the form
 //
 //   CLI demo:  node tools/playwright-fill.mjs <job url> [--headed]
 //
-// The engine (autobot/engine/*.js + page.js) is injected with page.evaluate, which is not subject to the site's CSP,
-// so it works on pages that block <script> tags. Everything runs in the page's main world, so the React bridge in
-// page.js is called in-process. Nothing here clicks submit.
+// The engine files listed in the extension's manifest (config plans, heuristics, writers and the multi-round option
+// search) plus page.js are injected with page.evaluate, which is not subject to the site's CSP, so it works on pages
+// that block <script> tags. Everything runs in the page's main world, so the React bridge in page.js is called
+// in-process. settings work as in the extension (search, searchAliases, searchOtherFallback, heuristics, debug).
+// Nothing here clicks submit.
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 import os from "node:os";
@@ -16,20 +18,23 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const ext = path.join(root, "autobot");
-const ENGINE = ["engine/util.js", "engine/xpath.js", "engine/profile.js", "engine/detect.js", "engine/heuristics.js", "engine/writer.js", "engine/plan.js", "engine/panel.js"];
+const DEFAULT_EXT = path.join(root, "autobot");
+// Same files, same order as the content script: read from the manifest so this host never drifts from the extension.
+export const engineFiles = (extDir = DEFAULT_EXT) =>
+  JSON.parse(fs.readFileSync(path.join(extDir, "manifest.json"), "utf8")).content_scripts[0].js.filter((f) => f !== "content.js");
 
-export const loadConfigs = () => fs.readdirSync(path.join(ext, "configs")).filter((f) => f.endsWith(".json") && !f.startsWith("profile.")).map((f) => ({ id: f.replace(/\.json$/, ""), ...JSON.parse(fs.readFileSync(path.join(ext, "configs", f), "utf8")) }));
+export const loadConfigs = (extDir = DEFAULT_EXT) => fs.readdirSync(path.join(extDir, "configs")).filter((f) => f.endsWith(".json") && !f.startsWith("profile.")).map((f) => ({ id: f.replace(/\.json$/, ""), ...JSON.parse(fs.readFileSync(path.join(extDir, "configs", f), "utf8")) }));
 
 /**
- * Fill the form on `page` with Autobot's engine.
+ * Fill the form on `page` with autobot's engine.
  * @param page Playwright Page (or Frame) already navigated to the application form.
- * @param opts { profile, resume?: {name,type,dataBase64}, settings?: {heuristics?: boolean, debug?: boolean}, configs?: [...], panel?: boolean }
+ * @param opts { profile, resume?: {name,type,dataBase64}, settings?: {heuristics?, search?, searchAliases?, searchOtherFallback?, debug?},
+ *               extDir?: extension folder (default autobot/), configs?: [...], panel?: boolean }
  * @returns { ats, matchedBy, filled, statuses: [[key, status, detail], ...] }
  */
-export async function autobotFill(page, { profile, resume = null, settings = {}, configs = loadConfigs(), panel = false } = {}) {
+export async function autobotFill(page, { profile, resume = null, settings = {}, extDir = DEFAULT_EXT, configs = loadConfigs(extDir), panel = false } = {}) {
   if (!profile) throw new Error("autobotFill: profile is required");
-  const sources = [...ENGINE.map((f) => fs.readFileSync(path.join(ext, f), "utf8")), fs.readFileSync(path.join(ext, "page.js"), "utf8")];
+  const sources = [...engineFiles(extDir).map((f) => fs.readFileSync(path.join(extDir, f), "utf8")), fs.readFileSync(path.join(extDir, "page.js"), "utf8")];
   for (const src of sources) await page.evaluate((code) => { (0, eval)(code); }, src); // eval in main world; CSP does not apply to CDP evaluation
   return page.evaluate(async ({ profile, resume, settings, configs, panel }) => {
     const AB = globalThis.AB;

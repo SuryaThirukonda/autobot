@@ -45,11 +45,22 @@ const profile = {
   gender: GENDER[me.gender] || "Decline to self-identify", ethnicity: ethnicity[0] || "Decline to self-identify", hispanic: ethnicity.includes("Hispanic or Latino") ? "yes" : ethnicity[0] === "Decline to self-identify" ? "Decline to self-identify" : "no",
   veteran: VETERAN[me.veteran_v2] || "I don't wish to answer", disability: DISABILITY[me.disability_v2] || "I do not want to answer", lgbt: LGBT[me.lgbt_v2] || "Decline to self-identify",
   salary: "", start_date: "", notice_period: "", how_heard: "LinkedIn", referred_by: "",
-  education: (me.education || []).map((e) => ({
-    school: s(e.education?.lever || e.education?.name || e.education_custom_name), school_greenhouse: s(e.education?.greenhouse || e.education?.name),
-    degree: DEGREE[e.degree] || "Bachelor's", degree_full: DEGREE_FULL[e.degree] || "", major: s(e.major?.name || e.major_custom_name), gpa: e.gpa ? Number(e.gpa).toFixed(1) : "",
-    start_month: s(e.start_month), start_year: s(e.start_year), end_month: s(e.grad_month), end_year: s(e.grad_year), graduated: e.grad_year ? e.grad_year < new Date().getFullYear() : false,
-  })),
+  education: (me.education || []).map((e) => {
+    const school = s(e.education?.lever || e.education?.name || e.education_custom_name);
+    const major = s(e.major?.name || e.major_custom_name);
+    // Simplify keeps the exact name each ATS's list uses ("Texas A&M University - College Station" on Greenhouse).
+    // autobot's option search tries school_<ats> / major_<ats> first on that ATS; only written when it differs.
+    const perAts = {};
+    for (const ats of ["greenhouse", "lever"]) {
+      const sn = s(e.education?.[ats]); if (sn && sn !== school) perAts[`school_${ats}`] = sn;
+      const mn = s(e.major?.[ats]); if (mn && mn !== major) perAts[`major_${ats}`] = mn;
+    }
+    return {
+      school, ...perAts,
+      degree: DEGREE[e.degree] || "Bachelor's", degree_full: DEGREE_FULL[e.degree] || "", major, gpa: e.gpa ? Number(e.gpa).toFixed(1) : "",
+      start_month: s(e.start_month), start_year: s(e.start_year), end_month: s(e.grad_month), end_year: s(e.grad_year), graduated: e.grad_year ? e.grad_year < new Date().getFullYear() : false,
+    };
+  }),
   experience: (me.experience || []).map((e) => ({
     company: s(e.company?.name), title: s(e.title), location: s(e.location), start_month: s(e.start_month), start_year: s(e.start_year), end_month: s(e.end_month), end_year: s(e.end_year), current: Boolean(e.currently_working), description: s(e.description),
   })),

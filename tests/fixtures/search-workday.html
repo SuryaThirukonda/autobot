@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Workday-style prompt search</title>
+<style>
+body{font:14px system-ui;margin:24px;max-width:720px} .q{margin-top:16px;position:relative} label{display:block;font-weight:600}
+input{width:100%;padding:6px;margin-top:4px;box-sizing:border-box}
+[data-automation-id=activeListContainer]{border:1px solid #999;background:#fff;position:absolute;left:0;right:0;z-index:5}
+[data-automation-id=promptOption]{padding:4px 8px;cursor:pointer}
+[data-automation-id=selectedItem]{display:inline-block;background:#def;border-radius:10px;padding:2px 8px;margin:4px 0}
+</style></head>
+<body>
+<h1>Workday-style application (prompt search)</h1>
+<form onsubmit="return false">
+  <div class="q"><label for="legal-first">Legal First Name</label><input id="legal-first" type="text" data-automation-id="legalNameSection_firstName" /></div>
+  <div class="q"><label for="legal-last">Legal Last Name</label><input id="legal-last" type="text" data-automation-id="legalNameSection_lastName" /></div>
+  <div class="q"><label for="em">Email Address</label><input id="em" type="email" /></div>
+
+  <!-- Workday prompt: type, press Enter, options appear in an active list; click adds a selected pill and clears the box. -->
+  <div class="q" data-automation-id="formField-schoolItem">
+    <label for="school-search" id="school-label">School or University</label>
+    <div data-automation-id="multiSelectContainer">
+      <div id="school-pills"></div>
+      <div data-uxi-widget-type="selectinput"><input id="school-search" data-automation-id="searchBox" placeholder="Search" type="text" autocomplete="off" aria-labelledby="school-label" /></div>
+    </div>
+    <input type="hidden" id="school-value" />
+  </div>
+  <button type="submit">Submit</button>
+</form>
+<script>
+(() => {
+  window.__wdQueries = [];
+  const SCHOOLS = ["Texas A&M University", "Texas A&M University - Commerce", "Texas State University", "Texas Tech University", "University of Texas at Austin"];
+  const input = document.getElementById("school-search"), pills = document.getElementById("school-pills"), hidden = document.getElementById("school-value");
+  let list = null;
+  const close = () => { list?.remove(); list = null; };
+  const search = (q) => {
+    close();
+    window.__wdQueries.push(q);
+    list = document.createElement("div"); list.setAttribute("data-automation-id", "activeListContainer"); list.setAttribute("role", "listbox");
+    list.textContent = "Searching…";
+    input.closest(".q").appendChild(list);
+    setTimeout(() => {
+      if (!list) return;
+      const items = SCHOOLS.filter((s) => s.toLowerCase().includes(q.trim().toLowerCase()));
+      list.textContent = items.length ? "" : "No Items.";
+      for (const s of items) {
+        const o = document.createElement("div"); o.setAttribute("data-automation-id", "promptOption"); o.setAttribute("role", "option"); o.setAttribute("data-automation-label", s); o.textContent = s;
+        // Like Workday's multi-select prompts, clicking an option that is already chosen removes its pill again.
+        o.addEventListener("click", () => {
+          const had = Array.from(pills.children).find((p) => p.title === s);
+          if (had) { had.remove(); hidden.value = ""; }
+          else { const p = document.createElement("div"); p.setAttribute("data-automation-id", "selectedItem"); p.title = s; p.textContent = s; pills.appendChild(p); hidden.value = s; }
+          input.value = ""; close();
+        });
+        list.appendChild(o);
+      }
+    }, 300);
+  };
+  // Workday searches on Enter, not on each keystroke.
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); search(input.value); } if (e.key === "Escape") close(); });
+})();
+</script>
+</body></html>

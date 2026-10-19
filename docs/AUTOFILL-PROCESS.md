@@ -1,5 +1,7 @@
 # How job-application autofill works — Simplify Copilot vs Jobright, and what Autobot keeps
 
+> **Since 0.2.0:** autobot also runs Jobright's multi-round option search for school, major, location and company fields, with a local resolver. How that search works is in [`SEARCH-REA.md`](SEARCH-REA.md) and [`v2_REA_analysis.md`](v2_REA_analysis.md).
+
 Sources: static analysis of Simplify Copilot 3.1.9 (`targets/simplify-3.1.9`, prettified in `analysis/pretty`) and Jobright Autofill 1.24.1 (`targets/jobright-1.24.1`, prettified in `analysis/jobright/pretty`), REA application graphs for both (`analysis/*.json`, both `partial` because the main bundles exhaust REA's analysis heap), and a live capture of Simplify's traffic and remote config (`analysis/live/CAPTURE.md`). Line references below point at the prettified copies.
 
 ## 1. The pipeline both extensions implement

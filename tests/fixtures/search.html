@@ -1,0 +1,146 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: search widgets (multi-round option search)</title>
+<style>
+body{font:14px system-ui;margin:24px;max-width:760px} .q{margin-top:16px;position:relative} .q > label, .q > span{display:block;font-weight:600}
+input,select{width:100%;padding:6px;margin-top:4px;box-sizing:border-box}
+ul[role=listbox], .s2-results{list-style:none;margin:0;padding:0;border:1px solid #999;background:#fff;position:absolute;left:0;right:0;z-index:5;max-height:220px;overflow:auto}
+ul[role=listbox] li, .s2-results li{padding:4px 8px;cursor:pointer} ul[role=listbox] li[aria-selected=true]{background:#def}
+.hidden{display:none !important}
+.select2-hidden-accessible{border:0 !important;clip:rect(0 0 0 0) !important;height:1px !important;margin:-1px !important;overflow:hidden !important;padding:0 !important;position:absolute !important;width:1px !important}
+.select2-selection{display:block;border:1px solid #999;padding:6px;margin-top:4px;min-height:18px;cursor:pointer}
+.select2-dropdown{position:absolute;background:#fff;border:1px solid #999;padding:4px;width:400px;z-index:10}
+</style></head>
+<body>
+<h1>Careers — Application (search widgets)</h1>
+<form id="f" onsubmit="return false">
+  <div class="q"><label for="fullname">Full Name</label><input type="text" id="fullname" /></div>
+  <div class="q"><label for="email">Email</label><input type="email" id="email" /></div>
+
+  <!-- A: async ARIA combobox. Backend matches the query only against "City, ST, US" keys, so "Austin, Texas"
+       finds nothing and the resolver must search again with "Austin, TX". -->
+  <div class="q field" id="loc-field">
+    <label for="loc" id="loc-label">Current location</label>
+    <input id="loc" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="loc-list" aria-labelledby="loc-label" autocomplete="off" />
+    <ul id="loc-list" role="listbox" class="hidden" aria-label="Current location suggestions"></ul>
+    <input type="hidden" id="loc-id" />
+  </div>
+
+  <!-- B: select2-style ajax select. Native select holds only a placeholder; options are fetched as you type in a
+       search box inside a dropdown appended to <body>. -->
+  <div class="q field">
+    <label for="school">School</label>
+    <select id="school" name="school" class="select2-hidden-accessible" tabindex="-1" aria-hidden="true" data-ajax--url="/schools"><option value="">Select…</option></select><span class="select2 select2-container" id="s2-school"><span class="select2-selection" role="combobox" aria-haspopup="true" aria-expanded="false" tabindex="0"><span class="select2-selection__rendered">Select…</span></span></span>
+  </div>
+
+  <!-- C: typeahead whose data only contains other campuses: autobot must leave it empty. -->
+  <div class="q field" id="other-field">
+    <label for="other" id="other-label">Other university attended</label>
+    <input id="other" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="other-list" aria-labelledby="other-label" autocomplete="off" />
+    <ul id="other-list" role="listbox" class="hidden"></ul>
+  </div>
+
+  <!-- D: long native select with prefix traps. -->
+  <div class="q"><label for="major">Major / field of study</label><select id="major"></select></div>
+
+  <!-- E: datalist suggestions. -->
+  <div class="q"><label for="employer">Current employer</label><input id="employer" type="text" list="companies" />
+    <datalist id="companies"><option value="Babbage Ventures"></option><option value="Babbage and Co."></option><option value="Analytical Engines Ltd"></option></datalist></div>
+
+  <!-- G: school list without the profile's school (and nothing resembling it), an "Other" entry and a companion box. -->
+  <div class="q"><label for="edu-school">College / University</label>
+    <select id="edu-school"><option value="">Please select</option><option value="10">Baylor University</option><option value="11">Rice University</option><option value="12">Trinity University</option><option value="99">Other</option></select></div>
+  <div class="q"><label for="edu-school-other">If other, please specify school name</label><input id="edu-school-other" type="text" /></div>
+
+  <!-- F: plain text city, must not be searched. -->
+  <div class="q"><label for="city">City</label><input id="city" type="text" /></div>
+  <button type="submit">Submit</button>
+</form>
+<pre id="log"></pre>
+<script>
+(() => {
+  const log = (m) => { document.getElementById("log").textContent += m + "\n"; };
+  window.__queries = { loc: [], school: [], other: [] };
+  const fold = (s) => s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+  const tokPrefix = (q, name) => { const nt = fold(name).split(" "); return fold(q).split(" ").filter(Boolean).every((w) => nt.some((t) => t.startsWith(w))); };
+
+  // ---- A: location combobox (async, debounced, loading row) ----
+  const LOCS = [
+    { id: "L1", key: "Austin, TX, US", label: "Austin, Texas, United States" },
+    { id: "L2", key: "Austin, MN, US", label: "Austin, Minnesota, United States" },
+    { id: "L3", key: "Round Rock, TX, US", label: "Round Rock, Texas, United States" },
+    { id: "L4", key: "Boston, MA, US", label: "Boston, Massachusetts, United States" },
+  ];
+  const combo = (input, list, search, onPick, name) => {
+    let timer = null, seq = 0;
+    const render = (items) => {
+      list.innerHTML = "";
+      if (!items.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "No results found"; list.appendChild(li); }
+      items.forEach((it, i) => {
+        const li = document.createElement("li"); li.setAttribute("role", "option"); li.id = `${list.id}-o${i}`; li.dataset.value = it.id; li.textContent = it.label;
+        li.addEventListener("mousedown", (e) => e.preventDefault());
+        li.addEventListener("click", () => { input.value = it.label; onPick(it); list.classList.add("hidden"); input.setAttribute("aria-expanded", "false"); log(`${name} picked ${it.label}`); });
+        list.appendChild(li);
+      });
+      list.classList.remove("hidden"); input.setAttribute("aria-expanded", "true");
+    };
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+      const q = input.value, my = ++seq;
+      if (q.trim().length < 2) { list.classList.add("hidden"); return; }
+      list.innerHTML = '<li class="loading">Loading…</li>'; list.classList.remove("hidden");
+      timer = setTimeout(() => { setTimeout(() => { if (my !== seq) return; window.__queries[name].push(q); render(search(q)); }, 120); }, 180);
+    });
+    input.addEventListener("keydown", (e) => { if (e.key === "Escape") { list.classList.add("hidden"); input.setAttribute("aria-expanded", "false"); } });
+  };
+  combo(document.getElementById("loc"), document.getElementById("loc-list"),
+    (q) => LOCS.filter((l) => l.key.toLowerCase().includes(q.trim().toLowerCase())), (it) => { document.getElementById("loc-id").value = it.id; }, "loc");
+
+  // ---- C: other university (near-misses only) ----
+  const OTHERS = ["Texas A&M University - Commerce", "Texas A&M University-Corpus Christi", "Texas A&M International University", "Texas State University"].map((label, i) => ({ id: `O${i}`, label }));
+  combo(document.getElementById("other"), document.getElementById("other-list"), (q) => OTHERS.filter((o) => tokPrefix(q, o.label)), () => {}, "other");
+
+  // ---- B: select2-like ajax select ----
+  const SCHOOLS = ["Texas A&M University - Commerce", "Texas A&M University-Corpus Christi", "Texas A&M University", "Texas A&M International University", "Texas State University", "Texas Tech University", "University of Texas at Austin", "Trinity University"].map((label, i) => ({ id: String(1000 + i), label }));
+  const sel = document.getElementById("school"), s2 = document.getElementById("s2-school"), trig = s2.querySelector(".select2-selection"), rendered = s2.querySelector(".select2-selection__rendered");
+  let dd = null;
+  const closeDd = () => { dd?.remove(); dd = null; s2.classList.remove("select2-container--open"); trig.setAttribute("aria-expanded", "false"); };
+  trig.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    if (dd) return closeDd();
+    dd = document.createElement("span"); dd.className = "select2-container select2-container--open";
+    const r = trig.getBoundingClientRect();
+    dd.innerHTML = '<span class="select2-dropdown" style="top:' + (window.scrollY + r.bottom) + 'px;left:' + r.left + 'px"><span class="select2-search"><input class="select2-search__field" type="search" autocomplete="off"></span><span class="select2-results"><ul class="s2-results select2-results__options" role="listbox"></ul></span></span>';
+    document.body.appendChild(dd); s2.classList.add("select2-container--open"); trig.setAttribute("aria-expanded", "true");
+    const input = dd.querySelector("input"), ul = dd.querySelector("ul");
+    let timer = null, seq = 0;
+    input.addEventListener("input", () => {
+      clearTimeout(timer); const q = input.value, my = ++seq;
+      ul.innerHTML = '<li class="select2-results__option loading-results">Searching…</li>';
+      timer = setTimeout(() => {
+        if (my !== seq) return;
+        window.__queries.school.push(q);
+        const items = SCHOOLS.filter((s) => s.label.toLowerCase().includes(q.trim().toLowerCase()));
+        ul.innerHTML = items.length ? "" : '<li class="select2-results__option select2-results__message">No results found</li>';
+        for (const it of items) {
+          const li = document.createElement("li"); li.className = "select2-results__option"; li.setAttribute("role", "option"); li.dataset.value = it.id; li.textContent = it.label;
+          li.addEventListener("mouseup", () => {
+            sel.innerHTML = '<option value="">Select…</option>'; const o = new Option(it.label, it.id, true, true); sel.appendChild(o);
+            sel.dispatchEvent(new Event("change", { bubbles: true })); rendered.textContent = it.label; log(`school picked ${it.label}`); closeDd();
+          });
+          ul.appendChild(li);
+        }
+      }, 220);
+    });
+    input.focus();
+  });
+  trig.addEventListener("click", (e) => e.preventDefault());
+
+  // ---- D: native select with 150 majors (prefix traps first) ----
+  const majors = ["Computer Science and Engineering", "Computer Science Education", "Computer and Information Sciences", "Computational Science", "Computer Engineering", "Computer Science"];
+  for (let i = 0; i < 144; i++) majors.push(`Placeholder Major ${String(i).padStart(3, "0")}`);
+  const m = document.getElementById("major");
+  m.appendChild(new Option("Please select", ""));
+  majors.forEach((t, i) => m.appendChild(new Option(t, `M${i}`)));
+})();
+</script>
+</body></html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>autobot</title>
+<style>
+  body { width: 280px; margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; color: #111827; background: #fff; }
+  h1 { font-size: 15px; margin: 0 0 8px; }
+  .row { display: flex; gap: 8px; margin-top: 8px; }
+  button { flex: 1; border: 0; border-radius: 6px; padding: 8px; cursor: pointer; font: inherit; font-weight: 600; }
+  .fill { background: #22c55e; color: #052e16; } .stop { background: #ef4444; color: #fff; } .opt { background: #e5e7eb; }
+  #status { color: #4b5563; min-height: 18px; }
+  label { display: flex; gap: 6px; align-items: center; margin-top: 8px; color: #374151; }
+  kbd { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 0 4px; }
+</style>
+</head>
+<body>
+  <h1>autobot</h1>
+  <div id="status">Detecting…</div>
+  <div class="row"><button class="fill" id="fill">Fill this page</button><button class="stop" id="stop">Stop</button></div>
+  <label><input type="checkbox" id="continuous" /> Continue through multi-page forms (never submits)</label>
+  <div class="row"><button class="opt" id="options">Profile &amp; settings</button></div>
+  <p style="color:#6b7280;margin:10px 0 0">Hotkey: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd></p>
+  <script src="popup.js"></script>
+</body>
+</html>

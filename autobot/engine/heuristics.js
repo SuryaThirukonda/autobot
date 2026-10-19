@@ -136,7 +136,10 @@ AB.classify = (el) => {
   if (type === "tel") return { key: "phone", via: "type", label: "phone" };
   const labels = AB.labelFor(el);
   // Search boxes inside widgets (intl-tel-input country list, typeahead filters) are never identity fields.
-  if (type === "search" || el.matches(".iti__search-input, .iti input, [class*='search-input'], [class*='searchInput']")) return { key: null, via: "search-box", label: AB.displayLabel(labels), labels: [] };
+  // A type=search input that is itself a listbox combobox (aria-haspopup/role/aria-autocomplete) is a real field.
+  const comboLike = el.getAttribute("aria-haspopup") === "listbox" || el.getAttribute("role") === "combobox" || el.hasAttribute("aria-autocomplete");
+  const widgetInner = el.matches(".iti__search-input, .iti input, .select2-search__field, .chosen-search input, [class*='search-input'], [class*='searchInput']") || el.closest(".select2-dropdown, .chosen-drop, [role=listbox]") || (el.closest("[role=dialog]") && el.matches("[class*='search'], [role=searchbox]"));
+  if (widgetInner || (type === "search" && !comboLike)) return { key: null, via: "search-box", label: AB.displayLabel(labels), labels: [] };
   // Open-ended questions are never profile fields; only a saved answer may fill them.
   const primary = AB.displayLabel(labels);
   if (AB.FREE_TEXT.test(primary) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && /^(radio|checkbox|file)$/.test(el.type)))

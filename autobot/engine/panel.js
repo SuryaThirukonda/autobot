@@ -92,9 +92,9 @@ AB.panel = (() => {
     host.setAttribute("data-autobot-panel", "1");
     root = host.attachShadow({ mode: "open" });
     root.innerHTML = `<style>${css}</style>
-      <div class="pill" title="Open Autobot"><span class="logo">A</span>Autobot</div>
+      <div class="pill" title="Open autobot"><span class="logo">A</span>autobot</div>
       <div class="col">
-        <div class="hdr"><div class="logo">A</div><div class="brand">Autobot</div>
+        <div class="hdr"><div class="logo">A</div><div class="brand">autobot</div>
           <button class="ic settings" title="Profile & settings">⚙</button><button class="ic collapse" title="Hide panel">›</button></div>
         <div class="tabs"><div class="tab on" data-t="autofill">⚡ Autofill</div><div class="tab" data-t="fields">☰ Fields</div><div class="tab" data-t="profile">◯ Profile</div></div>
         <div class="sheet">
@@ -113,7 +113,7 @@ AB.panel = (() => {
           <div class="pane" data-p="profile" style="display:none">
             <div class="card soft kv"></div>
             <button class="sec edit" style="width:100%">Edit profile &amp; saved answers</button>
-            <div class="sub">Your profile lives in this browser's extension storage. Autobot never submits an application.</div>
+            <div class="sub">Your profile lives in this browser's extension storage. autobot never submits an application.</div>
           </div>
         </div>
       </div>`;

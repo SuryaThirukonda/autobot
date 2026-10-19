@@ -1,19 +1,24 @@
-// Autobot end-to-end test: load the unpacked extension into Chrome for Testing, seed a profile,
+// autobot end-to-end test: load the unpacked extension into Chrome for Testing, seed a profile,
 // open each fixture, trigger a fill through the test hook, and assert the resulting values.
-// Usage: node tests/run.mjs [--headed] [--ext=v2]   (AUTOBOT_CHROME=/path/to/chrome to override the binary;
-// --ext or AUTOBOT_EXT picks the extension folder, default autobot/)
+// The browser loads a temporary copy of the extension without configs/profile.default.json, so a personal profile
+// is never seeded into a test run.
+// Usage: node tests/run.mjs [--headed] [--ext=legacy/autobot-v1]   (AUTOBOT_CHROME=/path/to/chrome overrides the
+// binary; --ext or AUTOBOT_EXT picks the extension folder, default autobot/)
 import { chromium } from "playwright-core";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
+import { stageExtension } from "./stage-ext.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const extArg = process.argv.find((a) => a.startsWith("--ext="));
 const extDir = path.resolve(root, extArg ? extArg.slice(6) : process.env.AUTOBOT_EXT || "autobot");
 const hasSearch = fs.existsSync(path.join(extDir, "engine", "search.js"));
+// Per-ATS names and the rerun checks arrived in 0.2.0; older folders (legacy/) skip those blocks.
+const has020 = hasSearch && /S\.atsAlternates\s*=/.test(fs.readFileSync(path.join(extDir, "engine", "search.js"), "utf8"));
 const headed = process.argv.includes("--headed");
 
 const PROFILE = {
@@ -65,14 +70,19 @@ const fillAndWait = async (page) => {
   await page.waitForFunction(() => document.documentElement.dataset.autobotDone, null, { timeout: 60000 });
   return JSON.parse(await page.evaluate(() => document.documentElement.dataset.autobotDone));
 };
+// Status lines for one key, without the transient "filling" entries.
+const statusOf = (summary, key) => JSON.stringify((summary.statuses || []).filter((s) => s[0] === key && s[1] !== "filling"));
+const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementById("school-hidden").value, shown: document.querySelector(".select__single-value").textContent,
+  box: document.getElementById("school-input").value, q: window.__queries.slice(), first: document.getElementById("first_name").value }));
 
 (async () => {
   const { srv, base } = await serve();
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "autobot-test-"));
+  const staged = stageExtension(extDir, { tag: "test-ext" });
   const ctx = await chromium.launchPersistentContext(userDataDir, {
     headless: false, // extensions need a headful (or --headless=new) browser
     executablePath: findChrome(),
-    args: [`--disable-extensions-except=${extDir}`, `--load-extension=${extDir}`, ...(headed ? [] : ["--headless=new"]), "--no-first-run", "--window-size=1200,900"],
+    args: [`--disable-extensions-except=${staged.dir}`, `--load-extension=${staged.dir}`, ...(headed ? [] : ["--headless=new"]), "--no-first-run", "--window-size=1200,900"],
     viewport: { width: 1200, height: 900 },
   });
   try {
@@ -81,12 +91,17 @@ const fillAndWait = async (page) => {
     const extId = new URL(sw.url()).host;
     console.log("extension id:", extId);
 
-    // Seed profile + resume + test hooks via the options page.
-    const opt = await ctx.newPage();
-    // onInstalled opens options.html too; that navigation can interrupt ours, so retry once.
-    try { await opt.goto(`chrome-extension://${extId}/options.html`); } catch { await new Promise((r) => setTimeout(r, 500)); await opt.goto(`chrome-extension://${extId}/options.html`); }
-    await opt.evaluate(([profile, resume]) => chrome.storage.local.set({ profile, resume, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } }), [PROFILE, RESUME]);
-    await opt.close();
+    // Storage writes go through an extension page. onInstalled opens options.html too; that navigation can
+    // interrupt ours, so retry once.
+    const setStorage = async (items) => {
+      const opt = await ctx.newPage();
+      try {
+        try { await opt.goto(`chrome-extension://${extId}/options.html`); } catch { await new Promise((r) => setTimeout(r, 500)); await opt.goto(`chrome-extension://${extId}/options.html`); }
+        await opt.evaluate((o) => chrome.storage.local.set(o), items);
+      } finally { await opt.close(); }
+    };
+    // Seed profile + resume + test hooks.
+    await setStorage({ profile: PROFILE, resume: RESUME, settings: { testHooks: true, showPanel: true, heuristics: true, debug: true } });
 
     // ---- Greenhouse-like ----
     {
@@ -143,7 +158,7 @@ const fillAndWait = async (page) => {
       check("generic gender synonym", v.q12, "Prefer not to say"); check("generic resume", v.q13, "ada-resume.pdf"); check("generic degree synonym", v.q14, "Bachelors"); check("generic certify checkbox untouched", v.q15, false);
       await page.close();
     }
-    // ---- Search widgets (v2 multi-round option search) ----
+    // ---- Search widgets (multi-round option search) ----
     if (hasSearch) {
       const page = await ctx.newPage();
       page.on("console", (m) => { if (/\[autobot\] search (result|search)/.test(m.text())) console.log("  ", m.text()); });
@@ -192,12 +207,112 @@ const fillAndWait = async (page) => {
       check("wd source multiselect", v.src, "LinkedIn"); check("wd job title", v.title, PROFILE.experience[0].title); check("wd company", v.company, PROFILE.experience[0].company); check("wd currently work here", v.current, true);
       check("wd start month", v.mm, "06"); check("wd start year", v.yyyy, "2025"); check("wd description", v.desc, PROFILE.experience[0].description);
       check("wd finished in under 25 s", elapsed, (ms) => ms < 25000);
+      // Rerun on the filled form: the prompt buttons and pills already show the answers, so autobot must not open,
+      // click or type into them again (a second click on a multi-select option toggles or duplicates it).
+      if (has020) {
+        const widgets = () => page.evaluate(() => { const q = (s) => document.querySelector(s); return { state: q("[data-automation-id='addressSection_countryRegion']").dataset.value,
+          device: q("[data-automation-id='phone-device-type']").dataset.value, cc: q("[data-automation-id='formField-countryPhoneCode'] .chips").innerHTML, src: q("[data-automation-id='sourceSection'] .chips").innerHTML }; });
+        const before = await widgets();
+        await page.evaluate(() => {
+          const W = "[data-automation-id='addressSection_countryRegion'], [data-automation-id='phone-device-type'], [data-automation-id='formField-countryPhoneCode'], [data-automation-id='sourceSection'], .popup";
+          window.__widgetEvents = []; window.__popups = 0;
+          for (const t of ["pointerdown", "mousedown", "mouseup", "click", "keydown", "input", "change", "focusin"]) document.addEventListener(t, (e) => { const w = e.target?.closest?.(W); if (w) window.__widgetEvents.push(`${t}@${w.getAttribute("data-automation-id") || w.className}`); }, true);
+          new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.classList?.contains("popup")) window.__popups++; }).observe(document.body, { childList: true });
+        });
+        const again = await fillAndWait(page);
+        const after = await widgets();
+        const r = await page.evaluate(() => ({ events: window.__widgetEvents.slice(0, 8), popups: window.__popups, first: document.getElementById("fn").value }));
+        const kept = (again.statuses || []).filter((s) => /already selected/.test(s[2])).map((s) => s[0]);
+        check("wd rerun: no events on selection widgets", JSON.stringify(r.events), "[]");
+        check("wd rerun: no popup opened", r.popups, 0);
+        check("wd rerun: choices unchanged", JSON.stringify(after), JSON.stringify(before));
+        check("wd rerun: prompts report already selected", JSON.stringify(kept), (t) => ["state", "phone_device", "phone_country_code", "how_heard"].every((k) => t.includes(`"${k}"`)));
+        check("wd rerun: text fields still filled", r.first, "Ada");
+      }
       await page.close();
+    }
+    // ---- Workday-style prompt (type, Enter, promptOption, selectedItem pill) ----
+    if (hasSearch) {
+      const page = await ctx.newPage();
+      await page.goto(`${base}/search-workday.html`);
+      await fillAndWait(page);
+      const v = await page.evaluate(() => ({ hidden: document.getElementById("school-value").value, pill: document.querySelector("[data-automation-id=selectedItem]")?.title,
+        box: document.getElementById("school-search").value, q: window.__wdQueries.slice(), first: document.getElementById("legal-first").value }));
+      check("workday: prompt option committed", v.hidden, "Texas A&M University");
+      check("workday: selectedItem pill", v.pill, "Texas A&M University");
+      check("workday: search box cleared (no retype)", v.box, "");
+      check("workday: searched once via Enter", JSON.stringify(v.q), JSON.stringify(["Texas A&M University"]));
+      if (has020) {
+        // Rerun: the pill already shows the school. The fixture's option click toggles, so a second commit would
+        // remove the pill, and a second search would add a query.
+        const again = await fillAndWait(page);
+        const r = await page.evaluate(() => ({ pills: Array.from(document.querySelectorAll("[data-automation-id=selectedItem]")).map((p) => p.title), q: window.__wdQueries.slice() }));
+        check("workday rerun: no new search", JSON.stringify(r.q), JSON.stringify(["Texas A&M University"]));
+        check("workday rerun: pill kept, once", JSON.stringify(r.pills), JSON.stringify(["Texas A&M University"]));
+        check("workday rerun: status says already selected", JSON.stringify(again.statuses), (t) => /already selected/.test(t));
+      }
+      await page.close();
+    }
+    // A different school already chosen by the user: leave the multi-select alone and add no second pill.
+    if (has020) {
+      const page = await ctx.newPage();
+      await page.goto(`${base}/search-workday.html`);
+      await page.evaluate(() => { const p = document.createElement("div"); p.setAttribute("data-automation-id", "selectedItem"); p.title = p.textContent = "Texas Tech University"; document.getElementById("school-pills").appendChild(p); document.getElementById("school-value").value = "Texas Tech University"; });
+      const res = await fillAndWait(page);
+      const r = await page.evaluate(() => ({ pills: Array.from(document.querySelectorAll("[data-automation-id=selectedItem]")).map((p) => p.title), q: window.__wdQueries.slice() }));
+      check("workday: user's other pill kept", JSON.stringify(r.pills), JSON.stringify(["Texas Tech University"]));
+      check("workday: no search over the user's pill", JSON.stringify(r.q), "[]");
+      check("workday: status says kept existing choice", JSON.stringify(res.statuses), (t) => /kept the existing choice/.test(t));
+      await page.close();
+    }
+    // ---- Greenhouse school list with campus-suffixed names only ----
+    if (hasSearch) {
+      const page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-campus.html`);
+      const summary = await fillAndWait(page);
+      const v = await readCampus(page);
+      check("campus: detected as greenhouse", summary.ats, "greenhouse");
+      check("campus: plain name commits no campus", v.hidden, "");
+      check("campus: nothing shown as chosen", v.shown, "");
+      check("campus: search box restored", v.box, "");
+      check("campus: searched the plan, then stopped", JSON.stringify(v.q), JSON.stringify(["Texas A&M University", "Texas A&M"]));
+      check("campus: status says return-empty", statusOf(summary, "education[0].school"), (t) => /return-empty/.test(t));
+      check("campus: other fields still filled", v.first, "Ada");
+      await page.close();
+    }
+    // Same form with the per-ATS name a Simplify import stores (education[0].school_greenhouse).
+    if (has020) {
+      const CS = "Texas A&M University - College Station";
+      await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }] } });
+      const page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-campus.html`);
+      const summary = await fillAndWait(page);
+      const v = await readCampus(page);
+      check("campus+ats: College Station committed", v.hidden, "11785542002");
+      check("campus+ats: shown as chosen", v.shown, CS);
+      check("campus+ats: one search, per-ATS name first", JSON.stringify(v.q), JSON.stringify([CS]));
+      check("campus+ats: status names the campus", statusOf(summary, "education[0].school"), (t) => t.includes(CS));
+      const again = await fillAndWait(page);
+      const r = await readCampus(page);
+      check("campus+ats rerun: no new search", JSON.stringify(r.q), JSON.stringify([CS]));
+      check("campus+ats rerun: choice kept", r.hidden, "11785542002");
+      check("campus+ats rerun: status says already selected", statusOf(again, "education[0].school"), (t) => /already selected/.test(t));
+      await page.close();
+      // A board whose list has only the plain name and whose menu closes when nothing matches: the per-ATS name finds
+      // nothing, then the profile value is searched and committed.
+      const plain = await ctx.newPage();
+      await plain.goto(`${base}/greenhouse.html`);
+      const s2 = await fillAndWait(plain);
+      check("campus+ats: plain list falls back to profile name", await plain.evaluate(() => document.getElementById("school-hidden").value), "Texas A&M University");
+      check("campus+ats: status shows the per-ATS search first", statusOf(s2, "education[0].school"), (t) => t.includes("College Station") && t.includes("filled"));
+      await plain.close();
+      await setStorage({ profile: PROFILE });
     }
   } finally {
     await ctx.close().catch(() => {});
     srv.close();
     fs.rmSync(userDataDir, { recursive: true, force: true });
+    staged.cleanup();
   }
   const pad = (s, n) => String(s).padEnd(n);
   let fails = 0;
