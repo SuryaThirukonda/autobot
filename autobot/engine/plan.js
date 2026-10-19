@@ -60,7 +60,10 @@ AB.runField = async (field, state, keyPrefix = "", data = state.profile) => {
       let sectionCtx = container;
       if (field.item) {
         const secs = AB.queryAny(field.item, container, true);
-        sectionCtx = secs[i] || secs[secs.length - 1] || container;
+        // An entry writes only into a section of its own. When the form shows fewer sections than the profile has
+        // entries (no add button, or the click added none), stop instead of writing over an earlier entry.
+        if (i > 0 && secs.length <= i) { onStatus(`${fullKey}[${i}]`, "skipped", "no section for this entry on the form"); break; }
+        sectionCtx = secs[i] || container;
       }
       for (const sub of field.fields || []) {
         if (await AB.runField(sub, { ...state, container: sectionCtx }, `${fullKey}[${i}]`, items[i])) wroteAny = true;

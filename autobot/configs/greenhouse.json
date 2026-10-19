@@ -152,7 +152,8 @@
       "item": [
         ".//div[@id='education_section']//div[contains(@class,'education') and not(contains(@class,'container')) and not(contains(@class,'section'))]",
         ".//div[contains(@class,'education--form')]",
-        ".//div[contains(@class,'education--container')]"
+        ".//div[contains(@class,'education--container')]",
+        ".//fieldset[.//input[starts-with(@id,'educations[')]]"
       ],
       "fields": [
         {
@@ -173,7 +174,9 @@
           "key": "degree",
           "method": "combobox",
           "values": "degree",
+          "searchType": "degree",
           "path": [
+            ".//input[contains(@id,'degree_id') or contains(@name,'degree_id')]",
             ".//label[contains(translate(., 'DEGREE', 'degree'), 'degree')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
             ".//select[contains(@id,'degree')]"
           ],
@@ -187,6 +190,7 @@
           "key": "major",
           "method": "combobox",
           "path": [
+            ".//input[contains(@id,'discipline_id') or contains(@name,'discipline_id')]",
             ".//label[contains(translate(., 'DISCIPLINE', 'discipline'), 'discipline')]/following::input[contains(@class,'select__input') or @role='combobox'][1]",
             ".//select[contains(@id,'discipline')]",
             ".//select[contains(@id,'major')]"
@@ -198,11 +202,25 @@
           ]
         },
         {
+          "key": "start_month",
+          "valueKey": "start_month|M",
+          "values": "month",
+          "method": "combobox",
+          "path": [
+            ".//input[contains(@id,'start-month') and (contains(@class,'select__input') or @role='combobox')]",
+            ".//*[contains(@id,'start_date.month')]//*[@aria-haspopup='listbox']"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
+        },
+        {
           "key": "start_month|MM",
           "valueKey": "start_month|MM",
           "path": [
-            ".//input[contains(@class,'start-date-month')]",
-            ".//input[contains(@id,'start-month')]"
+            ".//input[(contains(@class,'start-date-month') or contains(@id,'start-month')) and not(contains(@class,'select__input')) and not(@role='combobox')]"
           ],
           "allowFailure": true
         },
@@ -210,16 +228,31 @@
           "key": "start_year",
           "path": [
             ".//input[contains(@class,'start-date-year')]",
-            ".//input[contains(@id,'start-year')]"
+            ".//input[contains(@id,'start-year')]",
+            ".//input[contains(@id,'start_date.year')]"
           ],
           "allowFailure": true
+        },
+        {
+          "key": "end_month",
+          "valueKey": "end_month|M",
+          "values": "month",
+          "method": "combobox",
+          "path": [
+            ".//input[contains(@id,'end-month') and (contains(@class,'select__input') or @role='combobox')]",
+            ".//*[contains(@id,'end_date.month')]//*[@aria-haspopup='listbox']"
+          ],
+          "allowFailure": true,
+          "optionsPath": [
+            "css:.select__option",
+            "css:[role=option]"
+          ]
         },
         {
           "key": "end_month|MM",
           "valueKey": "end_month|MM",
           "path": [
-            ".//input[contains(@class,'end-date-month')]",
-            ".//input[contains(@id,'end-month')]"
+            ".//input[(contains(@class,'end-date-month') or contains(@id,'end-month')) and not(contains(@class,'select__input')) and not(@role='combobox')]"
           ],
           "allowFailure": true
         },
@@ -227,7 +260,8 @@
           "key": "end_year",
           "path": [
             ".//input[contains(@class,'end-date-year')]",
-            ".//input[contains(@id,'end-year')]"
+            ".//input[contains(@id,'end-year')]",
+            ".//input[contains(@id,'end_date.year')]"
           ],
           "allowFailure": true
         }

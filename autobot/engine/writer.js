@@ -279,7 +279,10 @@ AB.searchResults = new WeakMap();
 AB.shownChoices = (el) => {
   if (!el) return [];
   if (el.matches?.("button, [role=button]")) {
-    const t = String(el.innerText || el.textContent || "").replace(/\s+/g, " ").trim();
+    const text = (n) => String(n?.innerText || n?.textContent || "").replace(/\s+/g, " ").trim();
+    let t = text(el);
+    // An empty listbox button may show its choice beside it (Duolingo's month picker: <span>May</span><button>).
+    if (!t && el.getAttribute("aria-haspopup") === "listbox" && el.parentElement?.querySelectorAll("button, [role=button], input, select, textarea").length === 1) t = text(el.parentElement);
     return t && !AB.search?.isPlaceholder?.(t) ? [t] : [];
   }
   return AB.search?.selectedTexts ? AB.search.selectedTexts(el) : [];

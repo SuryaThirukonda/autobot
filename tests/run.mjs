@@ -74,6 +74,15 @@ const fillAndWait = async (page) => {
 const statusOf = (summary, key) => JSON.stringify((summary.statuses || []).filter((s) => s[0] === key && s[1] !== "filling"));
 const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementById("school-hidden").value, shown: document.querySelector(".select__single-value").textContent,
   box: document.getElementById("school-input").value, q: window.__queries.slice(), first: document.getElementById("first_name").value }));
+const readWebui = (page) => page.evaluate(() => { const g = (id) => document.getElementById(id); return {
+  schoolId: g("educations[0].school_name_id").value, degreeId: g("educations[0].degree_id").value, disciplineId: g("educations[0].discipline_id").value,
+  school: g("web-ui28").value, degree: g("web-ui31").value, discipline: g("web-ui34").value, month: document.querySelector("[id='educations[0].end_date.month'] .GfJwj").textContent,
+  year: g("educations[0].end_date.year").value, q: window.__queries, clicks: { ...window.__clicks }, submits: window.__submits, first: g("first_name").value }; });
+const readJobboards = (page) => page.evaluate(() => { const sv = (id) => document.getElementById(id).closest(".select__control").querySelector(".select__single-value")?.textContent || ""; const g = (id) => document.getElementById(id).value; return {
+  school: sv("school--0"), degree: sv("degree--0"), discipline: sv("discipline--0"), startMonth: sv("start-month--0"), startYear: g("start-year--0"), endMonth: sv("end-month--0"), endYear: g("end-year--0"),
+  q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
+// Statuses that report a choice the control already showed, as "key" strings.
+const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s) => s[1] === "filled" && /already selected/.test(s[2])).map((s) => s[0]));
 
 (async () => {
   const { srv, base } = await serve();
@@ -306,6 +315,71 @@ const readCampus = (page) => page.evaluate(() => ({ hidden: document.getElementB
       check("campus+ats: plain list falls back to profile name", await plain.evaluate(() => document.getElementById("school-hidden").value), "Texas A&M University");
       check("campus+ats: status shows the per-ATS search first", statusOf(s2, "education[0].school"), (t) => t.includes("College Station") && t.includes("filled"));
       await plain.close();
+      await setStorage({ profile: PROFILE });
+    }
+    // ---- Greenhouse education: Duolingo's own form with Greenhouse ids (web-ui pickers) ----
+    if (has020) {
+      const CS = "Texas A&M University - College Station";
+      await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }] } });
+      const page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-webui.html?gh_jid=8888721002`);
+      const summary = await fillAndWait(page);
+      const v = await readWebui(page);
+      check("webui: detected as greenhouse by gh_jid", summary.ats, "greenhouse");
+      check("webui: school id (College Station)", v.schoolId, "11785542002");
+      check("webui: degree id", v.degreeId, "11786718002");
+      check("webui: degree shown", v.degree, "Bachelor's Degree");
+      check("webui: degree went through search", statusOf(summary, "education[0].degree"), (t) => /"filled","Bachelor's Degree +\(searched/.test(t));
+      check("webui: discipline id", v.disciplineId, "11786740002");
+      check("webui: discipline shown", v.discipline, "Computer Science");
+      check("webui: discipline went through search", statusOf(summary, "education[0].major"), (t) => /"filled","Computer Science +\(searched/.test(t));
+      // The three pickers share one <fieldset>: each search must type into its own box, never into the school's.
+      check("webui: each search typed into its own box", JSON.stringify(v.q), JSON.stringify({ school: [CS], degree: ["Bachelor's Degree"], discipline: ["Computer Science"] }));
+      check("webui: end month picked", v.month, "May");
+      check("webui: end year", v.year, "2028");
+      check("webui: start date reported absent", statusOf(summary, "education[0].start_month") + statusOf(summary, "education[0].start_year"), (t) => (t.match(/"absent"/g) || []).length === 2);
+      check("webui: no unknown end-date question left", JSON.stringify(summary.statuses), (t) => !/\? [^"]*end date/.test(t));
+      check("webui: other fields still filled", v.first, "Ada");
+      check("webui: Add another (a submit button) and submit untouched", JSON.stringify([v.clicks.addAnother, v.clicks.submit, v.submits]), "[0,0,0]");
+      // Rerun: the pickers show their choice in the proxy box (id stored), the month in its span. Nothing is retyped,
+      // reopened or picked again.
+      const again = await fillAndWait(page);
+      const r = await readWebui(page);
+      check("webui rerun: no new searches", JSON.stringify(r.q), JSON.stringify(v.q));
+      check("webui rerun: month list not reopened", r.clicks.monthOpens, 1);
+      check("webui rerun: values unchanged", JSON.stringify([r.schoolId, r.degreeId, r.disciplineId, r.month, r.year]), JSON.stringify([v.schoolId, v.degreeId, v.disciplineId, v.month, v.year]));
+      check("webui rerun: choices report already selected", keptKeys(again), JSON.stringify(["education[0].school", "education[0].degree", "education[0].major", "education[0].end_month"]));
+      check("webui rerun: still nothing submitted", JSON.stringify([r.clicks.addAnother, r.clicks.submit, r.submits]), "[0,0,0]");
+      await page.close();
+      await setStorage({ profile: PROFILE });
+    }
+    // ---- Greenhouse job-boards education: react-select 5 with no "field" wrapper, start and end dates ----
+    if (has020) {
+      const CS = "Texas A&M University - College Station";
+      await setStorage({ profile: { ...PROFILE, education: [{ ...PROFILE.education[0], school_greenhouse: CS }] } });
+      const page = await ctx.newPage();
+      await page.goto(`${base}/greenhouse-jobboards.html`);
+      const summary = await fillAndWait(page);
+      const v = await readJobboards(page);
+      check("jobboards: detected as greenhouse", summary.ats, "greenhouse");
+      check("jobboards: school committed", v.school, CS);
+      check("jobboards: school status filled", statusOf(summary, "education[0].school"), (t) => /"filled"/.test(t));
+      check("jobboards: degree (list has Bachelors too)", v.degree, "Bachelor's Degree");
+      check("jobboards: degree went through search", statusOf(summary, "education[0].degree"), (t) => /"filled","Bachelor's Degree +\(searched/.test(t));
+      check("jobboards: discipline", v.discipline, "Computer Science");
+      check("jobboards: start month", v.startMonth, "August");
+      check("jobboards: start year", v.startYear, "2024");
+      check("jobboards: end month", v.endMonth, "May");
+      check("jobboards: end year", v.endYear, "2028");
+      check("jobboards: MM text fields leave the month selects alone", statusOf(summary, "education[0].start_month|MM") + statusOf(summary, "education[0].end_month|MM"), (t) => (t.match(/"absent"/g) || []).length === 2);
+      check("jobboards: school searched once", JSON.stringify(v.q), JSON.stringify([CS]));
+      const again = await fillAndWait(page);
+      const r = await readJobboards(page);
+      check("jobboards rerun: no new search", JSON.stringify(r.q), JSON.stringify([CS]));
+      check("jobboards rerun: values unchanged", JSON.stringify(r), JSON.stringify(v));
+      check("jobboards rerun: selects report already selected", keptKeys(again), JSON.stringify(["education[0].school", "education[0].degree", "education[0].major", "education[0].start_month", "education[0].end_month"]));
+      check("jobboards: never submitted", r.submits, 0);
+      await page.close();
       await setStorage({ profile: PROFILE });
     }
   } finally {

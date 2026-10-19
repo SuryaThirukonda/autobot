@@ -1,0 +1,159 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Duolingo careers form with Greenhouse education ids (web-ui pickers)</title>
+<style>
+  body{font:14px system-ui;margin:24px;max-width:720px} .qwjgb{margin-top:14px} .ZmsoW{display:block;font-weight:600;margin-bottom:4px}
+  .NuJad{width:100%;padding:8px;box-sizing:border-box;font:inherit} .xu0pG{display:none}
+  .KqT9e{position:relative} .vBiUr{visibility:hidden;position:absolute;left:0;right:0;top:0}
+  .m8kZ3{list-style:none;margin:0;padding:0;background:#fff;max-height:240px;overflow:auto} .m8kZ3:not(:empty){border:1px solid #ccc}
+  .hyKlT{padding:6px;cursor:pointer} .hyKlT:hover{background:#eef}
+  .LEZzN{display:flex;gap:12px} .LEZzN > .qwjgb{flex:1}
+  .FUCuR{position:relative;border:1px solid #ccc;height:36px;line-height:36px;padding:0 8px} .Ku9oD{position:absolute;inset:0;width:100%;background:transparent;border:0;cursor:pointer}
+</style></head>
+<body>
+<h1>Software Engineer, New Grad</h1>
+<!-- Mirrors careers.duolingo.com/jobs/8888721002 (job-boards.greenhouse.io/duolingo/jobs/8888721002 redirects there;
+     markup read 2026-10-19). Duolingo's own form posts to Greenhouse with Greenhouse field ids, built from hashed
+     "web-ui" components. The form has no id, action or input names, so it is detected by the gh_jid URL pattern (load
+     this page with ?gh_jid=…). Each picker has a visibility:hidden overlay input that owns the listbox (aria-controls),
+     a visible proxy input that takes focus and filters, a <ul role=listbox>, and a hidden input that receives the
+     option's Greenhouse id. School, degree and discipline sit side by side in one <fieldset>. End date month is a
+     listbox button that shows its choice in a <span> beside it; its list exists only while open. This posting asks
+     for no start date. "Add another" has no type attribute, so it is a submit button. -->
+<form class="k30Iw">
+  <div class="_jDNQ">
+    <div class="qwjgb"><label class="ZmsoW" for="first_name" id="first_name--label">First Name<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="first_name" type="text" required></div></div></div>
+    <div class="qwjgb"><label class="ZmsoW" for="last_name" id="last_name--label">Last Name<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="last_name" type="text" required></div></div></div>
+    <div class="qwjgb"><label class="ZmsoW" for="email" id="email--label">Email<span class="Z3JQr">*</span></label><div class="GGBZv"><div class="B8ekZ"><input class="NuJad" id="email" type="email" required></div></div></div>
+  </div>
+  <hr class="XSneO">
+  <div class="O090O _jDNQ">
+    <fieldset class="OljWZ">
+      <div class="_Bq5r"><legend class="g6gJ1">Education</legend></div>
+      <div class="qwjgb">
+        <label class="ZmsoW" for="educations[0].school_name_id" id="educations[0].school_name_id--label">School<span class="Z3JQr">*</span></label>
+        <div class="KqT9e">
+          <div class="GGBZv vBiUr"><div class="B8ekZ"><input aria-controls="web-ui26" aria-haspopup="listbox" tabindex="-1" class="NuJad" id="web-ui27" type="search"><button class="xu0pG" tabindex="-1" type="button"></button></div></div>
+          <div class="HNkOn _tq74 WMJuw HZa0Q"><div class="GGBZv"><div class="B8ekZ eFuJa BEljW sFcHf"><input class="NuJad" id="web-ui28" type="search" value=""><button class="xu0pG" tabindex="-1" type="button"></button></div></div></div>
+          <ul aria-disabled="false" aria-multiselectable="false" class="m8kZ3" id="web-ui26" role="listbox"></ul>
+        </div>
+        <input aria-errormessage="educations[0].school_name_id--error" id="educations[0].school_name_id" required type="hidden" value="">
+      </div>
+      <div class="qwjgb">
+        <label class="ZmsoW" for="educations[0].degree_id" id="educations[0].degree_id--label">Degree<span class="Z3JQr">*</span></label>
+        <div class="KqT9e">
+          <div class="GGBZv vBiUr"><div class="B8ekZ"><input aria-controls="web-ui29" aria-haspopup="listbox" tabindex="-1" class="NuJad" id="web-ui30" type="search"><button class="xu0pG" tabindex="-1" type="button"></button></div></div>
+          <div class="HNkOn _tq74 WMJuw HZa0Q"><div class="GGBZv"><div class="B8ekZ eFuJa BEljW sFcHf"><input class="NuJad" id="web-ui31" type="search" value=""><button class="xu0pG" tabindex="-1" type="button"></button></div></div></div>
+          <ul aria-disabled="false" aria-multiselectable="false" class="m8kZ3" id="web-ui29" role="listbox"></ul>
+        </div>
+        <input aria-errormessage="educations[0].degree_id--error" id="educations[0].degree_id" required type="hidden" value="">
+      </div>
+      <div class="qwjgb">
+        <label class="ZmsoW" for="educations[0].discipline_id" id="educations[0].discipline_id--label">Discipline<span class="Z3JQr">*</span></label>
+        <div class="KqT9e">
+          <div class="GGBZv vBiUr"><div class="B8ekZ"><input aria-controls="web-ui32" aria-haspopup="listbox" tabindex="-1" class="NuJad" id="web-ui33" type="search"><button class="xu0pG" tabindex="-1" type="button"></button></div></div>
+          <div class="HNkOn _tq74 WMJuw HZa0Q"><div class="GGBZv"><div class="B8ekZ eFuJa BEljW sFcHf"><input class="NuJad" id="web-ui34" type="search" value=""><button class="xu0pG" tabindex="-1" type="button"></button></div></div></div>
+          <ul aria-disabled="false" aria-multiselectable="false" class="m8kZ3" id="web-ui32" role="listbox"></ul>
+        </div>
+        <input aria-errormessage="educations[0].discipline_id--error" id="educations[0].discipline_id" required type="hidden" value="">
+      </div>
+      <div class="LEZzN">
+        <div class="qwjgb">
+          <label class="ZmsoW" for="educations[0].end_date.month" id="educations[0].end_date.month--label">End date month<span class="Z3JQr">*</span></label>
+          <div aria-errormessage="educations[0].end_date.month--error" aria-required="true" class="vkbLO" id="educations[0].end_date.month" role="group">
+            <div class="ykGYX"><div class="FUCuR sMEN5 AvNsP"><span class="GfJwj"></span><button aria-controls="web-ui35" aria-haspopup="listbox" class="Ku9oD CCR1m" type="button"></button></div></div>
+          </div>
+        </div>
+        <div class="qwjgb">
+          <label class="ZmsoW" for="educations[0].end_date.year" id="educations[0].end_date.year--label">End date year<span class="Z3JQr">*</span></label>
+          <div class="GGBZv"><div class="B8ekZ"><input aria-errormessage="educations[0].end_date.year--error" required class="NuJad" id="educations[0].end_date.year" type="number" value=""><button class="xu0pG" tabindex="-1" type="button"></button></div></div>
+        </div>
+      </div>
+    </fieldset>
+    <button class="_dlaB ZWlRv AGvZF icJgE at2Ig" id="add-another"><span class="Ewd3i">Add another</span></button>
+  </div>
+  <button class="Q5ycz" id="submit-application">Submit application</button>
+</form>
+<script>
+(() => {
+  window.__queries = { school: [], degree: [], discipline: [] };
+  window.__clicks = { addAnother: 0, submit: 0, monthOpens: 0 };
+  window.__submits = 0;
+  document.querySelector("form.k30Iw").addEventListener("submit", (e) => { e.preventDefault(); window.__submits++; });
+  document.getElementById("add-another").addEventListener("click", () => window.__clicks.addAnother++);
+  document.getElementById("submit-application").addEventListener("click", () => window.__clicks.submit++);
+
+  // Option lists as the live form shows them (Greenhouse ids where they were observed; the rest are placeholders).
+  const SCHOOLS = [["4001", "Texas A&M International University"], ["11785542002", "Texas A&M University - College Station"], ["11785542003", "Texas A&M University - Commerce"],
+    ["4002", "Texas A&M University - Corpus Christi"], ["4003", "Texas A&M University - Galveston"], ["4004", "Texas A&M University - Kingsville"], ["4005", "Texas A&M University - Texarkana"],
+    ["4006", "West Texas A&M University"], ["4007", "Texas Tech University"], ["4008", "Baylor University"]];
+  const DEGREES = [["11786716002", "Associate's Degree"], ["11786718002", "Bachelor's Degree"], ["11786723002", "Doctor of Medicine (M.D.)"], ["11786722002", "Doctor of Philosophy (Ph.D.)"],
+    ["11786724002", "Engineer's Degree"], ["11786715002", "High School"], ["11786721002", "Juris Doctor (J.D.)"], ["11786720002", "Master of Business Administration (M.B.A.)"],
+    ["11786719002", "Master's Degree"], ["11786725002", "Other"]];
+  const DISCIPLINES = ["Accounting", "African Studies", "Agriculture", "Anthropology", "Applied Health Services", "Architecture", "Art", "Asian Studies", "Biology", "Business",
+    "Business Administration", "Chemistry", "Classical Languages", "Communications & Film", "Computer Science", "Dentistry", "Developing Nations", "Discipline Unknown", "Earth Sciences",
+    "Economics", "Education", "Electronics", "Engineering", "English Studies", "Environmental Studies", "European Studies", "Fashion", "Finance", "Fine Arts", "General Studies",
+    "Health Services", "History", "Humanities", "Human Resources Management", "Industrial Arts & Carpentry", "Information Systems", "International Relations", "Journalism", "Languages",
+    "Latin American Studies", "Law", "Linguistics", "Manufacturing & Mechanics", "Mathematics", "Medicine", "Middle Eastern Studies", "Music", "Naval Science", "North American Studies",
+    "Nuclear Technics", "Operations Research & Strategy", "Organizational Theory", "Other", "Philosophy", "Physical Education", "Physical Sciences", "Physics", "Political Science",
+    "Psychology", "Public Policy", "Public Service", "Religious Studies", "Russian & Soviet Studies", "Scandinavian Studies", "Science", "Slavic Studies", "Social Science",
+    "Social Sciences", "Sociology", "Speech", "Statistics & Decision Theory", "Urban Studies", "Veterinary Medicine"].map((t, i) => [t === "Computer Science" ? "11786740002" : String(11786800002 + i), t]);
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  // The live picker wraps the typed part of each label in <strong> (the whole label when nothing is typed).
+  const li = ([id, t], q) => {
+    const at = q ? t.toLowerCase().indexOf(q.toLowerCase()) : -1;
+    const label = !q ? `<strong>${esc(t)}</strong>` : `${esc(t.slice(0, at))}<strong>${esc(t.slice(at, at + q.length))}</strong>${esc(t.slice(at + q.length))}`;
+    return `<li aria-disabled="false" aria-selected="false" class="hyKlT jwRSZ" role="option" tabindex="0" title="${esc(t)}" data-id="${id}"><div class="PTQys"><div class="HmUKu"><div class="rqMDI fRaYd">${label}</div></div></div></li>`;
+  };
+
+  // Typing goes into the proxy; changing its text drops the stored id; picking an option fills both and empties the
+  // list. The school list answers after a delay (a server search); degree and discipline filter at once. Each query
+  // is logged once the typing pauses, so a test can tell which box a search typed into.
+  const picker = (name, overlayId, proxyId, hiddenId, items, delay) => {
+    const overlay = document.getElementById(overlayId), proxy = document.getElementById(proxyId), hidden = document.getElementById(hiddenId);
+    const list = document.getElementById(overlay.getAttribute("aria-controls"));
+    let timer = null, pending = null, logTimer = null;
+    const logNow = () => { clearTimeout(logTimer); if (pending) window.__queries[name].push(pending); pending = null; };
+    const render = () => {
+      const q = proxy.value.trim();
+      const show = () => { list.innerHTML = items.filter(([, t]) => t.toLowerCase().includes(q.toLowerCase())).slice(0, 100).map((it) => li(it, q)).join(""); };
+      clearTimeout(timer);
+      if (delay) timer = setTimeout(show, delay); else show();
+    };
+    proxy.addEventListener("mousedown", render);
+    proxy.addEventListener("focus", render);
+    proxy.addEventListener("input", () => {
+      hidden.value = "";
+      pending = proxy.value.trim() || null;
+      clearTimeout(logTimer); logTimer = setTimeout(logNow, 150);
+      render();
+    });
+    list.addEventListener("click", (e) => {
+      const o = e.target.closest("[role=option]");
+      if (!o) return;
+      logNow();
+      clearTimeout(timer);
+      proxy.value = o.title; hidden.value = o.dataset.id; list.innerHTML = "";
+    });
+  };
+  picker("school", "web-ui27", "web-ui28", "educations[0].school_name_id", SCHOOLS, 250);
+  picker("degree", "web-ui30", "web-ui31", "educations[0].degree_id", DEGREES, 0);
+  picker("discipline", "web-ui33", "web-ui34", "educations[0].discipline_id", DISCIPLINES, 0);
+
+  // Month: the button opens a list inside its group; picking writes the month into the span and removes the list.
+  const group = document.getElementById("educations[0].end_date.month");
+  const btn = group.querySelector("button"), shown = group.querySelector(".GfJwj"), box = group.querySelector(".ykGYX");
+  btn.addEventListener("click", () => {
+    const open = box.querySelector(".HNkOn");
+    if (open) { open.remove(); return; }
+    window.__clicks.monthOpens++;
+    const wrap = document.createElement("div");
+    wrap.className = "HNkOn WMJuw Gfgx9";
+    wrap.innerHTML = `<ul aria-disabled="false" aria-multiselectable="false" class="m8kZ3" id="${btn.getAttribute("aria-controls")}" role="listbox">${MONTHS.map((m) => li([m, m], "")).join("")}</ul>`;
+    wrap.addEventListener("click", (e) => { const o = e.target.closest("[role=option]"); if (!o) return; shown.textContent = o.title; wrap.remove(); });
+    box.appendChild(wrap);
+  });
+})();
+</script>
+</body></html>

@@ -59,6 +59,9 @@ try {
   const values = await page.evaluate(() => Array.from(document.querySelectorAll("input:not([type=hidden]):not([type=submit]), textarea, select")).filter((e) => e.offsetParent !== null || e.type === "file").map((e) => ({ id: e.id || e.name || e.getAttribute("aria-label") || e.getAttribute("data-automation-id") || e.tagName, type: e.type, value: e.type === "file" ? (e.files[0]?.name || "") : e.type === "checkbox" || e.type === "radio" ? String(e.checked) : (e.value || "").slice(0, 60) })).filter((v) => v.value));
   const hiddenEdu = await page.evaluate(() => Array.from(document.querySelectorAll("input[type=hidden]")).filter((e) => /school|degree|discipline|location/i.test(e.id + " " + e.name)).map((e) => `${e.id || e.name}=${e.value}`));
   if (hiddenEdu.length) console.log("hidden education/location inputs:", hiddenEdu.join("  "));
+  // Listbox buttons (Duolingo's month picker) show their choice beside the button, not as a control value.
+  const picks = await page.evaluate(() => { const t = (n) => (n?.innerText || "").replace(/\s+/g, " ").trim(); return Array.from(document.querySelectorAll("button[aria-haspopup=listbox]")).map((b) => ({ id: b.closest("[id]")?.id || "", text: t(b) || t(b.parentElement) })).filter((x) => x.text && !/^select\b/i.test(x.text)); });
+  if (picks.length) { console.log("listbox buttons showing a choice:"); for (const x of picks) console.log(`  ${x.id.slice(0, 40).padEnd(40)} = ${x.text.slice(0, 60)}`); }
   console.log("non-empty controls after fill:"); for (const v of values) if (v.type !== "radio" && v.type !== "checkbox") console.log(`  ${v.type.padEnd(9)} ${String(v.id).slice(0, 40).padEnd(40)} = ${v.value}`);
   // Radio/checkbox groups: question text + what is checked (so a wrong tick is visible).
   const groups = await page.evaluate(() => {

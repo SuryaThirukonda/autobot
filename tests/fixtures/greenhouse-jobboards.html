@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture: Greenhouse job-boards education section (react-select)</title>
+<style>
+  body{font:14px system-ui;margin:24px;max-width:720px} .label{display:block;font-weight:600;margin:14px 0 4px} .input{width:100%;padding:6px;box-sizing:border-box}
+  .select-shell{position:relative} .select__control{display:flex;border:1px solid #ccc;min-height:34px;align-items:center} .select__value-container{flex:1;display:grid;padding:2px 8px}
+  .select__placeholder,.select__single-value,.select__input-container{grid-area:1/1} .select__placeholder{color:#888} .select__input{border:0;outline:0;width:100%;font:inherit;padding:0}
+  .remix-css-1a0ro4n-requiredInput{opacity:0;pointer-events:none;position:absolute;bottom:0;left:0;right:0;width:100%}
+  .select__menu{position:absolute;left:0;right:0;z-index:5;background:#fff;border:1px solid #ccc} .select__menu-list{max-height:240px;overflow:auto}
+  .select__option{padding:6px;cursor:pointer} .select__option--is-focused{background:#eef} .select__menu-notice{padding:6px;color:#666}
+  .education--date-container{display:flex;gap:12px} .education--date-container > div{flex:1}
+</style></head>
+<body>
+<h1>Strategic Finance &amp; Analytics Intern</h1>
+<!-- Mirrors the Greenhouse-hosted job-boards form (job-boards.greenhouse.io/robinhood/jobs/8198241 and the embed of
+     airbnb/8285171, markup read 2026-10-19). Every education field is a react-select 5 control: role=combobox sits on
+     the <input> itself and the chosen value shows as a sibling select__single-value inside select__control. No ancestor
+     has a "field" class. The menu renders inside select-shell only while open. The school list answers after a delay
+     (a server search). The degree list is Robinhood's custom one, which has both "Bachelors" and "Bachelor's Degree".
+     Airbnb's posting asks for start and end dates: months are react-selects, years are number inputs. -->
+<form id="application-form" class="application--form" onsubmit="window.__submits++; return false">
+  <div class="text-input-wrapper"><div class="input-wrapper"><label id="first_name-label" for="first_name" class="label">First Name<span aria-hidden="true">*</span></label><input id="first_name" class="input input__single-line" aria-label="First Name" aria-required="true" type="text" value=""></div></div>
+  <div class="text-input-wrapper"><div class="input-wrapper"><label id="last_name-label" for="last_name" class="label">Last Name<span aria-hidden="true">*</span></label><input id="last_name" class="input input__single-line" aria-label="Last Name" aria-required="true" type="text" value=""></div></div>
+  <div class="text-input-wrapper"><div class="input-wrapper"><label id="email-label" for="email" class="label">Email<span aria-hidden="true">*</span></label><input id="email" class="input input__single-line" aria-label="Email" aria-required="true" type="text" value=""></div></div>
+  <div class="education--container">
+    <div class="education--form">
+      <hr>
+      <div class="education--header"><p class="body body--medium">Education</p></div>
+      <div class="rs" data-id="school--0" data-label="School"></div>
+      <div class="rs" data-id="degree--0" data-label="Degree"></div>
+      <div class="rs" data-id="discipline--0" data-label="Discipline"></div>
+      <div class="education--half-width-container"><div class="education--date-container">
+        <div class="rs" data-id="start-month--0" data-label="Start date month"></div>
+        <div class="text-input-wrapper"><div class="input-wrapper"><label id="start-year--0-label" for="start-year--0" class="label label">Start date year<span aria-hidden="true">*</span></label><input id="start-year--0" class="input input__single-line" aria-label="Start date year" aria-required="true" type="number" value=""></div></div>
+      </div></div>
+      <div class="education--half-width-container"><div class="education--date-container">
+        <div class="rs" data-id="end-month--0" data-label="End date month"></div>
+        <div class="text-input-wrapper"><div class="input-wrapper"><label id="end-year--0-label" for="end-year--0" class="label label">End date year<span aria-hidden="true">*</span></label><input id="end-year--0" class="input input__single-line" aria-label="End date year" aria-required="true" type="number" value=""></div></div>
+      </div></div>
+    </div>
+    <button class="add-another-button" type="button">Add another</button>
+  </div>
+  <button type="submit" class="btn btn--pill">Submit application</button>
+</form>
+<script>
+(() => {
+  window.__queries = { "school--0": [] };
+  window.__submits = 0;
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const SCHOOLS = ["Texas A&M International University", "Texas A&M University - College Station", "Texas A&M University - Commerce", "Texas A&M University - Corpus Christi",
+    "Texas A&M University - Galveston", "West Texas A&M University", "Texas Tech University", "Baylor University", "Aalborg University", "Aalto University"];
+  const DEGREES = ["Accelerated Master's", "Advanced Certificate", "Associates", "Associate's Degree", "Bachelors", "Bachelor's Degree", "Certificate", "Community / Technical College",
+    "Doctorate", "Doctor of Medicine (M.D.)", "Doctor of Philosophy (Ph.D.)", "Engineer's Degree", "High School", "Juris Doctor (J.D.)", "Master of Business Administration (M.B.A.)",
+    "Masters", "Master's Degree", "Master's of Business Administration", "Non-Degree Seeking", "Other", "Postdoctoral Studies", "Technical Diploma"];
+  const DISCIPLINES = ["Accounting", "Biology", "Business", "Business Administration", "Chemistry", "Communications & Film", "Computer Science", "Economics", "Electronics", "Engineering",
+    "Finance", "Information Systems", "Mathematics", "Physics", "Science", "Social Science", "Statistics & Decision Theory"];
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // The markup react-select renders for a closed, empty control.
+  for (const slot of document.querySelectorAll(".rs")) {
+    const id = slot.dataset.id;
+    slot.outerHTML = `<div class="select"><div class="select__container"><label id="${id}-label" for="${id}" class="label select__label">${esc(slot.dataset.label)}<span aria-hidden="true">*</span></label>
+      <div class="select-shell remix-css-b62m3t-container"><span id="react-select-${id}-live-region" class="remix-css-7pg0cj-a11yText"></span><span aria-live="polite" aria-atomic="false" aria-relevant="additions text" role="log" class="remix-css-7pg0cj-a11yText"></span>
+        <div><div class="select__control remix-css-13cymwt-control"><div class="select__value-container remix-css-hlgwow"><div class="select__placeholder remix-css-1jqq78o-placeholder" id="react-select-${id}-placeholder">Select...</div>
+          <div class="select__input-container remix-css-19bb58m" data-value=""><input class="select__input" autocapitalize="none" autocomplete="off" autocorrect="off" id="${id}" spellcheck="false" tabindex="0" type="text" aria-autocomplete="list" aria-expanded="false" aria-haspopup="true" aria-errormessage="${id}-error" aria-invalid="false" aria-labelledby="${id}-label" aria-required="true" role="combobox" aria-activedescendant="" aria-describedby="react-select-${id}-placeholder ${id}-error" enterkeyhint="done" value=""></div></div>
+          <div class="select__indicators remix-css-1wy0on6"><button type="button" class="icon-button icon-button--sm" aria-label="Toggle flyout" tabindex="-1">&#9662;</button></div></div></div>
+        <input required="" tabindex="-1" aria-hidden="true" class="remix-css-1a0ro4n-requiredInput" value=""></div></div></div>`;
+  }
+
+  // react-select behaviour the engine relies on: the control opens the menu, typing filters it (the school list after
+  // a delay), Enter picks the focused option, a click picks that option, Escape and blur close it. A pick shows the
+  // label as select__single-value, empties the input and drops the required input.
+  const rs = (id, items, delay = 0) => {
+    const input = document.getElementById(id), shell = input.closest(".select-shell"), control = shell.querySelector(".select__control"), box = control.querySelector(".select__value-container");
+    const listId = `react-select-${id}-listbox`;
+    let menu = null, timer = null, shown = [];
+    const close = () => { clearTimeout(timer); if (menu) menu.remove(); menu = null; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-controls"); };
+    const draw = (html) => {
+      if (!menu) {
+        menu = document.createElement("div");
+        menu.className = "select__menu remix-css-1oc7h4y-menu";
+        menu.addEventListener("mousedown", (e) => e.preventDefault());
+        menu.addEventListener("click", (e) => { const o = e.target.closest("[role=option]"); if (o) pick(o.textContent); });
+        shell.appendChild(menu);
+      }
+      menu.innerHTML = html;
+      input.setAttribute("aria-expanded", "true"); input.setAttribute("aria-controls", listId);
+    };
+    const show = (q) => {
+      shown = items.filter((t) => t.toLowerCase().includes(q.toLowerCase()));
+      const chosen = box.querySelector(".select__single-value")?.textContent;
+      draw(shown.length ? `<div class="select__menu-list remix-css-qr46ko" role="listbox" aria-multiselectable="false" id="${listId}">${shown.map((t, i) => `<div class="select__option${i === 0 ? " select__option--is-focused" : ""} remix-css-1yzbtda-option" aria-disabled="false" id="react-select-${id}-option-${i}" tabindex="-1" role="option" aria-selected="${t === chosen}">${esc(t)}</div>`).join("")}</div>`
+        : `<div class="select__menu-notice select__menu-notice--no-options remix-css-1wlit7h-NoOptionsMessage">No options</div>`);
+    };
+    const render = () => {
+      const q = input.value;
+      clearTimeout(timer);
+      if (!delay || !q) return show(q);
+      draw(`<div class="select__menu-notice select__menu-notice--loading remix-css-1wlit7h-LoadingMessage">Loading...</div>`);
+      timer = setTimeout(() => { window.__queries[id]?.push(q); show(q); }, delay);
+    };
+    const pick = (t) => {
+      box.querySelector(".select__placeholder, .select__single-value")?.remove();
+      const sv = document.createElement("div");
+      sv.className = "select__single-value remix-css-1dimb5e-singleValue"; sv.textContent = t;
+      box.insertBefore(sv, box.querySelector(".select__input-container"));
+      shell.querySelector(".remix-css-1a0ro4n-requiredInput")?.remove();
+      input.value = "";
+      close();
+    };
+    control.addEventListener("mousedown", (e) => { if (e.target !== input) e.preventDefault(); input.focus(); if (!menu) render(); });
+    input.addEventListener("input", render);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" && !menu) render();
+      else if (e.key === "Enter" && menu && shown.length) { e.preventDefault(); pick(shown[0]); }
+      else if (e.key === "Escape") close();
+    });
+    input.addEventListener("blur", () => { input.value = ""; close(); });
+  };
+  rs("school--0", SCHOOLS, 200);
+  rs("degree--0", DEGREES);
+  rs("discipline--0", DISCIPLINES);
+  rs("start-month--0", MONTHS);
+  rs("end-month--0", MONTHS);
+})();
+</script>
+</body></html>
