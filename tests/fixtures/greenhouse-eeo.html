@@ -35,6 +35,7 @@
 (() => {
   window.__submits = 0;
   window.__picks = {};
+  window.__typed = {};   // every text typed into each react-select, in order
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const OPTIONS = {
     // Robinhood's demographic survey (boards-api demographic_questions)
@@ -143,7 +144,7 @@
       }
     };
     control.addEventListener("mousedown", (e) => { if (e.target !== input) e.preventDefault(); input.focus(); if (!menu) render(); });
-    input.addEventListener("input", render);
+    input.addEventListener("input", () => { (window.__typed[id] ||= []).push(input.value); render(); });
     input.addEventListener("keydown", (e) => {
       if (e.key === "ArrowDown" && !menu) render();
       else if (e.key === "Enter" && menu && shown.length) { e.preventDefault(); pick(shown[0]); }

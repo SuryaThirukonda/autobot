@@ -154,7 +154,12 @@ AB.refresh = (el) => {
   return el;
 };
 
-AB.collectOptions = (optSel) => AB.queryAny(optSel, document, true).filter((o) => AB.isVisible(o) && AB.textOf(o));
+// Rows that only report on the list are never options: react-select's menu notices ("No options", whose classes
+// contain "option") and "No results found" / "Loading…" rows.
+AB.collectOptions = (optSel) => AB.queryAny(optSel, document, true).filter((o) => {
+  const t = AB.textOf(o);
+  return t && AB.isVisible(o) && !o.matches("[class*='menu-notice']") && !/^(no (options?|results?|matches?)( found)?|nothing found|loading)$/.test(t);
+});
 
 // react-select (Greenhouse job-boards, many others) shows the choice in select__single-value beside its input; the
 // input's own text is only the search query, never a value.

@@ -85,12 +85,12 @@ const readJobboards = (page) => page.evaluate(() => { const sv = (id) => documen
   q: window.__queries["school--0"].slice(), submits: window.__submits, first: g("first_name") }; });
 // Statuses that report a choice the control already showed, as "key" strings.
 const keptKeys = (summary) => JSON.stringify((summary.statuses || []).filter((s) => s[1] === "filled" && /already selected/.test(s[2])).map((s) => s[0]));
-// greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits, and the
-// values of react-select's hidden "required" inputs (never written).
+// greenhouse-eeo.html: what each react-select shows, every pick per control (sorted), the checkboxes, submits, the
+// values of react-select's hidden "required" inputs (never written) and every text typed into each react-select.
 const readEeo = (page) => page.evaluate(() => ({
   shown: Object.fromEntries(Array.from(document.querySelectorAll("input[role=combobox]")).map((i) => [i.id, i.closest(".select__control").querySelector(".select__single-value")?.textContent || ""])),
   picks: Object.keys(window.__picks).sort().map((k) => `${k}=${window.__picks[k].join("|")}`), boxes: Array.from(document.querySelectorAll("input[type=checkbox]")).map((c) => c.checked), submits: window.__submits,
-  required: Array.from(document.querySelectorAll("input[aria-hidden=true][tabindex='-1']")).map((i) => i.value) }));
+  required: Array.from(document.querySelectorAll("input[aria-hidden=true][tabindex='-1']")).map((i) => i.value), typed: window.__typed }));
 // Status lines made from react-select's hidden "required" input, whose label is the placeholder or the live region.
 const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map((s) => s[0]).filter((k) => /^\? (select\b|option\b.*\bselected|\d+ results? available)/.test(k)));
 
@@ -410,6 +410,8 @@ const hiddenInputKeys = (summary) => JSON.stringify((summary.statuses || []).map
       check("eeo robinhood: gender identity needs you", statusOf(summary, "? what is your gender identity"), (t) => /"unknown"/.test(t));
       check("eeo robinhood: race picks the decline option", v.shown["1258"], "I don't wish to answer");
       check("eeo robinhood: status names the option shown", statusOf(summary, "ethnicity"), (t) => /"filled","I don't wish to answer"/.test(t));
+      // "I am not a protected veteran" lists nothing; the full list is matched next (a "No options" row is no option).
+      check("eeo robinhood: military status searched, then the full list", JSON.stringify(v.typed["1259"]), JSON.stringify(["I am not a protected veteran", ""]));
       check("eeo robinhood: military status not answered", JSON.stringify([v.shown["1259"], /"filled"/.test(statusOf(summary, "veteran"))]), JSON.stringify(["", false]));
       check("eeo robinhood: disability decline", v.shown["1261"], "I don't wish to answer");
       check("eeo robinhood: consent box untouched", JSON.stringify(v.boxes), "[false]");
